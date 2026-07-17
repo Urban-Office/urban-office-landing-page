@@ -1,0 +1,1524 @@
+/*
+ * Urban Office - Location Detail Pages Stylesheet
+ * Contains specialized premium styling for branch detail landing pages.
+ */
+
+/* 1. Hero Section Layout */
+.loc-hero {
+    padding: 60px 0 60px;
+    background-color: #FFFFFF;
+    border-bottom: 1px solid #EAEAEA;
+    margin-top: 80px;
+}
+
+.loc-hero-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    grid-template-areas:
+        "badge img"
+        "title img"
+        "desc img"
+        "list img"
+        "btns img"
+        "share img";
+    gap: 12px 50px;
+    align-items: center;
+}
+
+.loc-rating-badge {
+    grid-area: badge;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: rgba(255, 107, 0, 0.08);
+    color: #FF6B00;
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    font-size: 0.82rem;
+    font-weight: 700;
+    justify-self: start;
+    margin-bottom: 8px;
+}
+
+.loc-hero-grid h1 {
+    grid-area: title;
+    font-size: clamp(2rem, 4.5vw, 3rem);
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 0;
+    letter-spacing: -0.02em;
+    color: #111111;
+}
+
+.loc-hero-grid h1 span {
+    color: #FF6B00;
+}
+
+.loc-hero-subtitle {
+    grid-area: desc;
+    font-size: 1.05rem;
+    color: #555555;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.loc-highlights-list {
+    grid-area: list;
+    list-style: none;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px 20px;
+}
+
+.loc-highlights-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #333333;
+}
+
+.loc-highlights-list li i {
+    color: #25d366;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.loc-hero-btns {
+    grid-area: btns;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 0;
+}
+
+.loc-hero-btns .btn {
+    text-transform: none;
+    letter-spacing: 0;
+    justify-content: center;
+}
+
+.loc-share-block {
+    grid-area: share;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid #F0F0F0;
+    margin: 0;
+}
+
+.loc-share-block span {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #666666;
+}
+
+.loc-share-links {
+    display: flex;
+    gap: 8px;
+}
+
+.loc-share-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #F5F5F5;
+    color: #444444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+}
+
+.loc-share-btn:hover {
+    background-color: #FF6B00;
+    color: #FFFFFF;
+    transform: translateY(-2px);
+}
+
+.loc-share-btn.copied {
+    background-color: #25d366;
+    color: #FFFFFF;
+}
+
+.loc-hero-img-wrapper {
+    grid-area: img;
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.loc-hero-img-wrapper img {
+    width: 100%;
+    height: 420px;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s ease;
+}
+
+.loc-hero-img-wrapper:hover img {
+    transform: scale(1.03);
+}
+
+/* 2. Mini Info Cards */
+.loc-mini-info-section {
+    padding: 0;
+    margin-top: -30px;
+    position: relative;
+    z-index: 20;
+}
+
+.loc-mini-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 24px;
+}
+
+.loc-mini-card {
+    background-color: #FFFFFF;
+    border-radius: var(--radius-md);
+    padding: 24px 28px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(234, 234, 234, 0.9);
+    display: flex;
+    align-items: start;
+    gap: 18px;
+}
+
+.loc-mini-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background-color: rgba(255, 107, 0, 0.1);
+    color: #FF6B00;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.loc-mini-details {
+    text-align: left;
+}
+
+.loc-mini-details h4 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #777777;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+}
+
+.loc-mini-details p {
+    font-size: 0.95rem;
+    color: #111111;
+    font-weight: 600;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+/* 3. Gallery Slider CSS */
+.gallery-section {
+    background-color: #F9F9F9;
+    padding: 80px 0;
+}
+
+.gallery-slider-container {
+    position: relative;
+    width: 100%;
+    max-width: 1140px;
+    margin: 0 auto;
+    cursor: grab;
+    user-select: none;
+    touch-action: pan-y;
+}
+
+.gallery-slider-container:active {
+    cursor: grabbing;
+}
+
+.gallery-slider-wrapper {
+    overflow: hidden;
+    width: 100%;
+    padding: 15px 0; /* to prevent clipping item box-shadows */
+}
+
+.gallery-track {
+    display: flex;
+    gap: 20px;
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    width: 100%;
+}
+
+.gallery-item {
+    flex: 0 0 calc(33.333% - 13.333px);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 4/3;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+    background-color: #EAEAEA;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s ease;
+}
+
+.gallery-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.1);
+}
+
+.gallery-item:hover img {
+    transform: scale(1.05);
+}
+
+.gallery-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 70%, transparent 100%);
+    color: #FFFFFF;
+    padding: 24px 20px;
+    text-align: left;
+    opacity: 0;
+    transform: translateY(15px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.gallery-item:hover .gallery-caption {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.gallery-arrow {
+    display: none !important;
+}
+
+.gallery-arrow:hover {
+    background-color: #FF6B00;
+    color: #FFFFFF;
+    transform: translateY(-50%) scale(1.08);
+    box-shadow: 0 6px 20px rgba(255, 107, 0, 0.3);
+}
+
+.gallery-arrow.prev {
+    left: -24px;
+}
+
+.gallery-arrow.next {
+    right: -24px;
+}
+
+@media (max-width: 1200px) {
+    .gallery-arrow.prev {
+        left: -12px;
+    }
+    
+    .gallery-arrow.next {
+        right: -12px;
+    }
+}
+
+@media (max-width: 991px) {
+    .gallery-item {
+        flex: 0 0 calc(50% - 10px);
+    }
+}
+
+@media (max-width: 576px) {
+    .gallery-item {
+        flex: 0 0 220px !important;
+        aspect-ratio: 1.6 !important;
+        border-radius: 12px !important;
+    }
+}
+
+/* 4. App Promo Banner */
+.app-promo-section {
+    padding: 40px 0;
+    background-color: #FFFFFF;
+}
+
+.app-promo-banner {
+    background: linear-gradient(135deg, #FF5100, #FF8800, #FFD700);
+    border-radius: var(--radius-lg);
+    padding: 50px 60px;
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    grid-template-areas:
+        "title mockup"
+        "desc mockup"
+        "badges mockup";
+    gap: 12px 40px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.app-promo-banner h3 {
+    grid-area: title;
+    color: #FFFFFF !important;
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    font-weight: 800;
+    line-height: 1.3;
+    margin: 0;
+    text-align: left;
+}
+
+.app-promo-desc {
+    grid-area: desc;
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.6;
+    text-align: left;
+}
+
+.app-badge-row {
+    grid-area: badges;
+    display: flex;
+    gap: 14px;
+    margin: 0;
+    justify-content: flex-start;
+}
+
+.app-badge-link {
+    transition: transform 0.2s ease;
+}
+
+.app-badge-link img {
+    height: 42px;
+    width: auto;
+}
+
+.app-badge-link:hover {
+    transform: translateY(-2px);
+}
+
+.app-promo-mockup {
+    grid-area: mockup;
+    position: relative;
+    z-index: 2;
+    margin-right: -40px;
+    margin-bottom: -90px;
+    margin-top: -50px;
+    justify-self: center;
+}
+
+.app-promo-mockup img {
+    height: 380px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+}
+
+/* App Promo Decorative Circles */
+.app-promo-banner::before,
+.app-promo-banner::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.app-promo-banner::before {
+    width: 300px;
+    height: 300px;
+    top: -100px;
+    right: 10% ;
+}
+
+.app-promo-banner::after {
+    width: 150px;
+    height: 150px;
+    bottom: -50px;
+    left: 10%;
+}
+
+/* 5. Booking Steps Layout */
+.steps-section {
+    background-color: #F9F9F9;
+}
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.step-card {
+    background-color: #FFFFFF;
+    border-radius: var(--radius-md);
+    padding: 35px 30px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid #EAEAEA;
+    text-align: left;
+    position: relative;
+    transition: transform 0.25s ease;
+}
+
+.step-card:hover {
+    transform: translateY(-5px);
+    border-color: #FF6B00;
+}
+
+.step-number {
+    font-size: 3rem;
+    font-weight: 800;
+    color: rgba(255, 107, 0, 0.12);
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    line-height: 1;
+}
+
+.step-icon-wrap {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    background-color: rgba(255, 107, 0, 0.08);
+    color: #FF6B00;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 24px;
+}
+
+.step-card h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.step-card p {
+    font-size: 0.88rem;
+    color: #555555;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* 6. Pricing Packages Section & Filter Tabs */
+.pricing-section {
+    background-color: #FFFFFF;
+}
+
+.pricing-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 45px;
+    flex-wrap: wrap;
+}
+
+.pricing-tab-btn {
+    background-color: #F4F4F4;
+    border: 1px solid #EAEAEA;
+    color: #444444;
+    padding: 10px 22px;
+    border-radius: var(--radius-full);
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.pricing-tab-btn:hover {
+    background-color: #EEEEEE;
+    color: #111111;
+}
+
+.pricing-tab-btn.active {
+    background-color: #FF6B00;
+    border-color: #FF6B00;
+    color: #FFFFFF;
+    box-shadow: 0 4px 15px rgba(255, 107, 0, 0.25);
+}
+
+.pricing-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    align-items: stretch;
+}
+
+/* Pricing Card Styles */
+.pkg-card {
+    background-color: #FFFFFF;
+    border-radius: var(--radius-md);
+    border: 1px solid #EAEAEA;
+    padding: 24px 18px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 0 1 calc(25% - 15px);
+    min-width: 170px;
+    max-width: 270px;
+    min-height: 650px;
+    transition: all 0.3s ease;
+    text-align: left;
+    position: relative;
+}
+
+.pkg-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-md);
+    border-color: #FF6B00;
+}
+
+.pkg-card.popular {
+    border: 2px solid #FF6B00;
+    box-shadow: 0 10px 30px rgba(255, 107, 0, 0.1);
+}
+
+.pkg-badge {
+    position: absolute;
+    top: -15px;
+    right: 30px;
+    background-color: #FF6B00;
+    color: #FFFFFF;
+    padding: 4px 14px;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/*.pkg-card-top h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.pkg-price-wrap {
+    margin: 8px 0 12px;
+}
+
+.pkg-currency {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #111111;
+    vertical-align: top;
+}
+
+.pkg-price {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #FF6B00;
+    line-height: 1;
+}
+
+.pkg-period {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #777777;
+}
+
+.pkg-minimum-info {
+    font-size: 0.62rem;
+    color: #888888;
+    margin-top: -6px;
+    margin-bottom: 12px;
+    font-weight: 500;
+    font-style: italic;
+}
+
+.pkg-desc {
+    font-size: 0.74rem;
+    color: #666666;
+    margin-bottom: 14px;
+    min-height: 50px;
+}
+
+.pkg-features-wrap {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.pkg-features-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #999999;
+    margin-bottom: 10px;
+}
+
+.pkg-features-list {
+    list-style: none;
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.pkg-features-list li {
+    display: flex;
+    align-items: start;
+    gap: 7px;
+    font-size: 0.74rem;
+    color: #333333;
+    line-height: 1.35;
+}
+
+.pkg-features-list li i {
+    color: #FF6B00;
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}*/
+.pkg-card-top h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.pkg-price-wrap {
+    margin: 8px 0 12px;
+}
+
+.pkg-currency {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #111111;
+    vertical-align: top;
+}
+
+.pkg-price {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #FF6B00;
+    line-height: 1;
+}
+
+.pkg-period {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #777777;
+}
+
+.pkg-minimum-info {
+    font-size: 0.62rem;
+    color: #888888;
+    margin-top: -6px;
+    margin-bottom: 12px;
+    font-weight: 500;
+    font-style: italic;
+}
+
+.pkg-desc {
+    font-size: 0.74rem;
+    color: #666666;
+    margin-bottom: 14px;
+    min-height: 50px;
+}
+
+.pkg-features-wrap {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.pkg-features-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #999999;
+    margin-bottom: 10px;
+}
+
+.pkg-features-list {
+    list-style: none;
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.pkg-features-list li {
+    display: flex;
+    align-items: start;
+    gap: 7px;
+    font-size: 0.74rem;
+    color: #333333;
+    line-height: 1.35;
+}
+
+.pkg-features-list li i {
+    color: #FF6B00;
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* Actions Wrapper (Booking Now + WhatsApp side-by-side) */
+.pkg-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+    width: 100%;
+    align-items: center;
+}
+
+.pkg-actions .btn-booking {
+    flex-grow: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #FF6B00;
+    color: #FFFFFF;
+    border: 1px solid #FF6B00;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+    transition: all 0.25s ease;
+    text-decoration: none;
+}
+
+.pkg-actions .btn-booking:hover {
+    background-color: #E05E00;
+    border-color: #E05E00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 107, 0, 0.25);
+}
+
+.pkg-actions .btn-whatsapp-icon {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #25d366;
+    color: #25d366;
+    background-color: transparent;
+    border-radius: var(--radius-sm);
+    font-size: 1.05rem;
+    flex-shrink: 0;
+    transition: all 0.25s ease;
+    text-decoration: none;
+}
+
+.pkg-actions .btn-whatsapp-icon:hover {
+    background-color: #25d366;
+    color: #FFFFFF;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.2);
+}
+
+.pricing-empty {
+    grid-column: span 3;
+    padding: 50px 0;
+    text-align: center;
+    color: #777777;
+    font-style: italic;
+}
+
+/* 7. Other Branches Section */
+.other-branches-section {
+    background-color: #F9F9F9;
+}
+
+/* 8. Clients Logo List */
+.clients-section {
+    background-color: #FFFFFF;
+    padding: 50px 0 60px;
+    border-bottom: 1px solid #EAEAEA;
+}
+
+.clients-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 30px 60px;
+    opacity: 0.6;
+}
+
+.client-logo-item {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #444444;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.05em;
+    user-select: none;
+}
+
+.client-logo-item i {
+    font-size: 1.3rem;
+    color: #FF6B00;
+}
+
+/* 9. Testimonials */
+.testi-section {
+    background-color: #F9F9F9;
+}
+
+.testi-card-wrap {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.testi-premium-card {
+    background-color: #FFFFFF;
+    border-radius: var(--radius-lg);
+    padding: 45px 50px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid #EAEAEA;
+    text-align: left;
+    position: relative;
+}
+
+.testi-stars {
+    color: #FFD700;
+    font-size: 1.1rem;
+    margin-bottom: 18px;
+}
+
+.testi-text {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    font-style: italic;
+    color: #222222;
+    margin-bottom: 24px;
+    font-weight: 500;
+    position: relative;
+    z-index: 2;
+}
+
+.testi-text::before {
+    content: '"';
+    font-size: 5rem;
+    font-family: Georgia, serif;
+    color: rgba(255, 107, 0, 0.08);
+    position: absolute;
+    top: -40px;
+    left: -20px;
+    z-index: -1;
+}
+
+.testi-profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.testi-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.testi-info h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.testi-info p {
+    font-size: 0.82rem;
+    color: #777777;
+    margin: 0;
+}
+
+/* 10. FAQ Accordion CSS */
+.faq-section {
+    background-color: #FFFFFF;
+}
+
+.faq-list {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.faq-card-item {
+    background-color: #FFFFFF;
+    border: 1px solid #EAEAEA;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: all 0.25s ease;
+}
+
+.faq-card-item:hover {
+    border-color: #FF6B00;
+}
+
+.faq-card-item.active {
+    border-color: #FF6B00;
+    box-shadow: var(--shadow-sm);
+}
+
+.faq-card-header {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 22px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    outline: none;
+    text-align: left;
+}
+
+.faq-card-header h3 {
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: #111111;
+    margin: 0;
+    padding-right: 15px;
+}
+
+.faq-card-icon {
+    font-size: 1.1rem;
+    color: #777777;
+    transition: transform 0.3s ease;
+}
+
+.faq-card-item.active .faq-card-icon {
+    transform: rotate(180deg);
+    color: #FF6B00;
+}
+
+.faq-card-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: #FAFAFA;
+}
+
+.faq-card-body {
+    padding: 0 28px 22px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: #555555;
+    text-align: left;
+}
+
+/* 11. Responsive Layout adjustments */
+@media (max-width: 991px) {
+    .loc-hero-grid {
+        grid-template-columns: 1fr !important;
+        grid-template-areas:
+            "badge"
+            "title"
+            "img"
+            "desc"
+            "list"
+            "btns"
+            "share" !important;
+        gap: 20px !important;
+        text-align: left;
+    }
+    
+    .loc-hero-grid h1 {
+        text-align: left !important;
+    }
+    
+    .loc-hero-subtitle {
+        text-align: left !important;
+    }
+    
+    .loc-hero-img-wrapper img {
+        height: 320px;
+    }
+    
+    .loc-mini-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .app-promo-banner {
+        grid-template-columns: 1fr !important;
+        grid-template-areas:
+            "title"
+            "desc"
+            "badges"
+            "mockup" !important;
+        padding: 40px 30px;
+        gap: 20px;
+    }
+    
+    .app-promo-banner h3 {
+        text-align: center !important;
+    }
+    
+    .app-promo-desc {
+        text-align: center !important;
+    }
+    
+    .app-badge-row {
+        justify-content: center !important;
+    }
+    
+    .app-promo-mockup {
+        margin-right: 0 !important;
+        margin-bottom: -40px !important;
+        margin-top: 0 !important;
+    }
+    
+    .app-promo-mockup img {
+        height: 280px !important;
+    }
+    
+    .steps-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .pricing-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        align-items: stretch;
+    }
+    
+    .pkg-card {
+        flex: 0 1 calc(25% - 15px);
+        max-width: 270px;
+        min-width: 170px;
+        padding: 20px 12px;
+    }
+    
+    .pricing-empty {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .pricing-grid {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        justify-content: flex-start !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+        gap: 16px !important;
+        padding-bottom: 20px !important;
+        margin-left: -16px !important;
+        margin-right: -16px !important;
+        padding-left: calc(50% - 125px) !important;
+        padding-right: calc(50% - 125px) !important;
+        align-items: stretch !important;
+        scrollbar-width: none !important;
+    }
+    .pricing-grid::-webkit-scrollbar {
+        display: none !important;
+    }
+    
+    .pkg-card {
+        flex: 0 0 250px !important;
+        min-width: 250px !important;
+        max-width: 250px !important;
+        scroll-snap-align: center !important;
+        padding: 24px 20px !important;
+        min-height: auto !important;
+        height: auto !important;
+    }
+    
+    /* Make pricing card typography even smaller on mobile */
+    .pkg-card-top h3 {
+        font-size: 0.9rem !important;
+        margin-bottom: 4px !important;
+    }
+    .pkg-desc {
+        font-size: 0.7rem !important;
+        margin-bottom: 12px !important;
+        min-height: auto !important;
+        line-height: 1.4 !important;
+    }
+    .pkg-price-wrap {
+        margin: 8px 0 10px !important;
+    }
+    .pkg-price {
+        font-size: 1.3rem !important;
+    }
+    .pkg-currency {
+        font-size: 0.8rem !important;
+    }
+    .pkg-period {
+        font-size: 0.68rem !important;
+    }
+    .pkg-minimum-info {
+        font-size: 0.58rem !important;
+        margin-top: -6px !important;
+        margin-bottom: 10px !important;
+    }
+    .pkg-features-wrap {
+        margin-bottom: 15px !important;
+    }
+    .pkg-features-title {
+        font-size: 0.72rem !important;
+        margin-bottom: 8px !important;
+    }
+    .pkg-features-list {
+        gap: 6px !important;
+        margin-bottom: 10px !important;
+    }
+    .pkg-features-list li {
+        font-size: 0.7rem !important;
+        line-height: 1.35 !important;
+        gap: 6px !important;
+    }
+    .pkg-features-list li i {
+        font-size: 0.85rem !important;
+        margin-top: 1px !important;
+    }
+    .pkg-actions .btn-booking {
+        font-size: 0.72rem !important;
+        padding: 8px 10px !important;
+    }
+    .pkg-actions .btn-whatsapp-icon {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 0.95rem !important;
+    }
+
+    .gallery-arrow {
+        display: none !important;
+    }
+
+    .loc-highlights-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .loc-hero-btns {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+        width: 100% !important;
+        margin-bottom: 24px !important;
+    }
+    
+    /* Hero mobile typography refinements */
+    .loc-hero-grid h1 {
+        font-size: 1.5rem !important;
+    }
+    .loc-hero-subtitle {
+        font-size: 0.85rem !important;
+        line-height: 1.5 !important;
+    }
+    .loc-highlights-list li {
+        font-size: 0.78rem !important;
+    }
+    .loc-rating-badge {
+        font-size: 0.75rem !important;
+        padding: 5px 12px !important;
+    }
+    .loc-hero-btns .btn {
+        font-size: 0.74rem !important;
+        padding: 8px 12px !important;
+        width: auto !important;
+        flex-grow: 0 !important;
+        letter-spacing: 0 !important;
+        text-transform: none !important;
+        justify-content: flex-start !important;
+    }
+    .loc-hero-img-wrapper img {
+        height: 200px !important;
+    }
+    
+    /* Mini Info Cards side-by-side on mobile */
+    .loc-mini-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+    
+    .loc-mini-card {
+        padding: 12px 10px !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        text-align: left !important;
+        gap: 8px !important;
+        min-height: 140px !important;
+    }
+    
+    .loc-mini-icon {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 1rem !important;
+        border-radius: 8px !important;
+    }
+    
+    .loc-mini-details {
+        text-align: left !important;
+        width: 100% !important;
+    }
+    
+    .loc-mini-details h4 {
+        font-size: 0.68rem !important;
+        margin-bottom: 2px !important;
+    }
+    
+    .loc-mini-details p {
+        font-size: 0.72rem !important;
+        line-height: 1.3 !important;
+        margin-bottom: 6px !important;
+    }
+    
+    /* Override Card 2 inline styles on mobile */
+    .loc-mini-card p[style*="font-size: 1.15rem"] {
+        font-size: 0.9rem !important;
+        margin-bottom: 2px !important;
+    }
+    
+    .loc-mini-card p[style*="font-size: 0.85rem"] {
+        font-size: 0.65rem !important;
+        line-height: 1.25 !important;
+    }
+    
+    /* Map Button smaller size */
+    .loc-mini-details .btn-outline {
+        padding: 4px 8px !important;
+        font-size: 0.68rem !important;
+        width: 100% !important;
+        justify-content: center !important;
+        text-align: center !important;
+        gap: 4px !important;
+        border-radius: 4px !important;
+    }
+    
+    .gallery-slides {
+        height: 300px;
+    }
+    
+    .gallery-caption {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+        padding: 12px 10px !important;
+    }
+    
+    .gallery-caption h4 {
+        font-size: 0.8rem !important;
+        margin-bottom: 2px !important;
+    }
+    
+    .gallery-caption p {
+        font-size: 0.65rem !important;
+    }
+    
+    .testi-premium-card {
+        padding: 30px 24px;
+    }
+    
+    .faq-card-header {
+        padding: 16px 20px;
+    }
+    
+    .faq-card-body {
+        padding: 0 20px 16px;
+    }
+
+    /* Refine pricing filter tabs on mobile */
+    .pricing-tabs {
+        gap: 6px !important;
+        margin-bottom: 30px !important;
+    }
+    
+    .pricing-tab-btn {
+        font-size: 0.76rem !important;
+        padding: 6px 12px !important;
+    }
+
+    /* Refine mobile app promo banner height and content on mobile (custom grid layout) */
+    .app-promo-section {
+        padding: 20px 0 !important;
+    }
+    
+    .app-promo-banner {
+        grid-template-columns: 1fr !important;
+        grid-template-rows: auto auto auto auto !important;
+        grid-template-areas:
+            "title"
+            "mockup"
+            "desc"
+            "badges" !important;
+        padding: 24px 20px !important;
+        gap: 14px !important;
+        align-items: center !important;
+    }
+    
+    .app-promo-banner h3 {
+        font-size: 1.2rem !important;
+        text-align: center !important;
+        line-height: 1.3 !important;
+    }
+    
+    .app-promo-desc {
+        font-size: 0.8rem !important;
+        text-align: center !important;
+        line-height: 1.45 !important;
+        margin-top: 4px !important;
+    }
+    
+    .app-badge-row {
+        justify-content: flex-start !important; /* Keep left aligned as requested */
+        gap: 10px !important;
+        width: 100% !important;
+    }
+    
+    .app-badge-row .app-badge-link img {
+        height: 30px !important;
+    }
+    
+    .app-promo-mockup {
+        justify-self: center !important;
+        margin: 10px 0 !important;
+        margin-bottom: -10px !important; /* Raised up slightly from -24px */
+    }
+    
+    .app-promo-mockup img {
+        height: 180px !important; /* Set height to be very compact but readable */
+        width: auto !important;
+        max-width: 100% !important;
+    }
+}
+
+/* --- 12. Stacked Section Headers Layout (Pill Badge, Title, Subtitle stacked vertically) --- */
+.section-header-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 35px;
+    width: 100%;
+}
+
+.section-header-wrap .badge {
+    margin-bottom: 12px;
+    display: inline-block;
+}
+
+.section-header-wrap .section-title {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+    font-weight: 800;
+    line-height: 1.25;
+    color: #111111;
+    display: block;
+}
+
+.section-header-wrap .section-subtitle {
+    margin: 0 auto;
+    font-size: 0.95rem;
+    color: #555555;
+    line-height: 1.6;
+    max-width: 680px;
+}
+
+@media (min-width: 769px) {
+    .section-header-wrap {
+        align-items: flex-start;
+        text-align: left;
+        margin-bottom: 45px;
+    }
+    
+    .section-header-wrap .section-subtitle {
+        margin: 0;
+        text-align: left;
+        max-width: 800px;
+    }
+    
+    /* Modifier class to force center alignment on all screen sizes */
+    .section-header-wrap.center-align {
+        align-items: center;
+        text-align: center;
+    }
+    
+    .section-header-wrap.center-align .section-subtitle {
+        margin: 0 auto;
+        text-align: center;
+    }
+}
+
+/* --- 13. Other Branches Slider CSS --- */
+.branches-slider-container {
+    position: relative;
+    width: 100%;
+    max-width: 1140px;
+    margin: 0 auto;
+}
+
+.branches-slider-wrapper {
+    overflow: hidden;
+    width: 100%;
+    padding: 15px 0; /* to prevent clipping shadow */
+}
+
+.branches-track {
+    display: flex;
+    gap: 20px;
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    width: 100%;
+}
+
+.branches-track .branch-card {
+    flex: 0 0 calc(33.333% - 13.333px);
+    background-color: #FFFFFF;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.branches-track .branch-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+}
+
+.branch-body-content {
+    padding: 24px;
+    text-align: left;
+}
+
+@media (max-width: 991px) {
+    .branches-track .branch-card {
+        flex: 0 0 calc(50% - 10px);
+    }
+}
+
+@media (max-width: 576px) {
+    .branches-track .branch-card {
+        flex: 0 0 240px !important;
+        border-radius: 12px !important;
+    }
+}
