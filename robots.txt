@@ -1,0 +1,81 @@
+# Robots.txt for Urban Office Platform
+# Enforces search indexing optimization and smart AI bot policy
+# Last updated: 2026-06-13
+
+# ============================================
+# Global Rules (All Crawlers)
+# ============================================
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /cache/
+Disallow: /inc/
+Disallow: /scratch/
+
+# ============================================
+# AI Search Bots — ALLOWED (for GEO visibility)
+# These bots power AI search results (ChatGPT Search,
+# Google AI Overviews, Perplexity, Claude Search).
+# Allowing them ensures Urban Office gets cited in
+# AI-powered search engines and conversational results.
+# ============================================
+
+# OpenAI GPTBot — powers ChatGPT search & Bing Copilot citations
+User-agent: GPTBot
+Allow: /
+Disallow: /admin/
+Disallow: /cache/
+Disallow: /inc/
+
+# OpenAI ChatGPT User — browser agent for ChatGPT user browsing
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /admin/
+Disallow: /cache/
+Disallow: /inc/
+
+# Google Extended — powers Google AI Overviews & Gemini search
+User-agent: Google-Extended
+Allow: /
+Disallow: /admin/
+Disallow: /cache/
+Disallow: /inc/
+
+# Anthropic Claude Web — powers Claude.ai search citations
+User-agent: Claude-Web
+Allow: /
+Disallow: /admin/
+Disallow: /cache/
+Disallow: /inc/
+
+# ============================================
+# AI Training-Only Bots — BLOCKED
+# These bots are used purely for model training and
+# do not contribute to search citation visibility.
+# ============================================
+
+# Anthropic ClaudeBot — training-only crawler
+User-agent: ClaudeBot
+Disallow: /
+
+# Common Crawl (CCBot) — open dataset training crawler
+User-agent: CCBot
+Disallow: /
+
+# Facebook AI training bot
+User-agent: FacebookBot
+Disallow: /
+
+# Apple AI training bot
+User-agent: Applebot-Extended
+Disallow: /
+
+# ============================================
+# Sitemap Pointer
+# ============================================
+Sitemap: https://urbanoffice.co.id/sitemap.xml
+
+# ============================================
+# AI Content Discovery (llms.txt standard)
+# ============================================
+# See: https://urbanoffice.co.id/llms.txt
