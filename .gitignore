@@ -1,0 +1,32 @@
+# Environment / credentials
+.env
+.env.*
+*.pem
+*.key
+
+# Runtime data (sessions, generated cache)
+cache/
+
+# User-uploaded media (created at runtime by DIR_UPLOADS, not source-controlled)
+uploads/
+
+# Backup / snapshot archives (redundant with tracked source)
+admin.zip
+perizinan-dan-perubahan-perusahaan.zip
+test_zip/
+
+# One-off scratch/debug scripts and their dump output
+scratch/
+
+# Backup copies left alongside their live counterpart
+*.bak
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Dependency dirs (in case any tooling adds these later)
+node_modules/
+vendor/
