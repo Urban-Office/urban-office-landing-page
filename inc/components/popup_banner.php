@@ -331,10 +331,15 @@ $p_delay     = max(2, (int)$active_popup['delay_seconds']);
     let countdownInterval = null;
     let isCloseAllowed = false;
 
-    // 1. Evaluate Frequency / Storage eligibility
+    /* 1. Evaluate Frequency / Storage eligibility */
     function shouldShowPopup() {
         if (config.isForced) {
-            return true; // Deep link forced via ?promo=slug
+            return true; /* Deep link forced via ?promo=slug */
+        }
+
+        /* Allow instant display for testing via ?test_popup=1 */
+        if (window.location.search.indexOf('test_popup') !== -1) {
+            return true;
         }
 
         if (config.frequency === 'always') {
@@ -362,7 +367,7 @@ $p_delay     = max(2, (int)$active_popup['delay_seconds']);
         return;
     }
 
-    // Countdown Timer Handler (5 seconds)
+    /* Countdown Timer Handler (5 seconds) */
     function startCountdown() {
         countdownSeconds = 5;
         isCloseAllowed = false;
@@ -396,18 +401,18 @@ $p_delay     = max(2, (int)$active_popup['delay_seconds']);
         }, 1000);
     }
 
-    // 2. Open Popup Function
+    /* 2. Open Popup Function */
     function openPopup() {
         modalWrapper.style.display = 'flex';
-        // Trigger animation
+        /* Trigger animation */
         requestAnimationFrame(() => {
             modalWrapper.classList.add('uo-popup-visible');
         });
 
-        // Start 5-second countdown on close button
+        /* Start 5-second countdown on close button */
         startCountdown();
 
-        // Dynamic URL Update (without page refresh, SEO friendly)
+        /* Dynamic URL Update (without page refresh, SEO friendly) */
         try {
             const curUrl = new URL(window.location.href);
             if (curUrl.searchParams.get('promo') !== config.slug) {
@@ -420,14 +425,14 @@ $p_delay     = max(2, (int)$active_popup['delay_seconds']);
             }
         } catch (e) {}
 
-        // Send View Analytics Event (non-blocking)
+        /* Send View Analytics Event (non-blocking) */
         sendTrackEvent('view');
     }
 
-    // 3. Close Popup Function
+    /* 3. Close Popup Function */
     function closePopup() {
         if (!isCloseAllowed) {
-            // Pulse animation feedback if user tries to close early
+            /* Pulse animation feedback if user tries to close early */
             if (closeBtn) {
                 closeBtn.style.transform = 'scale(1.22)';
                 setTimeout(() => { closeBtn.style.transform = ''; }, 200);
@@ -445,7 +450,7 @@ $p_delay     = max(2, (int)$active_popup['delay_seconds']);
             modalWrapper.style.display = 'none';
         }, 360);
 
-        // Record User Frequency Flag in Storage
+        /* Record User Frequency Flag in Storage */
         try {
             if (config.frequency === 'session') {
                 sessionStorage.setItem('uo_popup_seen_' + config.id, '1');
@@ -454,7 +459,7 @@ $p_delay     = max(2, (int)$active_popup['delay_seconds']);
             }
         } catch (e) {}
 
-        // Restore URL parameter to original clean state
+        /* Restore URL parameter to original clean state */
         try {
             const curUrl = new URL(window.location.href);
             if (curUrl.searchParams.get('promo') === config.slug) {
@@ -465,7 +470,7 @@ $p_delay     = max(2, (int)$active_popup['delay_seconds']);
         } catch (e) {}
     }
 
-    // 4. Send Event Tracker Helper
+    /* 4. Send Event Tracker Helper */
     function sendTrackEvent(evtName) {
         if (!config.trackUrl) return;
         try {
@@ -484,7 +489,7 @@ $p_delay     = max(2, (int)$active_popup['delay_seconds']);
         } catch (e) {}
     }
 
-    // 5. Event Listeners
+    /* 5. Event Listeners */
     if (closeBtn) {
         closeBtn.addEventListener('click', closePopup);
     }
@@ -515,21 +520,21 @@ $p_delay     = max(2, (int)$active_popup['delay_seconds']);
                 const msg = this.getAttribute('data-wa-msg') || '';
                 const encMsg = msg ? encodeURIComponent(msg) : '';
 
-                // Deteksi apakah pengunjung menggunakan Smartphone / HP
+                /* Deteksi apakah pengunjung menggunakan Smartphone / HP */
                 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
                 if (isMobile) {
-                    // Di Smartphone: Langsung buka aplikasi WhatsApp (Bypass halaman perantara web)
+                    /* Di Smartphone: Langsung buka aplikasi WhatsApp (Bypass halaman perantara web) */
                     const appUrl = 'whatsapp://send?phone=' + phone + (encMsg ? '&text=' + encMsg : '');
                     window.location.href = appUrl;
 
-                    // Fallback jika belum menginstall WhatsApp di HP
+                    /* Fallback jika belum menginstall WhatsApp di HP */
                     setTimeout(function() {
                         if (document.hidden) return;
                         window.location.href = 'https://api.whatsapp.com/send?phone=' + phone + (encMsg ? '&text=' + encMsg : '');
                     }, 1500);
                 } else {
-                    // Di Laptop/PC: Langsung buka WhatsApp Web (Bypass halaman perantara api.whatsapp.com)
+                    /* Di Laptop/PC: Langsung buka WhatsApp Web (Bypass halaman perantara api.whatsapp.com) */
                     const webUrl = 'https://web.whatsapp.com/send?phone=' + phone + (encMsg ? '&text=' + encMsg : '');
                     window.open(webUrl, '_blank', 'noopener,noreferrer');
                 }
@@ -537,7 +542,7 @@ $p_delay     = max(2, (int)$active_popup['delay_seconds']);
         });
     }
 
-    // 6. Schedule Display
+    /* 6. Schedule Display */
     const delayMs = config.isForced ? 100 : (config.delaySeconds * 1000);
     setTimeout(openPopup, delayMs);
 })();

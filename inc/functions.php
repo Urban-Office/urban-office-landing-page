@@ -139,21 +139,22 @@ function verify_csrf_token(?string $token): bool {
 }
 
 /**
- * Simple HTML Minifier
- * Compresses HTML outputs to reduce bandwidth and load times
+ * Safe HTML Minifier
+ * Strips HTML comments and collapses redundant spaces while preserving newlines
+ * so inline JavaScript comments (//) and formatting are never broken.
  */
 function minify_html(string $html): string {
     $search = [
-        '/\n+/',             // Replace multiple newlines with a single space
-        '/[ \t]+/',          // Replace tabs and multiple spaces with a single space
-        '/<!--[^]\[|><]*(?<![<>])-->/' // Strip HTML comments (leaving browser hacks if any)
+        '/<!--[^]\[|><]*(?<![<>])-->/', // Strip HTML comments (leaving browser hacks)
+        '/[ \t]+/',                     // Collapse multiple horizontal spaces/tabs into a single space
+        '/(\r?\n)+/'                   // Collapse multiple empty newlines into a single newline
     ];
     $replace = [
+        '',
         ' ',
-        ' ',
-        ''
+        "\n"
     ];
-    return preg_replace($search, $replace, $html);
+    return trim(preg_replace($search, $replace, $html));
 }
 
 /**
