@@ -3,7 +3,6 @@
  * Enforces modern premium aesthetics, layout style, and strict color palette
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
     /* Color Tokens (Strict Palette + Compatibility with HSL) */
@@ -905,6 +904,62 @@ img {
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 30px;
 }
+/* Local branch cards (per-city service pages): cap card width and center them so 1-2 cards
+   don't stretch to fill the whole row. Desktop up to 3/row, tablet 2, mobile 1. */
+.local-branch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 360px));
+    justify-content: center;
+    align-items: stretch;
+    gap: 30px;
+    margin-top: 40px;
+}
+@media (max-width: 991px) {
+    .local-branch-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 340px)); }
+}
+@media (max-width: 640px) {
+    .local-branch-grid { grid-template-columns: minmax(0, 400px); }
+}
+/* When only one local branch card exists, drop the slider's edge padding and center it
+   cleanly on mobile (the ?type slider padding leaves a single card ~16px off-center). */
+@media (max-width: 768px) {
+    .local-branch-grid.local-branch-grid--single {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        justify-content: center !important;
+    }
+}
+/* Two-column local branch block: photo + map on the left, keunggulan on the right. */
+.local-branch-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+    margin-top: 32px;
+    padding: 28px;
+    background-color: #FFFFFF;
+    border: 1px solid hsl(var(--clr-border));
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+.local-branch-media img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16/10;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    display: block;
+    margin-bottom: 14px;
+}
+.local-branch-info { text-align: left; }
+.local-branch-info h3 { font-size: 1.3rem; margin-bottom: 8px; }
+.local-branch-addr { color: hsl(var(--clr-text-muted)); font-size: 0.9rem; margin-bottom: 6px; }
+.local-branch-rating { font-size: 0.9rem; margin-bottom: 14px; }
+@media (max-width: 768px) {
+    .local-branch-split { grid-template-columns: 1fr; gap: 22px; padding: 20px; }
+}
 .premium-card {
     background-color: #FFFFFF;
     border-radius: var(--radius-md);
@@ -948,6 +1003,24 @@ img {
 .pricing-grid-custom,
 .pricing-grid,
 .card-grid {
+    align-items: flex-start !important;
+}
+
+/* Equal-height pricing cards: grids that opt in with .stretch-items make every card match the
+   tallest one in the row (mobile, tablet & desktop). Overrides the flex-start rule above. */
+.pricing-grid-custom.stretch-items,
+.pricing-grid.stretch-items,
+.card-grid.stretch-items {
+    align-items: stretch !important;
+}
+
+/* When any pricing card is expanded, decouple row height so unopened cards do not stretch with empty space */
+.pricing-grid-custom.has-expanded,
+.pricing-grid.has-expanded,
+.card-grid.has-expanded,
+.pricing-grid-custom.stretch-items.has-expanded,
+.pricing-grid.stretch-items.has-expanded,
+.card-grid.stretch-items.has-expanded {
     align-items: flex-start !important;
 }
 
@@ -1859,7 +1932,8 @@ textarea.form-control {
     .services-3col-grid,
     .timeline-flow,
     .problems-grid,
-    .other-services-grid {
+    .other-services-grid,
+    .local-branch-grid {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -1891,6 +1965,15 @@ textarea.form-control {
         align-items: stretch !important;
     }
     
+    .pricing-grid-custom.has-expanded,
+    .pricing-grid.has-expanded,
+    .card-grid.has-expanded,
+    .pricing-grid-custom.stretch-items.has-expanded,
+    .pricing-grid.stretch-items.has-expanded,
+    .card-grid.stretch-items.has-expanded {
+        align-items: flex-start !important;
+    }
+    
     .pricing-badge-popular {
         top: -8px !important;
         right: -4px !important;
@@ -1918,7 +2001,8 @@ textarea.form-control {
     .services-3col-grid::-webkit-scrollbar,
     .timeline-flow::-webkit-scrollbar,
     .problems-grid::-webkit-scrollbar,
-    .other-services-grid::-webkit-scrollbar {
+    .other-services-grid::-webkit-scrollbar,
+    .local-branch-grid::-webkit-scrollbar {
         display: none; /* Hide scrollbar for Chrome/Safari/Edge */
     }
     
@@ -2851,9 +2935,27 @@ textarea.form-control {
 }
 
 .benefits-vo-slide {
-    flex: 0 0 33.333%; /* 3 items visible on desktop */
+    flex: 0 0 87%; /* <100% so the next slide peeks in on the right (all breakpoints) */
     padding: 15px;
     display: flex;
+}
+
+/* Two-column merge: "Keuntungan" image slider (left) + "Keunggulan Cabang" advantages (right) */
+.benefits-vo-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    align-items: center;
+    margin-top: 40px;
+}
+.benefits-vo-split .benefits-vo-slider-container {
+    max-width: 100%;
+    margin: 0;
+}
+.vo-branch-advantages { text-align: left; }
+.vo-branch-advantages h3 { font-size: 1.35rem; margin-bottom: 20px; }
+@media (max-width: 900px) {
+    .benefits-vo-split { grid-template-columns: 1fr; gap: 30px; }
 }
 
 .benefits-vo-card {
@@ -2907,13 +3009,13 @@ textarea.form-control {
 
 @media (max-width: 991px) {
     .benefits-vo-slide {
-        flex: 0 0 50%; /* 2 items on tablet */
+        flex: 0 0 88%; /* keep a peek of the next slide on tablet */
     }
 }
 
 @media (max-width: 768px) {
     .benefits-vo-slide {
-        flex: 0 0 100%; /* 1 item on mobile */
+        flex: 0 0 85%; /* slightly larger peek on mobile (full-width column) */
     }
 }
 
@@ -3648,3 +3750,17 @@ textarea.form-control {
         font-size: 11.5px !important;
     }
 }
+
+/* Accessibility & SEO helper for icon-only links */
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+

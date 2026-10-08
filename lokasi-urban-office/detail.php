@@ -38,12 +38,12 @@ $page_slug = $slug;
 
 // Filter packages based on branch slug rules
 $allowed_pricing_categories = [
-    'merr' => ['virtual-office', 'coworking', 'private-office', 'meeting-room', 'event-space', 'sharing-room-office'],
-    'klampis' => ['virtual-office', 'meeting-room', 'coworking'],
-    'grand-sungkono-lagoon' => ['virtual-office', 'meeting-room'],
-    'ptgm-tower' => ['virtual-office', 'meeting-room', 'private-office'],
-    'fatmawati' => ['virtual-office', 'coworking', 'private-office', 'meeting-room', 'event-space', 'sharing-room-office'],
-    'gorebiz' => ['virtual-office', 'meeting-room', 'private-office'],
+    'surabaya' => ['virtual-office', 'coworking', 'private-office', 'meeting-room', 'event-space', 'sharing-room-office'],
+    'surabaya-timur' => ['virtual-office', 'meeting-room', 'coworking'],
+    'surabaya-barat' => ['virtual-office', 'meeting-room'],
+    'gresik' => ['virtual-office', 'meeting-room', 'private-office'],
+    'jakarta' => ['virtual-office', 'coworking', 'private-office', 'meeting-room', 'event-space', 'sharing-room-office'],
+    'jakarta-timur' => ['virtual-office', 'meeting-room', 'private-office'],
     'medan' => ['virtual-office']
 ];
 

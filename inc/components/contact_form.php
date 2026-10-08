@@ -13,61 +13,88 @@ require_once dirname(dirname(__FILE__)) . '/functions.php';
         
         <div class="contact-grid">
             <!-- Left Side: Testimonial Slider -->
+            <!-- ============================================================================
+                 TESTIMONI PELANGGAN — branch-aware: leads with the CURRENT VO branch's own
+                 review (from inc/locations_data.php 'testimonial') so the location matches the
+                 page, then city-neutral fallbacks fill the slider. Plain testimonials only —
+                 NO Google branding (would misrepresent placeholder text as genuine Google
+                 reviews). NOTE: content is still PLACEHOLDER — replace the per-branch
+                 'testimonial' in locations_data + the neutral fallbacks below with REAL reviews.
+                 ============================================================================ -->
+            <?php
+            // $vo_branch is in scope on VO branch pages (set in virtual-office-surabaya/index.php);
+            // unset elsewhere, so the branch review is simply skipped on non-VO pages.
+            $reviews = [];
+            $reviews_are_google = false;
+            if (!empty($vo_branch['google_reviews'])) {
+                // Real Google Maps reviews for this branch → show the Google badge (source genuinely IS Google).
+                $reviews_are_google = true;
+                foreach ($vo_branch['google_reviews'] as $gr) {
+                    $reviews[] = [
+                        'name'   => $gr['name'] ?? 'Pelanggan',
+                        'role'   => '',
+                        'text'   => $gr['text'] ?? '',
+                        'rating' => (int) ($gr['rating'] ?? 5),
+                    ];
+                }
+            } else {
+                // No real Google reviews yet → plain customer testimonials (NO Google badge): the
+                // branch's own placeholder testimonial leads, then city-neutral fallbacks.
+                if (!empty($vo_branch['testimonial']['text'])) {
+                    $bt = $vo_branch['testimonial'];
+                    $reviews[] = [
+                        'name'   => $bt['name'] ?? 'Pelanggan',
+                        'role'   => $bt['role'] ?? (isset($vo_branch['location']) ? 'Cabang ' . $vo_branch['location'] : ''),
+                        'text'   => $bt['text'],
+                        'rating' => (int) ($bt['rating'] ?? 5),
+                    ];
+                }
+                $reviews[] = ['name' => 'Ayu Agustiningsih', 'role' => 'Pelanggan Virtual Office', 'text' => 'Padahal sewa virtual office di sini, tapi benefit yang didapat luar biasa. Penanganan surat rapi dan langsung diinfo via WA!', 'rating' => 5];
+                $reviews[] = ['name' => 'Stepanus Budi', 'role' => 'Pelanggan Private Office', 'text' => 'Kantor sangat bersih, pelayanan super bagus, staff ramah. Sangat nyaman untuk kerja temporary atau rapat dengan klien.', 'rating' => 5];
+                $reviews[] = ['name' => 'Handoko', 'role' => 'Pelanggan', 'text' => 'Kantor yang sangat bersih, pelayanan super bagus, nyaman buat kerja temporary di sini.', 'rating' => 5];
+            }
+            ?>
+            <style>
+            /* Initial-letter avatar — used for reviewers without a public photo (same default Google
+               itself shows). Reuses .review-avatar sizing/border. */
+            .review-avatar-initial { display: flex; align-items: center; justify-content: center; background: hsl(var(--clr-primary)); color: #FFFFFF; font-size: 34px; font-weight: 800; line-height: 1; }
+            .review-role { font-size: 12.5px; color: #777777; margin: 2px 0 0; }
+            /* Google badge overlapping the avatar (only rendered for real Google reviews) */
+            .review-avatar-wrap { position: relative; display: inline-block; margin-bottom: 20px; }
+            .review-avatar-wrap .review-avatar { margin-bottom: 0; }
+            .review-google-badge { position: absolute; right: -2px; bottom: -2px; width: 30px; height: 30px; border-radius: 50%; background: #FFFFFF; border: 0.5px solid #E0E0E0; box-shadow: 0 1px 3px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; }
+            .review-google-badge svg { width: 18px; height: 18px; display: block; }
+            </style>
             <div class="contact-testimonial-slider-wrap">
                 <div class="contact-slider-container">
-                    <button type="button" class="slider-arrow prev-arrow" onclick="prevContactReview()" aria-label="Review Sebelumnya">&#10094;</button>
-                    
                     <div class="contact-slider-window">
-                        <!-- Slide 1 -->
-                        <div class="contact-review-slide active">
-                            <div class="review-avatar">
-                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" alt="Ayu Agustiningsih">
+                        <?php foreach ($reviews as $ri => $rev):
+                            $initial = function_exists('mb_substr') ? mb_strtoupper(mb_substr(trim($rev['name']), 0, 1)) : strtoupper(substr(trim($rev['name']), 0, 1));
+                            $stars = str_repeat('★', max(1, min(5, (int) $rev['rating'])));
+                        ?>
+                        <div class="contact-review-slide<?php echo $ri === 0 ? ' active' : ''; ?>">
+                            <div class="review-avatar-wrap">
+                                <div class="review-avatar review-avatar-initial"><?php echo sanitize($initial); ?></div>
+                                <?php if ($reviews_are_google): ?>
+                                <span class="review-google-badge" aria-label="Ulasan dari Google"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg></span>
+                                <?php endif; ?>
                             </div>
-                            <p class="review-quote">"Padahal sewa virtual office disini, tapi benefit yang didapat luar biasa. Penanganan surat rapi dan langsung diinfo via WA!"</p>
-                            <div class="review-stars">★★★★★</div>
-                            <h4 class="review-author">Ayu Agustiningsih</h4>
+                            <p class="review-quote">"<?php echo sanitize($rev['text']); ?>"</p>
+                            <div class="review-stars"><?php echo $stars; ?></div>
+                            <h4 class="review-author"><?php echo sanitize($rev['name']); ?></h4>
+                            <?php if ($reviews_are_google): ?><p class="review-role">Ulasan dari Google</p><?php elseif (!empty($rev['role'])): ?><p class="review-role"><?php echo sanitize($rev['role']); ?></p><?php endif; ?>
                         </div>
+                        <?php endforeach; ?>
                         
-                        <!-- Slide 2 -->
-                        <div class="contact-review-slide">
-                            <div class="review-avatar">
-                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" alt="Stepanus Budi Raharjo">
-                            </div>
-                            <p class="review-quote">"Kantor sangat bersih, pelayanan super bagus, staff ramah. Sangat nyaman untuk kerja temporary atau rapat dengan klien."</p>
-                            <div class="review-stars">★★★★★</div>
-                            <h4 class="review-author">Stepanus Budi</h4>
-                        </div>
-                        
-                        <!-- Slide 3 -->
-                        <div class="contact-review-slide">
-                            <div class="review-avatar">
-                                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80" alt="Lestari Handayani">
-                            </div>
-                            <p class="review-quote">"Coworking space bagus, adminnya ramah, lokasi strategis di Merr Surabaya. Recommended buat kerja fokus."</p>
-                            <div class="review-stars">★★★★★</div>
-                            <h4 class="review-author">Lestari Handayani</h4>
-                        </div>
-                        
-                        <!-- Slide 4 -->
-                        <div class="contact-review-slide">
-                            <div class="review-avatar">
-                                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80" alt="Handoko">
-                            </div>
-                            <p class="review-quote">"Kantor yang sangat bersih Pelayanan super bagus Nyaman buat kerja temporary disini"</p>
-                            <div class="review-stars">★★★★★</div>
-                            <h4 class="review-author">Handoko</h4>
-                        </div>
                     </div>
                     
-                    <button type="button" class="slider-arrow next-arrow" onclick="nextContactReview()" aria-label="Review Selanjutnya">&#10095;</button>
-                </div>
+</div>
                 
                 <!-- Dot Indicators -->
                 <div class="contact-slider-dots">
-                    <span class="contact-dot active" onclick="goToContactReview(0)"></span>
-                    <span class="contact-dot" onclick="goToContactReview(1)"></span>
-                    <span class="contact-dot" onclick="goToContactReview(2)"></span>
-                    <span class="contact-dot" onclick="goToContactReview(3)"></span>
+                    <?php foreach ($reviews as $ri => $rev): ?>
+                    <span class="contact-dot<?php echo $ri === 0 ? ' active' : ''; ?>" onclick="goToContactReview(<?php echo $ri; ?>)"></span>
+                    <?php endforeach; ?>
                 </div>
             </div>
             
@@ -131,6 +158,14 @@ require_once dirname(dirname(__FILE__)) . '/functions.php';
                         </select>
                     </div>
                     
+                    <?php
+                    // A visit date only makes sense for services the client physically comes in for.
+                    // Virtual Office (and legality/tax pages) are lead/quote flows where forcing a
+                    // date is pure friction, so it stays optional there. data-visit-required lets
+                    // main.js keep this rule when it toggles Offer Mode on/off.
+                    $visit_based_services = ['Meeting Room', 'Coworking Space', 'Event Space', 'Private Office', 'Sharing Room Office'];
+                    $is_visit_based = in_array($current_service, $visit_based_services, true);
+                    ?>
                     <!-- Visit Booking Row (hidden in Offer Mode) -->
                     <div class="form-row" id="visit-booking-row">
                         <div class="form-group">
@@ -138,8 +173,8 @@ require_once dirname(dirname(__FILE__)) . '/functions.php';
                             <input type="number" id="contact-people" name="jumlah_orang" class="form-control" placeholder="Jumlah Orang" min="1">
                         </div>
                         <div class="form-group">
-                            <label for="contact-date">TANGGAL (*)</label>
-                            <input type="date" id="contact-date" name="tanggal" class="form-control" required>
+                            <label for="contact-date"><?php echo $is_visit_based ? 'TANGGAL KUNJUNGAN (*)' : 'TANGGAL KUNJUNGAN (opsional)'; ?></label>
+                            <input type="date" id="contact-date" name="tanggal" class="form-control" data-visit-required="<?php echo $is_visit_based ? '1' : '0'; ?>" <?php echo $is_visit_based ? 'required' : ''; ?>>
                         </div>
                     </div>
 

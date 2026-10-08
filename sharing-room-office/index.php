@@ -11,6 +11,9 @@ require_once dirname(dirname(__FILE__)) . '/inc/header.php';
 <?php
 $hero_tag = 'Sharing Office';
 $hero_title = 'Sewa Sharing Room Office';
+// Reflect the ?lokasi city (validated against locations_data) in the hero for relevance.
+$svc_city = service_city_from_query('sharing-room-office');
+if ($svc_city !== '') { $hero_tag .= ' ' . $svc_city; $hero_title .= ' di ' . $svc_city; }
 $hero_desc = 'Ruang kantor bersama yang didesain untuk beberapa startup atau perusahaan dalam satu area kerja. Hemat biaya operasional, lengkap dengan furniture, listrik, internet, dan kebersihan.';
 $hero_cta_text = 'Pesan Meja Sharing';
 $hero_cta_url = '#pricing';

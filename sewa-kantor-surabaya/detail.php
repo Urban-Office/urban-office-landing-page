@@ -13,84 +13,84 @@ if ($type < 1 || $type > 8) {
 
 $types_data = [
     1 => [
-        'name' => 'Private Office Small (2 Pax)',
+        'name' => 'Private Office Small',
         'img' => 'private-office-small.webp',
         'pax' => '2 Pax',
         'capacity' => '2 Orang',
         'size' => '6m²',
         'monthly' => '4.000.000',
         'yearly' => '36.000.000',
-        'desc' => 'Ruang kantor privat berukuran 6m² yang fully-furnished, ideal untuk startup kecil atau tim cabang dengan kapasitas 2 orang. Dilengkapi dengan furnitur ergonomis premium, sambungan listrik & AC dedicated, serta akses internet super cepat.'
+        'desc' => 'Ruang kantor privat 6m² untuk 2 orang, fully furnished dan siap pakai. Ideal untuk startup kecil atau kantor perwakilan yang butuh alamat bisnis prestisius sekaligus ruang kerja profesional.'
     ],
     2 => [
-        'name' => 'Private Office Medium (4 Pax)',
+        'name' => 'Private Office Corporate',
         'img' => 'private-office-medium.webp',
-        'pax' => '4 Pax',
-        'capacity' => '4 Orang',
-        'size' => '9m²',
-        'monthly' => '5.500.000',
-        'yearly' => '49.500.000',
-        'desc' => 'Ruang kerja privat berukuran 9m² yang sempurna untuk tim berkembang yang terdiri dari 4-5 orang. Dilengkapi dengan furnitur lengkap, AC dedicated, dan layanan daily cleaning service untuk kenyamanan kerja tim Anda.'
+        'pax' => '5 Pax',
+        'capacity' => '5 Orang',
+        'size' => '14m²',
+        'monthly' => '6.000.000',
+        'yearly' => '54.000.000',
+        'desc' => 'Ruang kerja korporat 14m² berkapasitas 5 orang dengan layout lega. Cocok untuk tim inti perusahaan yang membutuhkan privasi dan kenyamanan penuh dalam satu ruang.'
     ],
     3 => [
-        'name' => 'Private Office Corporate (6 Pax)',
+        'name' => 'Private Office Corporate',
         'img' => 'private-office-corporate.webp',
-        'pax' => '6 Pax',
-        'capacity' => '6 Orang',
+        'pax' => '5 Pax',
+        'capacity' => '5 Orang',
         'size' => '14m²',
-        'monthly' => '10.000.000',
-        'yearly' => '90.000.000',
-        'desc' => 'Ruang kantor berukuran 14m² dengan desain mewah berkelas korporat. Sangat cocok untuk tim berskala menengah hingga 6 orang. Dilengkapi layout premium, furniture eksekutif, dan akses smart door lock mandiri.'
+        'monthly' => '7.000.000',
+        'yearly' => '63.000.000',
+        'desc' => 'Ruang kantor eksklusif 14m² untuk tim 5 orang dengan desain berkelas korporat, pencahayaan optimal, dan furnitur premium. Menghadirkan citra profesional bagi perusahaan Anda.'
     ],
     4 => [
-        'name' => 'Private Office Medium (3 Pax)',
+        'name' => 'Private Office Medium',
         'img' => 'private-office-4.webp',
-        'pax' => '3 Pax',
-        'capacity' => '3 Orang',
-        'size' => '8m²',
+        'pax' => '4 Pax',
+        'capacity' => '4 Orang',
+        'size' => '12m²',
         'monthly' => '5.500.000',
         'yearly' => '49.500.000',
-        'desc' => 'Ruang kerja privat modern berkapasitas 3 orang dengan sekat kaca eksklusif. Menawarkan pencahayaan alami yang melimpah dan desain interior minimalis untuk produktivitas tim startup Anda.'
+        'desc' => 'Ruang kerja privat 12m² berkapasitas 4 orang dengan sekat modern. Ukuran pas untuk tim yang sedang berkembang, lengkap dengan meja, kursi ergonomis, dan AC dedicated.'
     ],
     5 => [
-        'name' => 'Private Office Corporate (6 Pax)',
+        'name' => 'Private Office Corporate',
         'img' => 'private-office-5.webp',
         'pax' => '6 Pax',
         'capacity' => '6 Orang',
-        'size' => '15m²',
-        'monthly' => '10.000.000',
-        'yearly' => '90.000.000',
-        'desc' => 'Workspace luas berkapasitas hingga 6 orang dengan meja yang tertata rapi. Sangat nyaman untuk kolaborasi tim IT, marketing, atau operasional perusahaan.'
+        'size' => '16m²',
+        'monthly' => '7.500.000',
+        'yearly' => '67.500.000',
+        'desc' => 'Ruang kantor terluas 16m² untuk tim hingga 6 orang. Ruang paling lapang di lantai ini, ideal untuk divisi operasional atau tim yang butuh keleluasaan maksimal.'
     ],
     6 => [
-        'name' => 'Private Office Small (2 Pax)',
+        'name' => 'Private Office Small',
         'img' => 'private-office-6.webp',
         'pax' => '2 Pax',
         'capacity' => '2 Orang',
-        'size' => '6.5m²',
-        'monthly' => '4.000.000',
-        'yearly' => '36.000.000',
-        'desc' => 'Ruang kerja privat berkapasitas 2 orang dengan pemandangan langsung ke gedung pencakar langit kota. Memberikan kesan prestisius dan profesional bagi bisnis Anda.'
+        'size' => '6m²',
+        'monthly' => '5.000.000',
+        'yearly' => '45.000.000',
+        'desc' => 'Ruang kantor privat 6m² untuk 2 orang di lantai 2 dengan akses strategis. Nyaman dan profesional untuk duo founder atau tim kecil yang butuh ruang fokus.'
     ],
     7 => [
-        'name' => 'Private Office Small (1 Pax)',
+        'name' => 'Private Office Small',
         'img' => 'private-office-7.webp',
-        'pax' => '1 Pax',
-        'capacity' => '1 Orang (Eksekutif)',
-        'size' => '5m²',
+        'pax' => '2 Pax',
+        'capacity' => '2 Orang',
+        'size' => '6m²',
         'monthly' => '4.000.000',
         'yearly' => '36.000.000',
-        'desc' => 'Ruang kerja privat kelas eksekutif yang didesain khusus untuk para profesional perorangan, direktur, atau konsultan. Dilengkapi meja kayu kokoh, kursi kulit premium, dan suasana kedap suara.'
+        'desc' => 'Ruang kerja privat 6m² berkapasitas 2 orang dengan harga paling terjangkau. Pilihan tepat untuk profesional atau konsultan yang memulai kehadiran kantor fisik.'
     ],
     8 => [
-        'name' => 'Private Office Medium (4 Pax)',
+        'name' => 'Private Office Medium',
         'img' => 'private-office-8.webp',
-        'pax' => '4 Pax',
-        'capacity' => '4 Orang',
+        'pax' => '5 Pax',
+        'capacity' => '5 Orang',
         'size' => '10m²',
-        'monthly' => '5.500.000',
-        'yearly' => '49.500.000',
-        'desc' => 'Kabin kerja kolaboratif berkapasitas 4 orang dengan meja kayu hangat dan partisi kaca buram untuk privasi kerja yang terjaga namun tetap dinamis.'
+        'monthly' => '6.500.000',
+        'yearly' => '58.500.000',
+        'desc' => 'Ruang kerja 10m² yang efisien untuk tim hingga 5 orang. Tata letak kompak namun fungsional, cocok untuk tim yang mengutamakan kolaborasi erat.'
     ]
 ];
 
@@ -117,9 +117,15 @@ $office = $types_data[$type];
             <div style="background-color: hsl(var(--clr-bg-secondary)); padding: 24px; border-radius: var(--radius-md); border-left: 4px solid hsl(var(--clr-primary)); box-shadow: var(--shadow-sm); margin-bottom: 30px;">
                 <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 800; color: hsl(var(--clr-primary));">Mulai Dari</div>
                 <div style="font-size: 2.3rem; font-weight: 800; color: #111111; line-height: 1.1; margin: 6px 0;">
-                    Rp <?php echo sanitize($office['monthly']); ?> <span style="font-size: 1.2rem; color: #666666; font-weight: 500;">/ Bln</span>
+                    Rp <?php echo sanitize($office['monthly']); ?> <span style="font-size: 1.2rem; color: #666666; font-weight: 500;">/ Bulan</span>
                 </div>
-                <p style="font-size: 0.75rem; color: #666666; margin-top: 8px; margin-bottom: 0;">*Minimum kontrak 1 tahun. Sudah termasuk promo bayar 9 bulan untuk sewa 1 tahun.</p>
+                <?php if (!empty($office['yearly'])): ?>
+                <div style="font-size: 1rem; color: hsl(var(--clr-success)); font-weight: 700; margin-top: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    <i class="bi bi-tag-fill"></i> Rp <?php echo sanitize($office['yearly']); ?> / Tahun
+                    <span style="font-weight: 500; color: #666666; font-size: 0.85rem;">(bayar 9 bulan untuk sewa 1 tahun)</span>
+                </div>
+                <?php endif; ?>
+                <p style="font-size: 0.75rem; color: #666666; margin-top: 8px; margin-bottom: 0;">*Minimum kontrak 1 tahun. Harga tahunan sudah termasuk promo bayar 9 bulan.</p>
             </div>
             
             <!-- Call to Actions -->
@@ -133,7 +139,7 @@ $office = $types_data[$type];
         
         <!-- Right Image Column -->
         <div class="hero-image-col">
-            <img src="<?php echo BASE_URL; ?>assets/images/privateoffice/<?php echo $office['img']; ?>" alt="<?php echo $office['name']; ?>" style="width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); aspect-ratio: 4/3; object-fit: cover; border: 1px solid hsl(var(--clr-border));">
+            <img src="<?php echo BASE_URL; ?>assets/images/privateoffice/<?php echo $office['img']; ?>" alt="<?php echo $office['name']; ?>" style="width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); aspect-ratio: 4/3; object-fit: cover; object-position: center; border: 1px solid hsl(var(--clr-border));">
             <span style="position: absolute; top: 20px; right: 20px; background-color: hsl(var(--clr-primary)); color: #FFFFFF; font-size: 0.85rem; font-weight: 800; padding: 6px 14px; border-radius: var(--radius-full); text-transform: uppercase; box-shadow: var(--shadow-md);">
                 <?php echo $office['pax']; ?>
             </span>

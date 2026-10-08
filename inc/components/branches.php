@@ -9,57 +9,57 @@ $branches = [
         'name' => 'Urban Office - MERR',
         'city' => 'Surabaya',
         'location' => 'Surabaya Timur',
-        'slug' => 'merr',
-        'image' => BASE_URL . 'assets/images/branch/urban office - merr.webp'
+        'slug' => 'surabaya',
+        'image' => BASE_URL . 'assets/images/branch/merr new.png'
     ],
     [
         'name' => 'Urban Office - Klampis',
         'city' => 'Surabaya',
         'location' => 'Surabaya Timur',
-        'slug' => 'klampis',
-        'image' => 'https://images.unsplash.com/photo-1464938050520-ef2270bb8ce8?auto=format&fit=crop&w=600&q=80'
+        'slug' => 'surabaya-timur',
+        'image' => BASE_URL . 'assets/images/branch/klampis.png'
     ],
     [
         'name' => 'Urban Office - Grand Sungkono Lagoon',
         'city' => 'Surabaya',
         'location' => 'Surabaya Barat',
-        'slug' => 'grand-sungkono-lagoon',
-        'image' => BASE_URL . 'assets/images/branch/urban office - grand sungkono lagoon.webp'
+        'slug' => 'surabaya-barat',
+        'image' => BASE_URL . 'assets/images/branch/gsl new.png'
     ],
     [
         'name' => 'Urban Office - Fatmawati',
         'city' => 'Jakarta',
         'location' => 'Jakarta Selatan',
-        'slug' => 'fatmawati',
+        'slug' => 'jakarta',
         'image' => BASE_URL . 'assets/images/branch/urban office fatmawati.webp'
     ],
     [
         'name' => 'Urban Office - Gorebiz',
         'city' => 'Jakarta',
         'location' => 'Jakarta Timur',
-        'slug' => 'gorebiz',
-        'image' => BASE_URL . 'assets/images/branch/urban office - gorebiz.webp'
+        'slug' => 'jakarta-timur',
+        'image' => BASE_URL . 'assets/images/branch/gorebiz.png'
     ],
     [
         'name' => 'Urban Office - PTGM Tower',
         'city' => 'Gresik',
         'location' => 'Gresik',
-        'slug' => 'ptgm-tower',
-        'image' => 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80'
+        'slug' => 'gresik',
+        'image' => BASE_URL . 'assets/images/branch/ptgm.png'
     ],
     [
         'name' => 'Urban Office - Medan',
         'city' => 'Medan',
         'location' => 'Sumatera Utara',
         'slug' => 'medan',
-        'image' => BASE_URL . 'assets/images/branch/urban office medan.webp'
+        'image' => BASE_URL . 'assets/images/branch/medan.png'
     ],
     [
         'name' => 'Urban Office - Malang',
         'city' => 'Malang',
         'location' => 'Jawa Timur',
         'slug' => 'malang',
-        'image' => BASE_URL . 'assets/images/branch/malang.png'
+        'image' => BASE_URL . 'assets/images/branch/Malang.jpeg'
     ]
 ];
 
@@ -89,7 +89,7 @@ $default_city_slug = strtolower($default_city);
                     $city_slug = strtolower($city);
                     $is_active = $city === $default_city;
                 ?>
-                    <button type="button" class="branch-city-btn<?php echo $is_active ? ' active' : ''; ?>" data-branch-city="<?php echo sanitize($city_slug); ?>" aria-selected="<?php echo $is_active ? 'true' : 'false'; ?>">
+                    <button type="button" role="tab" class="branch-city-btn<?php echo $is_active ? ' active' : ''; ?>" data-branch-city="<?php echo sanitize($city_slug); ?>" aria-selected="<?php echo $is_active ? 'true' : 'false'; ?>">
                         <span class="branch-city-icon"><i class="bi bi-geo-alt-fill"></i></span>
                         <span class="branch-city-copy">
                             <strong><?php echo sanitize($city); ?></strong>

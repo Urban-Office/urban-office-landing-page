@@ -1,0 +1,196 @@
+{
+    "name": "Urban Office - Approval Callback Handler",
+    "nodes": [
+        {
+            "parameters": {
+                "updates": [
+                    "callback_query"
+                ],
+                "additionalFields": []
+            },
+            "id": "26cf323c1b235d18",
+            "name": "Telegram Trigger",
+            "type": "n8n-nodes-base.telegramTrigger",
+            "typeVersion": 1.2,
+            "position": [
+                240,
+                300
+            ],
+            "webhookId": "a05037fab1e94594"
+        },
+        {
+            "parameters": {
+                "includeOtherFields": true,
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "98d46540a71d",
+                            "name": "siteBaseUrl",
+                            "type": "string",
+                            "value": "http://localhost:8000"
+                        },
+                        {
+                            "id": "6eea0e7dfc9d",
+                            "name": "automationToken",
+                            "type": "string",
+                            "value": "PASTE_AUTOMATION_TOKEN"
+                        },
+                        {
+                            "id": "d95e46833659",
+                            "name": "telegramChatId",
+                            "type": "string",
+                            "value": "PASTE_TELEGRAM_CHAT_ID"
+                        }
+                    ]
+                },
+                "options": []
+            },
+            "id": "cb23be0961b83a4e",
+            "name": "Config",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                460,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const cb = $json.callback_query || {};\nconst data = String(cb.data || '');\nconst idx = data.indexOf(':');\nconst action = idx >= 0 ? data.slice(0, idx) : data;\nconst post_id = idx >= 0 ? parseInt(data.slice(idx + 1), 10) : 0;\nreturn [{ json: {\n  action,\n  post_id,\n  callback_query_id: cb.id || '',\n  chat_id: (cb.message && cb.message.chat) ? cb.message.chat.id : $json.telegramChatId,\n  siteBaseUrl: $json.siteBaseUrl,\n  automationToken: $json.automationToken,\n} }];"
+            },
+            "id": "c8f504c8268c6a33",
+            "name": "Parse Callback",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                680,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "callback",
+                "operation": "answerQuery",
+                "queryId": "={{ $('Parse Callback').item.json.callback_query_id }}",
+                "additionalFields": {
+                    "text": "Memproses..."
+                }
+            },
+            "id": "44f13ea0587a8b17",
+            "name": "Answer Callback",
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                900,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "={{ $('Parse Callback').item.json.siteBaseUrl }}/_api/moderate.php",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "X-Automation-Token",
+                            "value": "={{ $('Parse Callback').item.json.automationToken }}"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({ post_id: $('Parse Callback').item.json.post_id, action: $('Parse Callback').item.json.action }) }}",
+                "options": []
+            },
+            "id": "88945ef2e1065fa5",
+            "name": "Moderate",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                1120,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "chatId": "={{ $('Parse Callback').item.json.chat_id }}",
+                "text": "={{ $('Parse Callback').item.json.action === \"approve\" ? \"✅ Disetujui & dipublish: \" + ($json.public_url || \"\") : \"❌ Ditolak — artikel tidak dipublish.\" }}",
+                "additionalFields": []
+            },
+            "id": "d828d9f5803f5f76",
+            "name": "Kirim Balasan",
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                1340,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Telegram Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Config",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Config": {
+            "main": [
+                [
+                    {
+                        "node": "Parse Callback",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse Callback": {
+            "main": [
+                [
+                    {
+                        "node": "Answer Callback",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Answer Callback": {
+            "main": [
+                [
+                    {
+                        "node": "Moderate",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Moderate": {
+            "main": [
+                [
+                    {
+                        "node": "Kirim Balasan",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "meta": {
+        "templateId": "urban-office-approval-callback"
+    },
+    "tags": []
+}

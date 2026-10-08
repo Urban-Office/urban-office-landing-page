@@ -7,16 +7,16 @@
 
 $default_faqs = [
     [
-        'question' => 'Apa syarat untuk mendaftar Virtual Office di Urban Office?',
-        'answer' => 'Untuk perorangan, Anda cukup melampirkan KTP dan NPWP Pribadi. Sedangkan untuk badan usaha (PT/CV), dokumen yang dibutuhkan meliputi Akta Pendirian, SK Kemenkumham, NIB, dan NPWP Badan Usaha.'
+        'question' => 'Apa syarat untuk mendaftar layanan kantor di Urban Office?',
+        'answer' => 'Anda cukup menyiapkan kartu identitas penanggung jawab (KTP/Paspor) serta informasi profil usaha untuk kelengkapan administrasi perjanjian sewa.'
     ],
     [
         'question' => 'Berapa lama proses aktivasi Virtual Office?',
-        'answer' => 'Proses aktivasi sangat cepat. Surat Perjanjian Sewa dan Surat Domisili Gedung akan diterbitkan dan siap dalam waktu 1x24 jam setelah pembayaran dan dokumen persyaratan lengkap diterima.'
+        'answer' => 'Proses aktivasi sangat cepat. Surat Perjanjian Sewa akan disiapkan dan siap dalam waktu 1x24 jam setelah pembayaran dan administrasi lengkap diterima.'
     ],
     [
-        'question' => 'Apakah alamat Virtual Office bisa digunakan untuk PKP?',
-        'answer' => 'Ya, seluruh lokasi Virtual Office kami berada di zona bisnis (zonasi perkantoran resmi) sehingga legal dan mendukung pengurusan Pengukuhan Pengusaha Kena Pajak (PKP).'
+        'question' => 'Apakah alamat Virtual Office dapat digunakan untuk domisili bisnis?',
+        'answer' => 'Ya, seluruh cabang Urban Office berada di gedung perkantoran komersial yang prestisius untuk korespondensi dan operasional bisnis Anda.'
     ],
     [
         'question' => 'Bagaimana jika ada surat atau paket masuk untuk perusahaan saya?',

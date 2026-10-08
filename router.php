@@ -40,6 +40,36 @@ if (preg_match('#^/virtual-office-([a-zA-Z0-9][a-zA-Z0-9\-]+)/?$#', $req_path, $
     return true;
 }
 
+// 3.6 Per-city Private Office landing pages (pilot)
+// /sewa-kantor-{city}/ served by sewa-kantor-surabaya/index.php with ?lokasi={city}.
+// 'surabaya' is excluded so the real folder keeps serving the default page.
+if (preg_match('#^/sewa-kantor-([a-zA-Z0-9][a-zA-Z0-9\-]+)/?$#', $req_path, $matches) && $matches[1] !== 'surabaya') {
+    $_GET['lokasi'] = $matches[1];
+    include __DIR__ . '/sewa-kantor-surabaya/index.php';
+    return true;
+}
+
+// 3.7 Per-city Meeting Room landing pages
+if (preg_match('#^/meeting-room-([a-zA-Z0-9][a-zA-Z0-9\-]+)/?$#', $req_path, $matches) && $matches[1] !== 'surabaya') {
+    $_GET['lokasi'] = $matches[1];
+    include __DIR__ . '/meeting-room-surabaya/index.php';
+    return true;
+}
+
+// 3.8 Per-city Coworking Space landing pages
+if (preg_match('#^/coworking-space-([a-zA-Z0-9][a-zA-Z0-9\-]+)/?$#', $req_path, $matches) && $matches[1] !== 'urban-office') {
+    $_GET['lokasi'] = $matches[1];
+    include __DIR__ . '/coworking-space-urban-office/index.php';
+    return true;
+}
+
+// 3.9 Per-city Event Space landing pages
+if (preg_match('#^/event-space-([a-zA-Z0-9][a-zA-Z0-9\-]+)/?$#', $req_path, $matches) && $matches[1] !== '55k-perjam-urbanoffice') {
+    $_GET['lokasi'] = $matches[1];
+    include __DIR__ . '/event-space-55k-perjam-urbanoffice/index.php';
+    return true;
+}
+
 // 4. Category Clean URL mapping
 if (preg_match('#^/category/([a-zA-Z0-9][a-zA-Z0-9\-]+)/?$#', $req_path, $matches)) {
     $_GET['slug'] = $matches[1];

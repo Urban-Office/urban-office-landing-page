@@ -15,16 +15,49 @@ if (!isset($page_slug)) {
     $page_slug = '';
 }
 
-// Branches offering Virtual Office, for the nav dropdown's branch flyout
-$nav_vo_branches = [];
+// Build the "Ruang Kerja" (workspace) dropdown from locations_data.php so every option only
+// lists the locations that actually offer it (single source of truth).
+//   - Virtual Office has per-branch landing pages -> branch-level flyout (city-area names).
+//   - Other services have one page + a city filter (?lokasi=) -> city-level flyout.
+$nav_vo_branches = [];     // slug => city-area label, e.g. 'surabaya-timur' => 'Surabaya Timur'
+$nav_service_cities = [];  // category => [cityLower => 'City Name']
 foreach ($locations_db as $nav_loc_slug => $nav_loc) {
+    if (empty($nav_loc['pricing'])) {
+        continue;
+    }
+    $nav_loc_cats = [];
     foreach ($nav_loc['pricing'] as $nav_pkg) {
-        if ($nav_pkg['category'] === 'virtual-office') {
-            $nav_vo_branches[$nav_loc_slug] = $nav_loc['short_title'];
-            break;
+        if (isset($nav_pkg['category'])) {
+            $nav_loc_cats[$nav_pkg['category']] = true;
         }
     }
+    if (isset($nav_loc_cats['virtual-office'])) {
+        // Label follows the URL slug (city name) for keyword-rich internal links.
+        $nav_vo_branches[$nav_loc_slug] = ucwords(str_replace('-', ' ', $nav_loc_slug));
+    }
+    foreach ($nav_loc_cats as $nav_cat => $_present) {
+        if ($nav_cat === 'virtual-office') {
+            continue;
+        }
+        $nav_service_cities[$nav_cat][strtolower($nav_loc['city'])] = $nav_loc['city'];
+    }
 }
+
+// Non-VO workspace options in menu order: [category, landing page slug, label].
+$nav_workspace_services = [
+    ['cat' => 'private-office',      'url' => 'sewa-kantor-surabaya',               'label' => 'Private Office', 'clean_base' => 'sewa-kantor'],
+    ['cat' => 'meeting-room',        'url' => 'meeting-room-surabaya',              'label' => 'Ruang Meeting', 'clean_base' => 'meeting-room'],
+    ['cat' => 'coworking',           'url' => 'coworking-space-urban-office',       'label' => 'Coworking Space', 'clean_base' => 'coworking-space'],
+    ['cat' => 'event-space',         'url' => 'event-space-55k-perjam-urbanoffice', 'label' => 'Event Space', 'clean_base' => 'event-space'],
+    ['cat' => 'sharing-room-office', 'url' => 'sharing-room-office',                'label' => 'Sharing Room Office'],
+];
+
+// Detect if accessing Virtual Office landing page or any of its location branches
+$is_vo_page = (
+    (isset($page_slug) && strpos($page_slug, 'virtual-office') === 0) ||
+    (isset($_GET['branch']) && !empty($_GET['branch'])) ||
+    (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/virtual-office') !== false)
+);
 
 // Auto-publish scheduled posts whose published_at has arrived
 auto_publish_scheduled_posts();
@@ -50,17 +83,35 @@ start_page_cache($page_slug);
     render_schema_markup($page_slug);
     ?>
 
-    <!-- Google Fonts: Inter -->
+    <!-- Google Fonts: Inter (loaded via <link> in <head> instead of CSS @import so the
+         request starts during initial HTML parse, in parallel with style.css, cutting LCP) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+
     <!-- CSS Stylesheet -->
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/style.css?v=<?php echo filemtime(dirname(__FILE__) . '/../assets/css/style.css'); ?>">
     
     <!-- Bootstrap Icons for premium vector support -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-WWSSXT7P');</script>
+    <!-- End Google Tag Manager -->
+
+
 </head>
 <body>
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe title="Google Tag Manager" src="https://www.googletagmanager.com/ns.html?id=GTM-WWSSXT7P"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
 
     <!-- NAVBAR -->
     <nav class="navbar" id="navbar">
@@ -86,20 +137,43 @@ start_page_cache($page_slug);
                             <div class="dropdown-submenu">
                                 <div class="dropdown-submenu-panel">
                                     <?php foreach ($nav_vo_branches as $nav_vo_slug => $nav_vo_label):
-                                        $nav_vo_url = ($nav_vo_slug === 'merr') ? 'virtual-office-surabaya' : 'virtual-office-' . $nav_vo_slug;
+                                        $nav_vo_url = 'virtual-office-' . $nav_vo_slug;
                                     ?>
                                         <a href="<?php echo BASE_URL . $nav_vo_url; ?>/" class="dropdown-item"><?php echo sanitize($nav_vo_label); ?></a>
                                     <?php endforeach; ?>
                                 </div>
                             </div>
                         </div>
-                        <a href="<?php echo BASE_URL; ?>sewa-kantor-surabaya/" class="dropdown-item">Private Office</a>
-                        <a href="<?php echo BASE_URL; ?>meeting-room-surabaya/" class="dropdown-item">Ruang Meeting</a>
-                        <a href="<?php echo BASE_URL; ?>coworking-space-urban-office/" class="dropdown-item">Coworking Space</a>
-                        <a href="<?php echo BASE_URL; ?>event-space-55k-perjam-urbanoffice/" class="dropdown-item">Event Space</a>
-                        <a href="<?php echo BASE_URL; ?>sharing-room-office/" class="dropdown-item">Sharing Room Office</a>
+                        <?php foreach ($nav_workspace_services as $nav_svc):
+                            $svc_cities = isset($nav_service_cities[$nav_svc['cat']]) ? $nav_service_cities[$nav_svc['cat']] : [];
+                            $svc_base = BASE_URL . $nav_svc['url'] . '/';
+                        ?>
+                            <?php if (!empty($svc_cities)): ?>
+                            <div class="dropdown-item-wrap">
+                                <a href="<?php echo $svc_base; ?>" class="dropdown-item dropdown-item-has-sub">
+                                    <?php echo $nav_svc['label']; ?> <span class="dropdown-sub-arrow">▸</span>
+                                </a>
+                                <div class="dropdown-submenu">
+                                    <div class="dropdown-submenu-panel">
+                                        <?php foreach ($svc_cities as $svc_city_lower => $svc_city_label):
+                                            // Services with a clean_base use real per-city URLs (/sewa-kantor-jakarta/);
+                                            // the rest still use the ?lokasi filter until they are converted too.
+                                            $svc_city_href = isset($nav_svc['clean_base'])
+                                                ? BASE_URL . $nav_svc['clean_base'] . '-' . $svc_city_lower . '/'
+                                                : $svc_base . '?lokasi=' . urlencode($svc_city_lower);
+                                        ?>
+                                            <a href="<?php echo $svc_city_href; ?>" class="dropdown-item"><?php echo sanitize($svc_city_label); ?></a>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php else: ?>
+                            <a href="<?php echo $svc_base; ?>" class="dropdown-item"><?php echo $nav_svc['label']; ?></a>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
                     </div>
                 </li>
+                <?php if (!$is_vo_page): ?>
                 <li class="nav-item">
                     <a href="#" class="nav-link">
                         Layanan Bisnis <span>▼</span>
@@ -113,6 +187,7 @@ start_page_cache($page_slug);
                         <a href="<?php echo BASE_URL; ?>pajak-dan-akunting/" class="dropdown-item">Pajak & Akunting</a>
                     </div>
                 </li>
+                <?php endif; ?>
                 <li class="nav-item">
                     <a href="<?php echo BASE_URL; ?>lokasi-urban-office/" class="nav-link">Lokasi</a>
                 </li>
@@ -128,3 +203,7 @@ start_page_cache($page_slug);
             </ul>
         </div>
     </nav>
+
+    <!-- Main content landmark (closed in inc/footer.php). Improves accessibility
+         (screen-reader "skip to main" + Lighthouse main-landmark audit). -->
+    <main id="main-content">

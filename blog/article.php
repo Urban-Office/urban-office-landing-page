@@ -86,24 +86,16 @@ try {
     $view_count = Database::fetch("SELECT views FROM posts WHERE id = ?", [$post['id']])['views'];
 
     $pub_date = date('d M Y', strtotime($post['published_at'] ?: $post['created_at']));
-    $image_path = $post['featured_image'] ? BASE_URL . $post['featured_image'] : BASE_URL . 'assets/images/og-default.png';
+    $image_path = media_url($post['featured_image']) ?: BASE_URL . 'assets/images/og-default.png';
 
-    // Check if featured image is already inserted inside the article body content to prevent double rendering
-    $featured_in_content = false;
-    if ($post['featured_image']) {
-        $img_filename = basename($post['featured_image']);
-        if (strpos($post['content'], $img_filename) !== false) {
-            $featured_in_content = true;
-        }
-    }
-
-    // ALSO check if the post content starts with any image tag to avoid stacked header banners
-    if (!$featured_in_content && !empty($post['content'])) {
-        $trimmed_content = trim($post['content']);
-        if (preg_match('/^(?:<p[^>]*>|<div[^>]*>|<figure[^>]*>)?\s*<img\s+/i', $trimmed_content)) {
-            $featured_in_content = true;
-        }
-    }
+    // Clean duplicate leading title or duplicate image from body content
+    $display_content = $post['content'];
+    
+    // Strip duplicate heading at the very beginning of the body content if present
+    $display_content = preg_replace('/^\s*<h[1-3][^>]*>[\s\S]*?<\/h[1-3]>/iu', '', $display_content, 1);
+    
+    // Strip duplicate leading image / figure at the very beginning of the body content
+    $display_content = preg_replace('/^\s*(?:<p[^>]*>|<div[^>]*>|<figure[^>]*>)?\s*<img[^>]+>\s*(?:<\/figure>|<\/div>|<\/p>)?/iu', '', $display_content, 1);
 
     // Fetch tags associated with this post
     $post_tags = Database::fetchAll(
@@ -147,54 +139,54 @@ try {
     <!-- Title Area & Header Meta -->
     <header style="background-color: hsl(var(--clr-bg-secondary)); padding: 40px 0; border-bottom: 1px solid hsl(var(--clr-border));">
         <div class="container" style="max-width: 1200px; text-align: left;">
-            <h1 style="font-size: clamp(2rem, 4vw, 3rem); margin-bottom: 16px; line-height: 1.25;"><?php echo sanitize($post['title']); ?></h1>
-            <p style="margin: 0; font-size: 0.95rem; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-                Dipublikasikan pada <strong><?php echo $pub_date; ?></strong>
-                <span style="display: inline-flex; align-items: center; gap: 5px; color: hsl(var(--clr-text-muted)); font-size: 0.85rem;">👁 <?php echo number_format($view_count); ?> views</span>
+            <?php if (!empty($post_cats)): 
+                $primary_cat = $post_cats[0];
+            ?>
+                <div style="margin-bottom: 14px;">
+                    <a href="<?php echo BASE_URL . 'category/' . $primary_cat['slug'] . '/'; ?>" 
+                       style="display: inline-flex; align-items: center; background: #fff2ea; color: #ea580c; border: 1px solid #fdba74; font-size: 0.78rem; font-weight: 700; padding: 4px 14px; border-radius: 20px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.04em; transition: all 0.2s ease;">
+                        <?php echo sanitize($primary_cat['name']); ?>
+                    </a>
+                </div>
+            <?php endif; ?>
+            <h1 style="font-size: clamp(1.85rem, 3.8vw, 2.8rem); margin-bottom: 14px; line-height: 1.25;"><?php echo sanitize($post['title']); ?></h1>
+            <p style="margin: 0; font-size: 0.92rem; color: hsl(var(--clr-text-muted)); display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <span>Ditulis oleh <strong style="color: hsl(var(--clr-text-main));"><?php echo sanitize($post['author_name'] ?? 'Admin'); ?></strong></span>
+                <span>&bull;</span>
+                <span><?php echo $pub_date; ?></span>
+                <span>&bull;</span>
+                <span style="display: inline-flex; align-items: center; gap: 4px;">👁 <?php echo number_format($view_count); ?> views</span>
             </p>
         </div>
     </header>
 
     <!-- Main Content Grid -->
-    <div class="container" style="max-width: 1200px; padding-top: 50px; padding-bottom: 50px;">
+    <div class="container" style="max-width: 1200px; padding-top: 40px; padding-bottom: 50px;">
         
-        <!-- Featured Image -->
-        <?php if (!$featured_in_content): ?>
-        <div style="border-radius: var(--radius-md); overflow: hidden; margin-bottom: 40px; box-shadow: var(--shadow-sm);">
-            <img src="<?php echo $image_path; ?>" alt="<?php echo sanitize($post['title']); ?>" style="width: 100%; height: auto; display: block;">
+        <!-- Official Single Featured Hero Image under Author Meta -->
+        <div style="border-radius: var(--radius-md); overflow: hidden; margin-bottom: 40px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); background: #ffffff;">
+            <img src="<?php echo $image_path; ?>" alt="<?php echo sanitize($post['title']); ?>" style="width: 100%; height: auto; display: block; border-radius: 12px;">
         </div>
-        <?php endif; ?>
 
-        <!-- HTML Body Content (Output unescaped since it's HTML content from WP/Editor) -->
+        <!-- HTML Body Content -->
         <div class="article-body-content" style="line-height: 1.8; font-size: 1.075rem; color: hsl(var(--clr-text-main));">
-            <?php echo $post['content']; ?>
+            <?php echo $display_content; ?>
         </div>
 
-        <!-- Categories & Tags Section -->
-        <?php if (!empty($post_cats) || !empty($post_tags)): ?>
-            <div style="margin-top: 48px; padding-top: 28px; border-top: 2px solid #fed7aa;">
-                
-                <!-- Categories -->
-                <?php if (!empty($post_cats)): ?>
-                    <div style="margin-bottom: <?php echo !empty($post_tags) ? '16px' : '0'; ?>;">
-                        <span style="font-weight: 700; font-size: 0.9rem; color: #9a3412; margin-right: 10px;">Kategori:</span>
-                        <?php foreach ($post_cats as $i => $cat): ?>
-                            <a href="<?php echo BASE_URL . 'category/' . $cat['slug'] . '/'; ?>" 
-                               style="font-weight: 600; font-size: 0.9rem; color: #ea580c; text-decoration: none;"><?php echo sanitize($cat['name']); ?></a><?php echo $i < count($post_cats) - 1 ? '<span style="color: #fdba74; margin: 0 6px;">•</span>' : ''; ?>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-
-                <!-- Tags -->
-                <?php if (!empty($post_tags)): ?>
-                    <div>
-                        <span style="font-weight: 700; font-size: 0.9rem; color: #9a3412; margin-right: 10px;">Tags:</span>
-                        <?php foreach ($post_tags as $i => $tag): ?>
-                            <a href="<?php echo BASE_URL . 'tag/' . $tag['slug'] . '/'; ?>" 
-                               style="font-weight: 600; font-size: 0.9rem; color: #f97316; text-decoration: none;"><?php echo sanitize($tag['name']); ?></a><?php echo $i < count($post_tags) - 1 ? '<span style="color: #fdba74; margin: 0 6px;">•</span>' : ''; ?>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+        <!-- Tags / Topic Cloud at Bottom of Article -->
+        <?php if (!empty($post_tags) || count($post_cats) > 1): ?>
+            <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid hsl(var(--clr-border)); display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                <span style="font-size: 0.85rem; font-weight: 700; color: hsl(var(--clr-text-muted)); margin-right: 4px;">Topik:</span>
+                <?php foreach ($post_tags as $t): ?>
+                    <a href="<?php echo BASE_URL . 'tag/' . $t['slug'] . '/'; ?>" style="font-size: 0.78rem; font-weight: 600; padding: 4px 12px; background: hsl(var(--clr-bg-secondary)); border: 1px solid hsl(var(--clr-border)); color: hsl(var(--clr-text-muted)); border-radius: 6px; text-decoration: none; transition: all 0.2s ease;">
+                        #<?php echo sanitize($t['name']); ?>
+                    </a>
+                <?php endforeach; ?>
+                <?php for ($ci = 1; $ci < count($post_cats); $ci++): ?>
+                    <a href="<?php echo BASE_URL . 'category/' . $post_cats[$ci]['slug'] . '/'; ?>" style="font-size: 0.78rem; font-weight: 600; padding: 4px 12px; background: hsl(var(--clr-bg-secondary)); border: 1px solid hsl(var(--clr-border)); color: hsl(var(--clr-text-muted)); border-radius: 6px; text-decoration: none; transition: all 0.2s ease;">
+                        #<?php echo sanitize($post_cats[$ci]['name']); ?>
+                    </a>
+                <?php endfor; ?>
             </div>
         <?php endif; ?>
         
@@ -203,44 +195,47 @@ try {
 
 <!-- Related Posts Widget -->
 <?php if (!empty($related_posts)): ?>
-    <section class="section" style="background-color: hsl(var(--clr-bg-secondary)); border-top: 1px solid hsl(var(--clr-border));">
-        <div class="container" style="max-width: 900px;">
-            <h3 style="font-size: 1.5rem; margin-bottom: 30px;" class="text-center">Artikel Terkait</h3>
-            <div class="blog-post-grid related-articles-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); justify-content: center; gap: 20px;">
+    <section class="section" style="background-color: hsl(var(--clr-bg-secondary)); border-top: 1px solid hsl(var(--clr-border)); padding: 60px 0;">
+        <div class="container" style="max-width: 1200px;">
+            <div style="text-align: center; margin-bottom: 36px;">
+                <span class="hero-tag" style="margin-bottom: 8px;">Rekomendasi</span>
+                <h3 style="font-size: 1.8rem; font-weight: 800; margin: 6px 0 0; color: hsl(var(--clr-text-main));">Artikel Terkait Lainnya</h3>
+            </div>
+            <div class="related-articles-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
                 <?php foreach ($related_posts as $rel): 
-                    $rel_image = $rel['featured_image'] ? BASE_URL . $rel['featured_image'] : BASE_URL . 'assets/images/og-default.png';
+                    $rel_image = media_url($rel['featured_image']) ?: BASE_URL . 'assets/images/og-default.png';
                     $rel_date = date('d M Y', strtotime($rel['published_at'] ?: date('Y-m-d')));
                     // Fetch excerpt for related post
                     $rel_full = Database::fetch("SELECT excerpt, content, author_id FROM posts WHERE slug = ? AND status = 'published'", [$rel['slug']]);
                     $rel_excerpt = '';
                     $rel_author = '';
                     if ($rel_full) {
-                        $rel_excerpt = $rel_full['excerpt'] ?: substr(strip_tags($rel_full['content']), 0, 100) . '...';
+                        $rel_excerpt = $rel_full['excerpt'] ?: substr(strip_tags($rel_full['content']), 0, 90) . '...';
                         $rel_author_data = Database::fetch("SELECT username FROM users WHERE id = ?", [$rel_full['author_id']]);
                         $rel_author = $rel_author_data ? $rel_author_data['username'] : '';
                     }
                 ?>
-                    <div class="premium-card related-card" style="max-width: 300px; width: 100%; margin: 0 auto; padding: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; border-color: hsl(var(--clr-border));">
-                        <div class="related-card-img-wrap" style="height: 140px; overflow: hidden; background-color: #ffffff; display: flex; align-items: center; justify-content: center;">
-                            <img src="<?php echo $rel_image; ?>" alt="<?php echo sanitize($rel['title']); ?>" style="width: 100%; height: 100%; object-fit: contain;">
+                    <div class="related-card-item" style="width: 100%; padding: 0 !important; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid hsl(var(--clr-border)); border-radius: 12px; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                        <div class="related-card-img" style="width: 100%; aspect-ratio: 2 / 1; overflow: hidden; background-color: #f8fafc; margin: 0; padding: 0;">
+                            <img src="<?php echo $rel_image; ?>" alt="<?php echo sanitize($rel['title']); ?>" style="width: 100%; height: 100%; object-fit: cover; display: block; margin: 0; padding: 0;">
                         </div>
-                        <div style="padding: 18px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div class="related-card-content" style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
                             <div>
-                                <div style="font-size: 0.75rem; color: hsl(var(--clr-text-muted)); margin-bottom: 6px;">
+                                <div style="font-size: 0.78rem; color: hsl(var(--clr-text-muted)); margin-bottom: 8px;">
                                     <?php if ($rel_author): ?>By <strong><?php echo sanitize($rel_author); ?></strong> &bull; <?php endif; ?><?php echo $rel_date; ?>
                                 </div>
-                                <h4 style="font-size: 0.95rem; line-height: 1.35; margin-bottom: 6px;">
-                                    <a href="<?php echo BASE_URL . 'blog/' . $rel['slug'] . '/'; ?>" style="color: hsl(var(--clr-text-main));">
+                                <h4 style="font-size: 1.05rem; line-height: 1.35; margin-bottom: 10px; font-weight: 700;">
+                                    <a href="<?php echo BASE_URL . 'blog/' . $rel['slug'] . '/'; ?>" style="color: hsl(var(--clr-text-main)); text-decoration: none;">
                                         <?php echo sanitize($rel['title']); ?>
                                     </a>
                                 </h4>
                                 <?php if ($rel_excerpt): ?>
-                                <p style="font-size: 0.8rem; margin-bottom: 10px; line-height: 1.45;">
+                                <p style="font-size: 0.85rem; margin-bottom: 16px; line-height: 1.5; color: hsl(var(--clr-text-muted));">
                                     <?php echo sanitize($rel_excerpt); ?>
                                 </p>
                                 <?php endif; ?>
                             </div>
-                            <a href="<?php echo BASE_URL . 'blog/' . $rel['slug'] . '/'; ?>" style="font-weight: 600; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px;">
+                            <a href="<?php echo BASE_URL . 'blog/' . $rel['slug'] . '/'; ?>" style="font-weight: 700; font-size: 0.85rem; color: #ea580c; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
                                 Baca Artikel &rarr;
                             </a>
                         </div>
@@ -287,14 +282,61 @@ try {
     color: hsl(var(--clr-text-muted));
     margin-top: 8px;
 }
-@media (max-width: 768px) {
+@media (max-width: 991px) {
     .related-articles-grid {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px !important;
     }
 }
-@media (max-width: 576px) {
-    .blog-post-grid .premium-card.related-card {
-        max-width: 250px !important;
+@media (max-width: 640px) {
+    .related-articles-grid {
+        display: flex !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x mandatory !important;
+        gap: 10px !important;
+        padding-bottom: 14px !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        justify-content: flex-start !important;
+    }
+    .related-card-item {
+        flex: 0 0 46% !important;
+        min-width: 140px !important;
+        max-width: 185px !important;
+        scroll-snap-align: start !important;
+        border-radius: 10px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .related-card-img {
+        width: 100% !important;
+        aspect-ratio: 2 / 1 !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .related-card-img img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .related-card-content {
+        padding: 10px 8px !important;
+    }
+    .related-card-content h4 {
+        font-size: 0.82rem !important;
+        line-height: 1.25 !important;
+        margin-bottom: 4px !important;
+    }
+    .related-card-content p {
+        display: none !important;
+    }
+    .related-card-content a {
+        font-size: 0.75rem !important;
+        margin-top: 4px !important;
     }
 }
 </style>

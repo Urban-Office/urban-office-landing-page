@@ -21,6 +21,89 @@ function sanitize(?string $data): string {
 }
 
 /**
+ * Resolve a stored media path to a usable URL. Absolute URLs (e.g. Cloudinary
+ * https://res.cloudinary.com/...) are returned as-is; relative paths get
+ * BASE_URL prepended. Returns '' for empty input.
+ */
+function media_url(?string $path): string {
+    $path = trim((string)$path);
+    if ($path === '') return '';
+    if (strpos($path, 'http://') === 0 || strpos($path, 'https://') === 0) return $path;
+    return BASE_URL . ltrim($path, '/');
+}
+
+/**
+ * For service landing pages that share one URL across cities (filtered via ?lokasi=),
+ * return the proper-cased City label from the ?lokasi query param — but ONLY when a branch
+ * in that city actually offers the given service category (per locations_data.php). Returns
+ * '' when there is no valid location, so callers can leave the default hero untouched.
+ */
+function service_city_from_query(string $category): string {
+    $lokasi = isset($_GET['lokasi']) ? strtolower(trim($_GET['lokasi'])) : '';
+    if ($lokasi === '') {
+        return '';
+    }
+    global $locations_db;
+    if (!isset($locations_db) || !is_array($locations_db)) {
+        $path = __DIR__ . '/locations_data.php';
+        if (file_exists($path)) {
+            require $path;
+        }
+    }
+    if (!isset($locations_db) || !is_array($locations_db)) {
+        return ucwords(str_replace('-', ' ', $lokasi));
+    }
+    foreach ($locations_db as $key => $branch) {
+        $matches_loc = (isset($branch['city']) && strtolower($branch['city']) === $lokasi)
+                    || $key === $lokasi
+                    || (isset($branch['slug']) && $branch['slug'] === $lokasi);
+        if (!$matches_loc || empty($branch['pricing'])) {
+            continue;
+        }
+        foreach ($branch['pricing'] as $pkg) {
+            if (isset($pkg['category']) && $pkg['category'] === $category) {
+                return !empty($branch['location']) ? $branch['location'] : $branch['city'];
+            }
+        }
+    }
+    return ucwords(str_replace('-', ' ', $lokasi));
+}
+
+/**
+ * Return all branches (locations_data rows) in a given city slug that offer a given service
+ * category. Powers the per-city service landing pages (e.g. /sewa-kantor-jakarta/) with real,
+ * locally-unique content (address, map, advantages). Empty array if none.
+ */
+function service_city_branches(string $category, string $city_slug): array {
+    global $locations_db;
+    if (!isset($locations_db) || !is_array($locations_db)) {
+        $path = __DIR__ . '/locations_data.php';
+        if (file_exists($path)) {
+            require $path;
+        }
+    }
+    $out = [];
+    if (!isset($locations_db) || !is_array($locations_db)) {
+        return $out;
+    }
+    foreach ($locations_db as $key => $branch) {
+        $matches_loc = (isset($branch['city']) && strtolower($branch['city']) === $city_slug)
+                    || $key === $city_slug
+                    || (isset($branch['slug']) && $branch['slug'] === $city_slug);
+        if (!$matches_loc || empty($branch['pricing'])) {
+            continue;
+        }
+        foreach ($branch['pricing'] as $pkg) {
+            if (isset($pkg['category']) && $pkg['category'] === $category) {
+                $out[] = $branch;
+                break;
+            }
+        }
+    }
+    return $out;
+}
+
+/**
  * Verifies if user is logged in as administrator
  */
 function is_admin(): bool {
@@ -93,11 +176,16 @@ function log_activity(?int $user_id, string $action, string $details): void {
  * Saves compiled HTML pages into /cache to bypass MySQL queries on subsequent requests
  */
 function start_page_cache(string $page_key): void {
-    if (DEV_MODE || is_admin() || $_SERVER['REQUEST_METHOD'] !== 'GET') {
-        return; // Bypass cache in dev mode, for logged-in admins, or on POST requests
+    if (DEV_MODE || is_admin() || $_SERVER['REQUEST_METHOD'] !== 'GET' || isset($_GET['lokasi']) || isset($_GET['type'])) {
+        return; // Bypass cache in dev mode, for admins, on POST, for ?lokasi city variants, or ?type detail
+        // pages. ?type is critical: detail.php reuses page_key 'sewa-kantor-surabaya' for every room, so
+        // without this every detail?type=N (and the index page) would collide on one cache entry.
     }
 
-    $cache_file = DIR_CACHE . md5($page_key) . '.html';
+    // Incorporate full request URI (query string like ?page=2, ?q=...) into cache key to avoid cache collision
+    $uri_suffix = $_SERVER['REQUEST_URI'] ?? '';
+    $cache_key = md5($page_key . '_' . $uri_suffix);
+    $cache_file = DIR_CACHE . $cache_key . '.html';
 
     // Verify cache file exists and has not expired
     if (file_exists($cache_file) && (time() - filemtime($cache_file)) < CACHE_EXPIRY) {
@@ -111,7 +199,7 @@ function start_page_cache(string $page_key): void {
 }
 
 function end_page_cache(string $page_key): void {
-    if (DEV_MODE || is_admin() || $_SERVER['REQUEST_METHOD'] !== 'GET') {
+    if (DEV_MODE || is_admin() || $_SERVER['REQUEST_METHOD'] !== 'GET' || isset($_GET['lokasi']) || isset($_GET['type'])) {
         return;
     }
 
@@ -123,7 +211,9 @@ function end_page_cache(string $page_key): void {
         mkdir(DIR_CACHE, 0755, true);
     }
 
-    $cache_file = DIR_CACHE . md5($page_key) . '.html';
+    $uri_suffix = $_SERVER['REQUEST_URI'] ?? '';
+    $cache_key = md5($page_key . '_' . $uri_suffix);
+    $cache_file = DIR_CACHE . $cache_key . '.html';
     file_put_contents($cache_file, $minified_html);
 
     echo $minified_html;

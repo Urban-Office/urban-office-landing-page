@@ -59,6 +59,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     }
 }
 
+// Process Create Form
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
+    $token = $_POST['csrf_token'] ?? '';
+    if (!verify_csrf_token($token)) {
+        $error = 'Validasi CSRF token gagal.';
+    } else {
+        $title = trim($_POST['title']);
+        $slug = trim($_POST['slug']);
+        $meta_title = trim($_POST['meta_title']);
+        $meta_description = trim($_POST['meta_description']);
+        $canonical_url = trim($_POST['canonical_url'] ?? '');
+
+        // Normalise slug: strip surrounding slashes, lowercase, safe characters only
+        $slug = strtolower(trim($slug, "/ \t\n\r\0\x0B"));
+        $slug = preg_replace('/[^a-z0-9\-]+/', '-', $slug);
+        $slug = trim(preg_replace('/-+/', '-', $slug), '-');
+
+        if (empty($title) || empty($slug) || empty($meta_title) || empty($meta_description)) {
+            $error = 'Nama halaman, slug, meta title, dan meta description wajib diisi.';
+        } elseif (Database::fetch("SELECT id FROM pages WHERE slug = ?", [$slug])) {
+            $error = 'Halaman dengan slug "' . sanitize($slug) . '" sudah terdaftar.';
+        } elseif (!is_dir(DIR_ROOT . $slug)) {
+            // A page row without a matching route would be published to sitemap.xml
+            // and return 404 to crawlers, so refuse to create it.
+            $error = 'Folder "' . sanitize($slug) . '" tidak ditemukan di server. Buat foldernya terlebih dahulu agar halaman tidak menjadi 404 di sitemap.';
+        } else {
+            try {
+                Database::insert(
+                    "INSERT INTO pages (title, slug, meta_title, meta_description, canonical_url) VALUES (?, ?, ?, ?, ?)",
+                    [$title, $slug, $meta_title, $meta_description, ($canonical_url !== '' ? $canonical_url : null)]
+                );
+                log_activity($_SESSION['admin_user_id'], 'create_page_seo', "Created SEO landing page: " . sanitize($title) . " (/$slug/)");
+                clear_page_cache();
+                header('Location: ' . BASE_URL . 'admin/pages.php?created=1');
+                exit;
+            } catch (Exception $e) {
+                $error = 'Gagal menambahkan halaman: ' . $e->getMessage();
+            }
+        }
+    }
+}
+
 // Fetch Page details for editing
 $page_data = null;
 $faq_list = [];
@@ -83,6 +125,10 @@ try {
 
 if (isset($_GET['success']) && $_GET['success'] == 1) {
     $success = 'Metadata SEO berhasil diperbarui!';
+}
+
+if (isset($_GET['created']) && $_GET['created'] == 1) {
+    $success = 'Halaman baru berhasil ditambahkan! Silakan lengkapi Open Graph & FAQ Schema-nya.';
 }
 ?>
 <!DOCTYPE html>
@@ -124,6 +170,8 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                 <div>
                     <?php if ($action !== 'list'): ?>
                         <a href="pages.php" class="btn-admin btn-admin-secondary">Kembali ke Daftar</a>
+                    <?php else: ?>
+                        <a href="?action=new" class="btn-admin btn-admin-primary">+ Tambah Halaman</a>
                     <?php endif; ?>
                 </div>
             </div>
@@ -140,8 +188,51 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                 </div>
             <?php endif; ?>
 
+            <!-- Action: NEW Landing Page Form -->
+            <?php if ($action === 'new'): ?>
+                <div class="admin-card">
+                    <h2>Tambah SEO Landing Page</h2>
+                    <p style="font-size:0.85rem; color:#64748b; margin-top:8px;">
+                        Daftarkan halaman yang sudah ada di server agar punya meta title/description sendiri dan masuk ke sitemap.xml.
+                        Folder halaman harus sudah dibuat lebih dulu.
+                    </p>
+                    <form action="" method="POST" style="margin-top: 24px;" class="form-horizontal">
+                        <?php echo csrf_field(); ?>
+
+                        <div style="margin-bottom: 20px;">
+                            <label class="form-label">Nama Halaman (untuk tampilan admin)</label>
+                            <input type="text" name="title" class="form-control" placeholder="Perizinan &amp; Perubahan Perusahaan" style="background-color: white; border:1px solid #cbd5e1; width:100%;" required>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label class="form-label">Slug URL (tanpa garis miring)</label>
+                            <input type="text" name="slug" class="form-control" placeholder="perizinan-dan-perubahan-perusahaan" style="background-color: white; border:1px solid #cbd5e1; width:100%;" required>
+                            <p style="font-size:0.78rem; color:#64748b; margin-top:6px;">Harus sama persis dengan nama folder di server.</p>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label class="form-label">SEO Meta Title (Maks 60 Karakter)</label>
+                            <input type="text" name="meta_title" class="form-control" style="background-color: white; border:1px solid #cbd5e1; width:100%;" required>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label class="form-label">SEO Meta Description (Maks 160 Karakter)</label>
+                            <textarea name="meta_description" class="form-control" style="background-color: white; border:1px solid #cbd5e1; width:100%; height:90px;" required></textarea>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label class="form-label">Canonical URL (opsional)</label>
+                            <input type="text" name="canonical_url" class="form-control" style="background-color: white; border:1px solid #cbd5e1; width:100%;">
+                        </div>
+
+                        <button type="submit" name="create" class="btn-admin btn-admin-primary" style="margin-top:10px; padding:12px 24px;">
+                            Simpan Halaman Baru
+                        </button>
+                    </form>
+                </div>
+
             <!-- Action: EDIT Metadata Page Form -->
-            <?php if ($action === 'edit' && $page_data): ?>
+            <?php elseif ($action === 'edit' && $page_data): ?>
                 <div class="admin-card">
                     <h2>Edit SEO Meta: <?php echo sanitize($page_data['title']); ?></h2>
                     <form action="" method="POST" style="margin-top: 24px;" class="form-horizontal">

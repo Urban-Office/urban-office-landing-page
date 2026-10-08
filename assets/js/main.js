@@ -151,14 +151,23 @@ function initActiveMenuHighlight() {
     // 3. Apply active highlights on page load
     const activeHref = sessionStorage.getItem('activeNavLink');
     if (activeHref) {
-        // Strip trailing slash, query params, and hash to ensure perfect matching
-        const cleanUrl = (url) => url.split('?')[0].split('#')[0].replace(/\/+$/, '');
+        // Normalize for matching: strip hash and trailing slash but KEEP the query string,
+        // so location variants of the same page (e.g. ?lokasi=jakarta vs ?lokasi=surabaya)
+        // are treated as distinct and only the link actually clicked gets highlighted.
+        const cleanUrl = (url) => url.split('#')[0].replace(/\/+$/, '');
         const targetCleanUrl = cleanUrl(activeHref);
         const currentCleanUrl = cleanUrl(window.location.href);
 
         // Only highlight if the stored link is actually for the current page
         if (targetCleanUrl === currentCleanUrl) {
             navLinks.forEach(link => {
+                // Skip hash/JS anchors (e.g. the "#" dropdown toggles): their resolved href is
+                // the current page URL, so they would falsely match on every page. The correct
+                // parent menu still gets highlighted via the dropdown-item branch below.
+                const rawHref = link.getAttribute('href') || '';
+                if (rawHref === '' || rawHref.charAt(0) === '#' || rawHref.startsWith('javascript:')) {
+                    return;
+                }
                 if (cleanUrl(link.href) === targetCleanUrl) {
                     link.classList.add('nav-active');
 
@@ -563,7 +572,7 @@ function initBranchesFilter() {
         const summary = section.querySelector('.branch-filter-summary');
         if (!buttons.length || !cards.length) return;
 
-        const setActiveCity = (citySlug) => {
+        const setActiveCity = (citySlug, preferredBranchId = null) => {
             let activeLabel = '';
             let visibleCount = 0;
 
@@ -587,7 +596,7 @@ function initBranchesFilter() {
             }
 
             if (typeof renderBranchButtons === 'function') {
-                renderBranchButtons(citySlug);
+                renderBranchButtons(citySlug, preferredBranchId);
             }
         };
 
@@ -597,13 +606,20 @@ function initBranchesFilter() {
             });
         });
 
+        // The VO landing template exposes the current branch (from ?branch=) via these globals.
+        // Prefer them so a branch page opens on its own city/branch instead of always Surabaya.
+        const currentCity = window.currentBranchCity ? normalizeCity(window.currentBranchCity) : null;
+        const currentCityBtn = currentCity
+            ? Array.from(buttons).find(button => normalizeCity(button.dataset.branchCity) === currentCity)
+            : null;
+
         const queryLocation = normalizeCity(new URLSearchParams(window.location.search).get('lokasi'));
         const queryMatch = queryLocation
             ? Array.from(buttons).find(button => normalizeCity(button.dataset.branchCity) === queryLocation || normalizeCity(button.textContent).includes(queryLocation))
             : null;
-        const activeButton = queryMatch || section.querySelector('.branch-city-btn.active') || buttons[0];
+        const activeButton = currentCityBtn || queryMatch || section.querySelector('.branch-city-btn.active') || buttons[0];
 
-        setActiveCity(activeButton.dataset.branchCity);
+        setActiveCity(activeButton.dataset.branchCity, window.currentBranchId || null);
     });
 }
 
@@ -847,8 +863,22 @@ function showWhyVoSlide(index) {
     }
 
     currentWhyVoIndex = index;
-    const slideWidth = 100 / visibleCount;
-    slider.style.transform = `translateX(-${index * slideWidth}%)`;
+    // Derive the per-slide step from the actual rendered slide width (relative to the
+    // viewport wrap) so any CSS flex-basis — including the mobile "peek" width (<100%) —
+    // stays snapped. On desktop/tablet this equals the old 100/visibleCount value.
+    const wrap = slider.parentElement;
+    const wrapPx = wrap ? wrap.getBoundingClientRect().width : 0;
+    const slidePx = slides[0] ? slides[0].getBoundingClientRect().width : 0;
+    const slideWidth = (wrapPx > 0 && slidePx > 0) ? (slidePx / wrapPx) * 100 : (100 / visibleCount);
+    let offset = index * slideWidth;
+    // Mobile peek mode (one card + a sliver of the next): center the LAST card so the
+    // previous card peeks on the left, instead of the card being stuck to the left edge
+    // with blank space on the right.
+    if (visibleCount === 1 && slideWidth < 99 && index === maxIndex && index > 0) {
+        offset = index * slideWidth - (100 - slideWidth) / 2;
+        if (offset < 0) offset = 0;
+    }
+    slider.style.transform = `translateX(-${offset}%)`;
 
     // Update active dot
     const dots = document.querySelectorAll('.why-vo-dot');
@@ -894,10 +924,9 @@ const benefitsVoVisibleCount = {
 };
 
 function getBenefitsVoVisibleCount() {
-    const width = window.innerWidth;
-    if (width > 991) return benefitsVoVisibleCount.desktop;
-    if (width > 768) return benefitsVoVisibleCount.tablet;
-    return benefitsVoVisibleCount.mobile;
+    // Always 1: this slider now sits in a half-width column (two-column "Keuntungan &
+    // Keunggulan" section), so it shows one image at a time on every breakpoint.
+    return 1;
 }
 
 function initBenefitsVoSlider() {
@@ -924,10 +953,8 @@ function initBenefitsVoSliderDots(totalSlides) {
     const dotsContainer = document.getElementById('benefits-vo-dots');
     if (!dotsContainer) return;
     dotsContainer.innerHTML = '';
-    const visibleCount = getBenefitsVoVisibleCount();
-    const maxDots = Math.max(1, totalSlides - visibleCount + 1);
-    
-    for (let i = 0; i < maxDots; i++) {
+    // One dot per slide — every slide can become the primary one (the next slide just peeks).
+    for (let i = 0; i < totalSlides; i++) {
         const dot = document.createElement('span');
         dot.className = 'benefits-vo-dot' + (i === currentBenefitsVoIndex ? ' active' : '');
         dot.setAttribute('onclick', `goToBenefitsVoSlide(${i})`);
@@ -941,10 +968,10 @@ function showBenefitsVoSlide(index) {
 
     const slides = slider.querySelectorAll('.benefits-vo-slide');
     const totalSlides = slides.length;
-    const visibleCount = getBenefitsVoVisibleCount();
-    
-    // Bounds check
-    const maxIndex = Math.max(0, totalSlides - visibleCount);
+    if (!totalSlides) return;
+
+    // Every slide can be primary; the CSS slide width (<100%) makes the next one peek.
+    const maxIndex = totalSlides - 1;
     if (index > maxIndex) {
         index = 0;
     } else if (index < 0) {
@@ -952,29 +979,21 @@ function showBenefitsVoSlide(index) {
     }
 
     currentBenefitsVoIndex = index;
-    const slideWidth = 100 / visibleCount;
-    slider.style.transform = `translateX(-${index * slideWidth}%)`;
+    // Pixel-based transform reads the real rendered slide width, so the peek stays exact on
+    // every breakpoint regardless of the CSS percentage.
+    const slideWidth = slides[0].getBoundingClientRect().width;
+    slider.style.transform = `translateX(-${index * slideWidth}px)`;
 
-    // Update active dot
     const dots = document.querySelectorAll('.benefits-vo-dot');
-    dots.forEach((dot, idx) => {
-        if (idx === index) {
-            dot.classList.add('active');
-        } else {
-            dot.classList.remove('active');
-        }
-    });
+    dots.forEach((dot, idx) => dot.classList.toggle('active', idx === index));
 }
 
 function nextBenefitsVoSlide() {
     const slider = document.getElementById('benefits-vo-slider');
     if (!slider) return;
-    const slides = slider.querySelectorAll('.benefits-vo-slide');
-    const totalSlides = slides.length;
-    const visibleCount = getBenefitsVoVisibleCount();
-    const maxIndex = Math.max(0, totalSlides - visibleCount);
+    const totalSlides = slider.querySelectorAll('.benefits-vo-slide').length;
 
-    if (currentBenefitsVoIndex >= maxIndex) {
+    if (currentBenefitsVoIndex >= totalSlides - 1) {
         showBenefitsVoSlide(0);
     } else {
         showBenefitsVoSlide(currentBenefitsVoIndex + 1);
@@ -990,72 +1009,23 @@ function goToBenefitsVoSlide(index) {
 /**
  * Pricing Location Filter Logic
  */
-const branchPricingData = {
-    'surabaya-pusat': {
-        name: 'Surabaya Pusat',
-        address: 'Pusat Kota Surabaya',
-        prices: { starter: '385.000', luxury: '620.000', priority: '770.000' }
-    },
-    'merr': {
-        name: 'MERR (Surabaya Timur)',
-        address: 'Jl. Dr. Ir. H. Soekarno No.470, Kedung Baruk, Rungkut, Surabaya',
-        kpp: 'KPP Rungkut',
-        prices: { starter: '385.000', luxury: '620.000', priority: '770.000' }
-    },
-    'klampis': {
-        name: 'Klampis (Surabaya Timur)',
-        address: 'Ruko Klampis Megah, Jl. Klampis Jaya blok B-20, Sukolilo, Surabaya',
-        kpp: 'KPP Gubeng',
-        prices: { starter: '385.000', luxury: '620.000', priority: '770.000' }
-    },
-    'grand-sungkono-lagoon': {
-        name: 'Grand Sungkono Lagoon (Surabaya Barat)',
-        address: 'Grand Sungkono Lagoon, Jl. KH Abdul Wahab Siamin Surabaya',
-        kpp: 'KPP Karang Pilang',
-        prices: { starter: '415.000', luxury: '675.000', priority: '830.000' }
-    },
-    'fatmawati': {
-        name: 'Fatmawati (Jakarta Selatan)',
-        address: 'Jl. RS. Fatmawati Raya No.35A, Cilandak, Jakarta Selatan',
-        kpp: 'KPP Cilandak',
-        prices: { starter: '385.000', luxury: '620.000', priority: '770.000' }
-    },
-    'gorebiz': {
-        name: 'Gorebiz (Jakarta Timur)',
-        address: 'Jl. Raya Bekasi KM.17, Jatinegara, Jakarta Timur',
-        kpp: 'KPP Cakung 1',
-        prices: { starter: '385.000', luxury: '620.000', priority: '770.000' }
-    },
-    'ptgm-tower': {
-        name: 'PTGM Tower (Gresik)',
-        address: 'PTGM Tower, Jl. Dr. Wahidin Sudirohusodo, Gresik',
-        kpp: 'KPP Madya Gresik',
-        prices: { starter: '385.000', luxury: '620.000', priority: '770.000' }
-    },
-    'medan': {
-        name: 'Medan',
-        address: 'Kota Medan, Sumatera Utara',
-        prices: { starter: '385.000', luxury: '620.000', priority: '770.000' }
-    },
-    'malang': {
-        name: 'Malang',
-        address: 'Kota Malang, Jawa Timur',
-        prices: { starter: '385.000', luxury: '620.000', priority: '770.000' }
-    }
-};
+// Pricing data for the branch switcher now comes from PHP (inc/footer.php), generated from
+// inc/locations_data.php so there is a single source of truth (prices, address, KPP, tier
+// count). Falls back to an empty object if the inline script wasn't emitted.
+const branchPricingData = window.branchPricingData || {};
 
 const cityBranches = {
     'surabaya': [
-        { id: 'merr', label: 'MERR (Surabaya Timur)' },
-        { id: 'klampis', label: 'Klampis (Surabaya Timur)' },
-        { id: 'grand-sungkono-lagoon', label: 'Grand Sungkono (Surabaya Barat)' }
+        { id: 'surabaya', label: 'MERR (Surabaya Timur)' },
+        { id: 'surabaya-timur', label: 'Klampis (Surabaya Timur)' },
+        { id: 'surabaya-barat', label: 'Grand Sungkono (Surabaya Barat)' }
     ],
     'jakarta': [
-        { id: 'fatmawati', label: 'Fatmawati (Jakarta Selatan)' },
-        { id: 'gorebiz', label: 'Gorebiz (Jakarta Timur)' }
+        { id: 'jakarta', label: 'Fatmawati (Jakarta Selatan)' },
+        { id: 'jakarta-timur', label: 'Gorebiz (Jakarta Timur)' }
     ],
     'gresik': [
-        { id: 'ptgm-tower', label: 'PTGM Tower (Gresik)' }
+        { id: 'gresik', label: 'PTGM Tower (Gresik)' }
     ],
     'medan': [
         { id: 'medan', label: 'Medan' }
@@ -1069,19 +1039,25 @@ function initPricingFilter() {
     // Legacy pricing filter init (removed as it's now integrated with branches.php city filter)
 }
 
-function renderBranchButtons(city) {
+function renderBranchButtons(city, preferredBranchId = null) {
     const branchContainer = document.getElementById('branch-filter');
     if (!branchContainer) return;
 
     branchContainer.innerHTML = '';
     const branches = cityBranches[city] || [];
 
+    // Which branch's pricing to show first: the one from the page URL (?branch=) when it
+    // belongs to this city, otherwise the city's first branch. This keeps a Jakarta Timur
+    // (Gorebiz) landing page from defaulting to Fatmawati, etc.
+    const initialId = branches.some(b => b.id === preferredBranchId) ? preferredBranchId : (branches[0] ? branches[0].id : null);
+
     if (branches.length > 1) {
         branchContainer.style.display = 'flex';
-        branches.forEach((br, idx) => {
+        branches.forEach((br) => {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'branch-city-btn branch-detail-btn-small';
+            if (br.id === initialId) btn.classList.add('active');
             btn.setAttribute('data-branch', br.id);
             btn.innerHTML = `<span class="branch-city-icon"><i class="bi bi-geo-alt-fill"></i></span>
                              <span class="branch-city-copy"><strong>${br.label}</strong></span>`;
@@ -1104,7 +1080,7 @@ function renderBranchButtons(city) {
             });
             branchContainer.appendChild(btn);
         });
-        updatePricingCards(branches[0].id, false);
+        if (initialId) updatePricingCards(initialId, false);
     } else if (branches.length === 1) {
         branchContainer.style.display = 'none';
         updatePricingCards(branches[0].id, false);
@@ -1120,9 +1096,17 @@ function updatePricingCards(branchId, showKpp = true) {
     const priceLuxuryEl = document.getElementById('price-luxury');
     const pricePriorityEl = document.getElementById('price-priority');
 
-    if (priceStarterEl) priceStarterEl.innerHTML = `Rp ${data.prices.starter} <span>/ Bulan*</span>`;
-    if (priceLuxuryEl) priceLuxuryEl.innerHTML = `Rp ${data.prices.luxury} <span>/ Bulan*</span>`;
-    if (pricePriorityEl) pricePriorityEl.innerHTML = `Rp ${data.prices.priority} <span>/ Bulan*</span>`;
+    if (priceStarterEl && data.prices.starter) priceStarterEl.innerHTML = `Rp ${data.prices.starter} <span>/ Bulan*</span>`;
+    if (priceLuxuryEl && data.prices.luxury) priceLuxuryEl.innerHTML = `Rp ${data.prices.luxury} <span>/ Bulan*</span>`;
+    if (pricePriorityEl && data.prices.priority) pricePriorityEl.innerHTML = `Rp ${data.prices.priority} <span>/ Bulan*</span>`;
+
+    // Hide tiers a branch doesn't offer (e.g. Jakarta has no Priority, Malang only Starter).
+    // Only relevant when switching branches on a page that rendered 3 cards — a branch's own
+    // page already renders just its real tiers server-side.
+    [[priceLuxuryEl, data.prices.luxury], [pricePriorityEl, data.prices.priority]].forEach(([el, price]) => {
+        const card = el ? el.closest('.premium-card') : null;
+        if (card) card.style.display = price ? '' : 'none';
+    });
 
     // Update Address features
     const addressStarter = document.querySelector('#features-starter .address-feature');
@@ -1187,7 +1171,7 @@ window.activateOfferMode = function(packageName, serviceName = 'Virtual Office',
         if (branchName) {
             val = branchName;
         } else {
-            const activeBranch = branchPricingData[window.activeBranchId || 'merr'];
+            const activeBranch = branchPricingData[window.activeBranchId || 'surabaya'];
             val = activeBranch ? activeBranch.name : 'MERR (Surabaya Timur)';
         }
 
@@ -1258,9 +1242,10 @@ window.resetOfferMode = function() {
     const pesanInput = document.getElementById('contact-pesan');
     if (pesanInput) pesanInput.value = '';
 
-    // Restore required status
+    // Restore required status — but only for visit-based services. Virtual Office and other
+    // lead/quote pages mark the date optional via data-visit-required="0", so don't force it.
     const dateInput = document.getElementById('contact-date');
-    if (dateInput) dateInput.required = true;
+    if (dateInput) dateInput.required = (dateInput.dataset.visitRequired !== '0');
 
     const budgetInput2 = document.getElementById('contact-budget');
     if (budgetInput2) budgetInput2.required = false;

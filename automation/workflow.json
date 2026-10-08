@@ -1,0 +1,623 @@
+{
+    "name": "Urban Office - Auto Artikel SEO/AIO/GEO",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "0 8,15 * * *"
+                        }
+                    ]
+                }
+            },
+            "id": "bfe99428322f3783",
+            "name": "Schedule 2x/hari",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.2,
+            "position": [
+                240,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "337f6976237e",
+                            "name": "siteBaseUrl",
+                            "type": "string",
+                            "value": "http://host.docker.internal:8000"
+                        },
+                        {
+                            "id": "85e6dc207bef",
+                            "name": "automationToken",
+                            "type": "string",
+                            "value": "PASTE_AUTOMATION_TOKEN"
+                        },
+                        {
+                            "id": "08f2ec4f3ae1",
+                            "name": "apiBase",
+                            "type": "string",
+                            "value": "https://api.groq.com/openai/v1"
+                        },
+                        {
+                            "id": "146bf83da159",
+                            "name": "apiModel",
+                            "type": "string",
+                            "value": "llama-3.3-70b-versatile"
+                        },
+                        {
+                            "id": "10003a22b72c",
+                            "name": "temperature",
+                            "type": "string",
+                            "value": "0.6"
+                        },
+                        {
+                            "id": "06e8459d42a6",
+                            "name": "falModel",
+                            "type": "string",
+                            "value": "fal-ai/flux/schnell"
+                        },
+                        {
+                            "id": "c0baff9509bb",
+                            "name": "telegramChatId",
+                            "type": "string",
+                            "value": "PASTE_TELEGRAM_CHAT_ID"
+                        },
+                        {
+                            "id": "e99f29f74191",
+                            "name": "systemPrompt",
+                            "type": "string",
+                            "value": "Kamu adalah content strategist senior Urban Office — penyedia Virtual Office, Coworking Space, Private Office, Meeting Room, Event Space, dan layanan legalitas usaha di Indonesia (cabang di Surabaya, Jakarta, Gresik, Malang, Medan).\n\nTUGAS: menulis SATU artikel blog berbahasa Indonesia yang ORISINAL dan informatif, dioptimalkan untuk SEO, AI Overview (AIO), dan Generative Engine Optimization (GEO). Topik sumber dari RSS hanya PEMICU sudut pandang — DILARANG menyalin, menerjemahkan, atau merangkum ulang isi berita sumber (alasan hak cipta & E-E-A-T). Tulis dari sudut pandang Urban Office dengan insight bisnis sendiri.\n\n=== ATURAN SEO ON-PAGE ===\n- meta_title: maksimal 60 karakter, mengandung kata kunci utama secara NATURAL.\n- meta_description: maksimal 155 karakter, ada CTA halus.\n- slug: pendek, lowercase, dipisah tanda hubung.\n- Heading pakai <h2> dan <h3> POLOS (tanpa atribut style). Konten dibungkus otomatis oleh .article-body-content yang sudah memberi styling.\n- JANGAN pakai H1 (judul dirender terpisah).\n- JANGAN sisipkan <img> di dalam content (featured image dirender otomatis di atas artikel oleh sistem).\n- Minimal 1 (idealnya 2-3) internal link ke halaman di daftar LINK INTERNAL — pakai URL PERSIS, anchor natural. Ikuti gaya situs: sertakan minimal satu baris \"Baca Juga: <a href=\\\"URL\\\">anchor lowercase</a>\" selain link natural di dalam paragraf.\n- HINDARI keyword stuffing (kata kunci utama 2-3x natural). Prioritaskan keterbacaan.\n- Panjang artikel 700-1100 kata.\n\n=== ATURAN AIO ===\n- Paragraf pembuka LANGSUNG menjawab inti topik dalam 2-3 kalimat (tanpa basa-basi).\n- Gunakan daftar berpoin (<ul><li>) untuk info yang mudah di-extract.\n- Akhiri dengan FAQ 2-3 pertanyaan bila relevan: <h2>Pertanyaan yang Sering Diajukan</h2> lalu tiap pertanyaan <h3>...</h3> diikuti <p> jawaban.\n\n=== ATURAN GEO ===\n- Sebut entitas spesifik (area/cabang, kota, landmark) HANYA bila datanya diberikan.\n- Sertakan angka/data konkret (mis. harga mulai Rp385.000/bulan) HANYA dari data yang diberikan — jangan mengarang harga/alamat.\n- Selipkan insight khas Urban Office tentang relevansi tren terhadap kebutuhan ruang kerja fleksibel / legalitas usaha di Indonesia.\n- Untuk artikel \"branch\": WAJIB pakai fakta cabang (alamat, keunggulan, harga) dari DATA CABANG dan link ke halaman cabang/produk terkait.\n\n=== GUARDRAIL (WAJIB) ===\n- DILARANG frasa \"Gratis Pembuatan PT\" atau klaim jasa dokumen resmi (PT/CV/PMA/izin) yang GRATIS/PASTI/instan tanpa disclaimer.\n- DILARANG klaim medis, hukum, atau finansial spesifik tanpa dasar.\n- Jika topik menyinggung politik praktis, SARA, konten sensitif, ATAU tidak relevan dengan Urban Office → kembalikan {\"reject\": true, \"reject_reason\": \"<alasan>\"} dan kosongkan field lain.\n- categories dan tags HANYA dari daftar yang diberikan. JANGAN membuat baru. Pilih 1-2 kategori paling tepat dan 6-10 tag paling relevan.\n\n=== FORMAT OUTPUT (WAJIB) ===\nKeluarkan HANYA satu objek JSON valid (tanpa teks lain, tanpa markdown fence):\n{\n  \"reject\": false,\n  \"reject_reason\": \"\",\n  \"title\": \"Judul (bukan clickbait)\",\n  \"slug\": \"slug-pendek\",\n  \"excerpt\": \"Ringkasan 1-2 kalimat.\",\n  \"content\": \"<h2>...</h2><p>...</p>\",\n  \"meta_title\": \"<= 60 karakter\",\n  \"meta_description\": \"<= 155 karakter\",\n  \"categories\": [\"<dari daftar>\"],\n  \"tags\": [\"<dari daftar>\"],\n  \"cta\": \"1 kalimat soft-selling HALUS yang mengaitkan topik artikel dengan produk/layanan Urban Office yang relevan (mengundang, tidak memaksa, tanpa klaim gratis/pasti)\",\n  \"image_prompt\": \"English cover image prompt\",\n  \"internal_links_used\": [\"/url-dipakai/\"]\n}\n\nimage_prompt: Bahasa Inggris, foto sampul profesional realistis (modern office/coworking/suasana bisnis Indonesia), fotografis, cahaya natural, 16:9, TANPA teks/logo. content = HTML fragment (tanpa <html>/<body>), TANPA <img>, hanya <h2>/<h3>/<p>/<ul>/<ol>/<li>/<strong>/<em>/<a href>."
+                        }
+                    ]
+                },
+                "options": []
+            },
+            "id": "49523299fa9abb81",
+            "name": "Config",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                460,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "={{ $('Config').first().json.siteBaseUrl }}/_api/taxonomy.php",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "X-Automation-Token",
+                            "value": "={{ $('Config').first().json.automationToken }}"
+                        }
+                    ]
+                },
+                "options": []
+            },
+            "id": "441484b7491ed7e8",
+            "name": "GET Taxonomy",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                680,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "={{ $('Config').first().json.siteBaseUrl }}/_api/branches.php",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "X-Automation-Token",
+                            "value": "={{ $('Config').first().json.automationToken }}"
+                        }
+                    ]
+                },
+                "options": []
+            },
+            "id": "d6fdec77779066e9",
+            "name": "GET Branches",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                900,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const feeds = [\n  'https://news.google.com/rss/search?q=virtual+office+OR+coworking+space+indonesia&hl=id&gl=ID&ceid=ID:id',\n  'https://news.google.com/rss/search?q=UMKM+OR+startup+indonesia+bisnis&hl=id&gl=ID&ceid=ID:id',\n  'https://news.google.com/rss/search?q=sewa+kantor+OR+ruang+kerja+fleksibel+indonesia&hl=id&gl=ID&ceid=ID:id',\n  'https://finance.detik.com/rss',\n  'https://www.antaranews.com/rss/ekonomi',\n  'https://www.cnbcindonesia.com/rss',\n];\nreturn feeds.map(u => ({ json: { feedUrl: u } }));"
+            },
+            "id": "d92f880a9a56c6fa",
+            "name": "Feed List",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1120,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "url": "={{ $json.feedUrl }}",
+                "options": []
+            },
+            "id": "508e19567f6e98d0",
+            "name": "RSS Read",
+            "type": "n8n-nodes-base.rssFeedRead",
+            "typeVersion": 1.1,
+            "position": [
+                1340,
+                300
+            ],
+            "onError": "continueRegularOutput",
+            "retryOnFail": true,
+            "maxTries": 2
+        },
+        {
+            "parameters": {
+                "jsCode": "const cfg = $('Config').first().json;\nconst tax = $('GET Taxonomy').first().json;\nconst branches = ($('GET Branches').first().json.branches) || [];\nconst items = $input.all().map(i => i.json);\n\nconst KW = ['virtual office','coworking','private office','sewa kantor','ruang kerja','kantor virtual','umkm','startup','wirausaha','ekspansi bisnis','legalitas','pt perorangan','pma','wfa','work from anywhere','ruang meeting','event space','produktivitas','pajak','npwp','izin usaha','bisnis','ekonomi','investasi'];\nfunction score(it){\n  const text = ((it.title||'') + ' ' + (it.contentSnippet||it.content||'')).toLowerCase();\n  let s = 0;\n  for (const k of KW){ if (text.includes(k)) s += (k.length > 10 ? 2 : 1); }\n  return s;\n}\nlet scored = items.map(it => ({it, s: score(it)})).filter(x => x.s > 0).sort((a,b) => b.s - a.s);\nconst seen = new Set();\nscored = scored.filter(x => { const t = (x.it.title||'').toLowerCase().trim(); if(!t||seen.has(t)) return false; seen.add(t); return true; });\n\nlet chosen = null;\nfor (const x of scored.slice(0, 10)) {\n  const link = x.it.link || '';\n  const title = x.it.title || '';\n  try {\n    const res = await this.helpers.httpRequest({\n      method: 'GET',\n      url: cfg.siteBaseUrl + '/_api/check.php',\n      qs: { source_url: link, title: title },\n      headers: { 'X-Automation-Token': cfg.automationToken },\n      json: true,\n    });\n    if (res && res.duplicate) continue;\n  } catch (e) { /* jika check gagal, izinkan lanjut */ }\n  chosen = x.it; break;\n}\nif (!chosen) return [{ json: { hasTopic: false } }];\n\nconst doy = Math.floor(Date.now() / 86400000);\nconst isBranch = Math.random() < 0.30;\nlet target_type = 'general', branch = null;\nif (isBranch && branches.length) {\n  const priority = ['surabaya','jakarta','malang','surabaya-timur','surabaya-barat','jakarta-timur','gresik','medan'];\n  const ordered = priority.map(k => branches.find(b => b.slug === k)).filter(Boolean);\n  const pool = ordered.length ? ordered : branches;\n  branch = pool[doy % pool.length];\n  target_type = 'branch';\n}\nreturn [{ json: {\n  hasTopic: true,\n  topic_title: chosen.title || '',\n  topic_summary: (chosen.contentSnippet || chosen.content || '').toString().replace(/<[^>]+>/g,'').slice(0, 500),\n  source_url: chosen.link || '',\n  target_type,\n  branch,\n} }];"
+            },
+            "id": "b832bb8653885908",
+            "name": "Pick Topic",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1560,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "loose"
+                    },
+                    "combinator": "and",
+                    "conditions": [
+                        {
+                            "id": "a3454ef68733",
+                            "leftValue": "={{ $json.hasTopic }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true",
+                                "singleValue": true
+                            }
+                        }
+                    ]
+                },
+                "options": []
+            },
+            "id": "f46370aa8c9619b3",
+            "name": "Ada Topik?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.2,
+            "position": [
+                1780,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "chatId": "={{ $('Config').first().json.telegramChatId }}",
+                "text": "Automation: tidak ada topik relevan hari ini.",
+                "additionalFields": []
+            },
+            "id": "536279a5f272cee3",
+            "name": "Notif: Tidak Ada Topik",
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                1780,
+                520
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const cfg = $('Config').first().json;\nconst tax = $('GET Taxonomy').first().json;\nconst topic = $json;\nconst cats = (tax.categories || []).map(c => c.name).join(', ');\nconst tags = (tax.tags || []).map(t => t.name).join(', ');\nlet links = (tax.link_targets || []).map(l => ({ title: l.title, url: l.url }));\nlet branchJson = '';\nif (topic.target_type === 'branch' && topic.branch) {\n  branchJson = JSON.stringify(topic.branch, null, 2);\n  if (topic.branch.detail_url) links.unshift({ title: topic.branch.name + ' (halaman cabang)', url: topic.branch.detail_url });\n}\nconst user = [\n  'TOPIK SUMBER (pemicu sudut pandang — JANGAN disalin/rangkum):',\n  '- judul: ' + (topic.topic_title || ''),\n  '- ringkasan: ' + (topic.topic_summary || ''),\n  '- source_url: ' + (topic.source_url || ''),\n  '',\n  'JENIS ARTIKEL: ' + topic.target_type,\n  '',\n  'DATA CABANG (fakta ASLI — pakai untuk GEO/E-E-A-T; kosong jika general):',\n  branchJson,\n  '',\n  'KATEGORI TERSEDIA (pilih 1-2 dari sini saja):',\n  cats,\n  '',\n  'TAG TERSEDIA (pilih 6-10 paling relevan, HANYA dari sini):',\n  tags,\n  '',\n  'LINK INTERNAL TERSEDIA (pakai URL persis, pilih yang relevan):',\n  JSON.stringify(links),\n  '',\n  'Tulis artikel sesuai seluruh aturan di system prompt. Keluarkan HANYA JSON.'\n].join('\\n');\nreturn [{ json: { system: cfg.systemPrompt, user, source_url: topic.source_url, target_type: topic.target_type, topic_title: topic.topic_title } }];"
+            },
+            "id": "ea2824258c943c74",
+            "name": "Build Prompt",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2000,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "={{ $('Config').first().json.apiBase }}/chat/completions",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({ model: $('Config').first().json.apiModel, temperature: Number($('Config').first().json.temperature), max_tokens: 4000, messages: [ { role: 'system', content: $json.system }, { role: 'user', content: $json.user } ] }) }}",
+                "options": []
+            },
+            "id": "61de1f91fd963a86",
+            "name": "LLM Generate",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                2220,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const raw = ($json.choices && $json.choices[0] && $json.choices[0].message && $json.choices[0].message.content) || '{}';\nlet txt = String(raw).trim();\nif (txt.startsWith('```')) { txt = txt.replace(/^```(json)?/i, '').replace(/```$/,'').trim(); }\n// Extract the JSON object (first \"{\" .. last \"}\") so any prose/reasoning the\n// model prints around it is ignored.\nconst a = txt.indexOf('{'); const b = txt.lastIndexOf('}');\nif (a >= 0 && b > a) { txt = txt.slice(a, b + 1); }\nlet d;\ntry { d = JSON.parse(txt); }\ncatch (e) { d = { reject: true, reject_reason: 'Output LLM bukan JSON valid: ' + e.message }; }\nd.source_url = $('Build Prompt').item.json.source_url || '';\nif (typeof d.categories === 'string') d.categories = [d.categories];\nif (typeof d.tags === 'string') d.tags = [d.tags];\nif (!Array.isArray(d.categories)) d.categories = [];\nif (!Array.isArray(d.tags)) d.tags = [];\nd.reject = d.reject === true;\nreturn [{ json: d }];"
+            },
+            "id": "115d0b550ce23c4b",
+            "name": "Parse LLM",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2440,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "loose"
+                    },
+                    "combinator": "and",
+                    "conditions": [
+                        {
+                            "id": "e30087a7d504",
+                            "leftValue": "={{ $json.reject }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true",
+                                "singleValue": true
+                            }
+                        }
+                    ]
+                },
+                "options": []
+            },
+            "id": "c6afb37da8bb15e4",
+            "name": "LLM Reject?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.2,
+            "position": [
+                2660,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "chatId": "={{ $('Config').first().json.telegramChatId }}",
+                "text": "={{ \"Automation: topik dilewati oleh LLM. Alasan: \" + ($json.reject_reason || \"-\") }}",
+                "additionalFields": []
+            },
+            "id": "c670557642bbc2d2",
+            "name": "Notif: Ditolak LLM",
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                2660,
+                520
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "=https://fal.run/{{ $('Config').first().json.falModel }}",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({ prompt: $('Parse LLM').item.json.image_prompt, image_size: 'landscape_16_9', num_images: 1 }) }}",
+                "options": []
+            },
+            "id": "899d1444ed41a1ee",
+            "name": "Fal.ai Image",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                2880,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "={{ $('Config').first().json.siteBaseUrl }}/_api/ingest.php",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "X-Automation-Token",
+                            "value": "={{ $('Config').first().json.automationToken }}"
+                        }
+                    ]
+                },
+                "options": [],
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({ title: $('Parse LLM').item.json.title, slug: $('Parse LLM').item.json.slug, excerpt: $('Parse LLM').item.json.excerpt, content: $('Parse LLM').item.json.content, meta_title: $('Parse LLM').item.json.meta_title, meta_description: $('Parse LLM').item.json.meta_description, categories: $('Parse LLM').item.json.categories, tags: $('Parse LLM').item.json.tags, source_url: $('Parse LLM').item.json.source_url, image_url: ($json.images && $json.images[0] ? $json.images[0].url : '') }) }}"
+            },
+            "id": "7a97ac4ae325c28f",
+            "name": "Ingest Draft",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                3100,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "url": "={{ $('Ingest Draft').item.json.featured_image.startsWith('http') ? $('Ingest Draft').item.json.featured_image : $('Config').first().json.siteBaseUrl + '/' + $('Ingest Draft').item.json.featured_image }}",
+                "options": {
+                    "response": {
+                        "response": {
+                            "responseFormat": "file",
+                            "outputPropertyName": "data"
+                        }
+                    }
+                }
+            },
+            "id": "10d555c86337be75",
+            "name": "Get Hero Image",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                3320,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "message",
+                "operation": "sendPhoto",
+                "chatId": "={{ $('Config').first().json.telegramChatId }}",
+                "binaryData": true,
+                "binaryPropertyName": "data",
+                "additionalFields": {
+                    "caption": "={{ \"📝 \" + $('Parse LLM').item.json.title + \"\\n\\n\" + ($('Parse LLM').item.json.meta_description || \"\") + \"\\n\\nEdit: \" + $('Ingest Draft').item.json.admin_edit_url + \"\\n\\nSetujui untuk publish?\" }}"
+                },
+                "replyMarkup": "inlineKeyboard",
+                "inlineKeyboard": {
+                    "rows": [
+                        {
+                            "row": {
+                                "buttons": [
+                                    {
+                                        "text": "Approve",
+                                        "additionalFields": {
+                                            "callback_data": "=approve:{{ $('Ingest Draft').item.json.post_id }}"
+                                        }
+                                    },
+                                    {
+                                        "text": "Decline",
+                                        "additionalFields": {
+                                            "callback_data": "=reject:{{ $('Ingest Draft').item.json.post_id }}"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            "id": "b3714fc1f12dafd2",
+            "name": "Telegram Kirim Preview",
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                3540,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Schedule 2x/hari": {
+            "main": [
+                [
+                    {
+                        "node": "Config",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Config": {
+            "main": [
+                [
+                    {
+                        "node": "GET Taxonomy",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "GET Taxonomy": {
+            "main": [
+                [
+                    {
+                        "node": "GET Branches",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "GET Branches": {
+            "main": [
+                [
+                    {
+                        "node": "Feed List",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Feed List": {
+            "main": [
+                [
+                    {
+                        "node": "RSS Read",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "RSS Read": {
+            "main": [
+                [
+                    {
+                        "node": "Pick Topic",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Pick Topic": {
+            "main": [
+                [
+                    {
+                        "node": "Ada Topik?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Ada Topik?": {
+            "main": [
+                [
+                    {
+                        "node": "Build Prompt",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Notif: Tidak Ada Topik",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Build Prompt": {
+            "main": [
+                [
+                    {
+                        "node": "LLM Generate",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "LLM Generate": {
+            "main": [
+                [
+                    {
+                        "node": "Parse LLM",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse LLM": {
+            "main": [
+                [
+                    {
+                        "node": "LLM Reject?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "LLM Reject?": {
+            "main": [
+                [
+                    {
+                        "node": "Notif: Ditolak LLM",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Fal.ai Image",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fal.ai Image": {
+            "main": [
+                [
+                    {
+                        "node": "Ingest Draft",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Ingest Draft": {
+            "main": [
+                [
+                    {
+                        "node": "Get Hero Image",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Hero Image": {
+            "main": [
+                [
+                    {
+                        "node": "Telegram Kirim Preview",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "meta": {
+        "templateId": "urban-office-auto-artikel"
+    },
+    "tags": []
+}

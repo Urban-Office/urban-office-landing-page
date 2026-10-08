@@ -1,0 +1,1020 @@
+{
+  "name": "Urban Office - Auto Artikel SEO/AIO/GEO",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8,11,15,19 * * *"
+            }
+          ]
+        }
+      },
+      "id": "8f2d5933-cb16-4666-b9a6-b5891e1ec1c5",
+      "name": "Schedule 2x/hari",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6d77005287dc",
+              "name": "siteBaseUrl",
+              "type": "string",
+              "value": "https://urbanoffice.co.id"
+            },
+            {
+              "id": "2beffac2726f",
+              "name": "automationToken",
+              "type": "string",
+              "value": "2380322c67815028392cd7a07928f0545d60813f7f654ec0"
+            },
+            {
+              "id": "99eb58508182",
+              "name": "apiBase",
+              "type": "string",
+              "value": "https://api.deepseek.com"
+            },
+            {
+              "id": "10e03b9e3d14",
+              "name": "apiModel",
+              "type": "string",
+              "value": "deepseek-v4-flash"
+            },
+            {
+              "id": "c3fd18d17df5",
+              "name": "temperature",
+              "type": "string",
+              "value": "0.6"
+            },
+            {
+              "id": "255a1d6b4628",
+              "name": "falModel",
+              "type": "string",
+              "value": "fal-ai/flux/schnell"
+            },
+            {
+              "id": "dbad1cbe5e6c",
+              "name": "telegramChatId",
+              "type": "string",
+              "value": "-1004379322365"
+            },
+            {
+              "id": "3a2fe743b0d2",
+              "name": "systemPrompt",
+              "type": "string",
+              "value": "Kamu adalah content strategist senior Urban Office — penyedia Virtual Office, Coworking Space, Private Office, Meeting Room, Event Space, dan layanan legalitas usaha di Indonesia (cabang di Surabaya, Jakarta, Gresik, Malang, Medan).\n\nTUGAS: menulis SATU artikel blog berbahasa Indonesia yang ORISINAL dan informatif, dioptimalkan untuk SEO, AI Overview (AIO), dan Generative Engine Optimization (GEO). Topik sumber dari RSS hanya PEMICU sudut pandang — DILARANG menyalin, menerjemahkan, atau merangkum ulang isi berita sumber (alasan hak cipta & E-E-A-T). Tulis dari sudut pandang Urban Office dengan insight bisnis sendiri.\n\n=== ATURAN SEO ON-PAGE ===\n- meta_title: maksimal 60 karakter, mengandung kata kunci utama secara NATURAL.\n- meta_description: maksimal 155 karakter, ada CTA halus.\n- slug: pendek, lowercase, dipisah tanda hubung.\n- Heading pakai H2/H3 dengan format PERSIS: <h2 style=\"margin-left:0px;\">...</h2> dan <h3 style=\"margin-left:0px;\">...</h3>.\n- JANGAN pakai H1 (judul dirender terpisah).\n- Minimal 1 (idealnya 2-3) internal link ke halaman di daftar LINK INTERNAL — pakai URL PERSIS, anchor natural.\n- HINDARI keyword stuffing (kata kunci utama 2-3x natural). Prioritaskan keterbacaan.\n- Panjang artikel 700-1100 kata.\n\n=== ATURAN AIO ===\n- Paragraf pembuka LANGSUNG menjawab inti topik dalam 2-3 kalimat (tanpa basa-basi).\n- Gunakan daftar berpoin (<ul><li>) untuk info yang mudah di-extract.\n- Akhiri dengan FAQ 2-3 pertanyaan bila relevan: <h2 style=\"margin-left:0px;\">Pertanyaan yang Sering Diajukan</h2> lalu tiap pertanyaan <h3 style=\"margin-left:0px;\">...</h3> diikuti <p> jawaban.\n\n=== ATURAN GEO ===\n- Sebut entitas spesifik (area/cabang, kota, landmark) HANYA bila datanya diberikan.\n- Sertakan angka/data konkret (mis. harga mulai Rp385.000/bulan) HANYA dari data yang diberikan — jangan mengarang harga/alamat.\n- Selipkan insight khas Urban Office tentang relevansi tren terhadap kebutuhan ruang kerja fleksibel / legalitas usaha di Indonesia.\n- Untuk artikel \"branch\": WAJIB pakai fakta cabang (alamat, keunggulan, harga) dari DATA CABANG dan link ke halaman cabang/produk terkait.\n\n\n=== STRATEGI ARTIKEL JAKARTA (CURIOSITY HOOK & COMPARISON) ===\n- Jika topik atau target cabang mengarah ke Jakarta (Fatmawati / Jaktim), gunakan teknik judul pembanding yang memikat (Curiosity Hook) yang membandingkan kawasan prestisius/mahal (seperti SCBD, Sudirman, TB Simatupang, Kuningan) dengan solusi efisiensi di koridor MRT Fatmawati atau kawasan industri Jaktim.\n- DILARANG membuat clickbait bohong/hoax. Tetap berbasis fakta bisnis, efisiensi operasional, dan kenyamanan mobilitas jalur MRT.\n- Alur Penulisan:\n  1. Validasi gengsi area pusat bisnis Jakarta (SCBD/Sudirman) secara objektif.\n  2. Bedah tantangan biaya tinggi, sewa gedung konvensional, dan macetnya jalanan Jakarta.\n  3. Berikan solusi cerdas: Virtual Office di Urban Office Fatmawati (hanya 5 menit jalan kaki ke Stasiun MRT Fatmawati, akses 18 menit ke SCBD bebas macet, harga mulai Rp385.000/bln, legalitas zonasi komersial resmi).\n  4. Untuk target Jakarta Timur, arahkan ke Urban Office Gorebiz (Jatinegara / Cakung dekat kawasan industri Pulogadung untuk legalitas tender/logistik).\n\n=== GUARDRAIL (WAJIB) ===\n- DILARANG frasa \"Gratis Pembuatan PT\" atau klaim jasa dokumen resmi (PT/CV/PMA/izin) yang GRATIS/PASTI/instan tanpa disclaimer.\n- DILARANG klaim medis, hukum, atau finansial spesifik tanpa dasar.\n- Jika topik menyinggung politik praktis, SARA, konten sensitif, ATAU tidak relevan dengan Urban Office → kembalikan {\"reject\": true, \"reject_reason\": \"<alasan>\"} dan kosongkan field lain.\n- categories dan tags HANYA dari daftar yang diberikan. JANGAN membuat baru.\n\n=== FORMAT OUTPUT (WAJIB) ===\nKeluarkan HANYA satu objek JSON valid (tanpa teks lain, tanpa markdown fence):\n{\n  \"reject\": false,\n  \"reject_reason\": \"\",\n  \"title\": \"Judul memikat (berbasis perbandingan/solusi cerdas, bukan clickbait murahan/hoax)\",\n  \"slug\": \"slug-pendek\",\n  \"excerpt\": \"Ringkasan 1-2 kalimat.\",\n  \"content\": \"<h2 style=\\\"margin-left:0px;\\\">...</h2><p>...</p>\",\n  \"meta_title\": \"<= 60 karakter\",\n  \"meta_description\": \"<= 155 karakter\",\n  \"categories\": [\"<dari daftar>\"],\n  \"tags\": [\"<dari daftar>\"], \"cta\": \"1 kalimat soft-selling halus yang mengaitkan topik artikel dengan produk/layanan Urban Office yang relevan (tidak memaksa)\",\n  \"image_prompt\": \"English cover image prompt\",\n  \"internal_links_used\": [\"/url-dipakai/\"]\n}\n\nimage_prompt: Bahasa Inggris, foto sampul profesional realistis (modern office/coworking/suasana bisnis Indonesia), fotografis, cahaya natural, 16:9, TANPA teks/logo. content = HTML fragment (tanpa <html>/<body>), TANPA <img>, hanya <h2>/<h3>/<p>/<ul>/<ol>/<li>/<strong>/<em>/<a href>."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "90bbcf58-2e3e-4c32-8831-ed49b18bb44e",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        256,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Config').first().json.siteBaseUrl }}/_api/taxonomy.php",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Automation-Token",
+              "value": "={{ $('Config').first().json.automationToken }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5f2fef1e-7a81-4025-869e-747515a9b14c",
+      "name": "GET Taxonomy",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        464,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Config').first().json.siteBaseUrl }}/_api/branches.php",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Automation-Token",
+              "value": "={{ $('Config').first().json.automationToken }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "06b7b66e-f571-4442-b556-79673b9219df",
+      "name": "GET Branches",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        624,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const feeds = [\n  // 1. Kategori Umum: Virtual Office & Coworking Nasional\n  'https://news.google.com/rss/search?q=virtual+office+OR+coworking+space+indonesia+when:7d&hl=id&gl=ID&ceid=ID:id',\n\n  // 2. Kategori Umum: UMKM & Startup Indonesia\n  'https://news.google.com/rss/search?q=UMKM+OR+startup+indonesia+bisnis+when:7d&hl=id&gl=ID&ceid=ID:id',\n\n  // 3. Kategori Umum: Sewa Kantor & Ruang Kerja Fleksibel\n  'https://news.google.com/rss/search?q=sewa+kantor+OR+ruang+kerja+fleksibel+indonesia+when:7d&hl=id&gl=ID&ceid=ID:id',\n\n  // 4. KHUSUS JAKARTA: Dinamika Kantor, Startup & Bisnis Jakarta\n  'https://news.google.com/rss/search?q=kantor+OR+startup+OR+bisnis+jakarta+when:7d&hl=id&gl=ID&ceid=ID:id',\n\n  // 5. KHUSUS JAKARTA: MRT, Transportasi & Kawasan Perkantoran Jakarta\n  'https://news.google.com/rss/search?q=MRT+jakarta+OR+sewa+kantor+jakarta+when:7d&hl=id&gl=ID&ceid=ID:id',\n\n  // 6. KHUSUS JAKARTA TIMUR: Industri, Logistik & Usaha Jakarta Timur\n  'https://news.google.com/rss/search?q=industri+OR+logistik+OR+ekspedisi+jakarta+timur+when:7d&hl=id&gl=ID&ceid=ID:id',\n\n  // 7. Portal Berita Ekonomi & Finansial Nasional\n  'https://finance.detik.com/rss',\n  'https://www.antaranews.com/rss/ekonomi',\n  'https://www.cnbcindonesia.com/rss',\n];\n\nreturn feeds.map(u => ({\n  json: {\n    feedUrl: u\n  }\n}));"
+      },
+      "id": "1d4e90a6-6b3a-4a51-8b00-2fcf0e89cb38",
+      "name": "Feed List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.feedUrl }}",
+        "options": {}
+      },
+      "id": "cbd959c6-bfb1-4e1f-9923-5046da572218",
+      "name": "RSS Read",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        1008,
+        96
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 2,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Config').first().json;\nconst tax = $('GET Taxonomy').first().json;\nconst branches = ($('GET Branches').first().json.branches) || [];\nconst items = $input.all().map(i => i.json);\n\n// =====================================================\n// RETRY DATA\n// =====================================================\n\nlet trigger = {};\n\ntry {\n  trigger = $('When Executed by Another Workflow').first().json || {};\n} catch (e) {\n  trigger = {};\n}\n\nconst excludeUrls = new Set(\n  Array.isArray(trigger.excludeUrls)\n    ? trigger.excludeUrls\n    : []\n);\n\nconst attemptCount = Number(trigger.attemptCount || 0);\n\n// =====================================================\n// CONFIG\n// =====================================================\n\n// Maksimal usia berita yang masih boleh dipakai\nconst MAX_AGE_DAYS = 180;\n\n// Maksimal kandidat yang akan dicek ke check.php\nconst MAX_DUPLICATE_CHECKS = 50;\n\n// =====================================================\n// KEYWORDS (Termasuk Kata Kunci Koridor Jakarta)\n// =====================================================\n\nconst KW = [\n  'virtual office',\n  'coworking',\n  'private office',\n  'sewa kantor',\n  'ruang kerja',\n  'kantor virtual',\n  'umkm',\n  'startup',\n  'wirausaha',\n  'ekspansi bisnis',\n  'legalitas',\n  'pt perorangan',\n  'pma',\n  'wfa',\n  'work from anywhere',\n  'ruang meeting',\n  'event space',\n  'produktivitas',\n  'pajak',\n  'npwp',\n  'izin usaha',\n  'bisnis',\n  'ekonomi',\n  'investasi',\n  // Tambahan Koridor Jakarta & Bisnis\n  'jakarta',\n  'mrt',\n  'fatmawati',\n  'simatupang',\n  'cilandak',\n  'jatinegara',\n  'cakung',\n  'scbd',\n  'sudirman',\n  'logistik'\n];\n\n// =====================================================\n// PARSE DATE\n// =====================================================\n\nfunction getItemDate(it) {\n  const raw = it.isoDate || it.pubDate || '';\n\n  if (!raw) {\n    return null;\n  }\n\n  const d = new Date(raw);\n\n  if (Number.isNaN(d.getTime())) {\n    return null;\n  }\n\n  return d;\n}\n\n// =====================================================\n// HITUNG UMUR BERITA\n// =====================================================\n\nfunction getAgeDays(it, now) {\n  const d = getItemDate(it);\n\n  if (!d) {\n    return null;\n  }\n\n  const diffMs = now.getTime() - d.getTime();\n  const diffDays = diffMs / (1000 * 60 * 60 * 24);\n\n  return diffDays;\n}\n\n// =====================================================\n// FRESHNESS SCORE\n// =====================================================\n\nfunction freshnessScore(ageDays) {\n  if (ageDays === null) {\n    return 0;\n  }\n\n  if (ageDays < 1) {\n    return 5;\n  }\n\n  if (ageDays <= 3) {\n    return 4;\n  }\n\n  if (ageDays <= 7) {\n    return 3;\n  }\n\n  if (ageDays <= 30) {\n    return 2;\n  }\n\n  if (ageDays <= 180) {\n    return 1;\n  }\n\n  return 0;\n}\n\n// =====================================================\n// RELEVANCE SCORE\n// =====================================================\n\nfunction relevanceScore(it) {\n  const text = (\n    (it.title || '') +\n    ' ' +\n    (it.contentSnippet || it.content || '')\n  ).toLowerCase();\n\n  let score = 0;\n\n  for (const k of KW) {\n    if (text.includes(k)) {\n      score += (k.length > 10 ? 2 : 1);\n    }\n  }\n\n  return score;\n}\n\n// =====================================================\n// WAKTU SEKARANG\n// =====================================================\n\nconst now = new Date();\n\n// =====================================================\n// STEP 1 — FILTER FRESHNESS\n// =====================================================\n\nconst freshnessRejected = [];\nconst freshItems = [];\n\nfor (const it of items) {\n  const ageDays = getAgeDays(it, now);\n\n  if (ageDays !== null && ageDays > MAX_AGE_DAYS) {\n    freshnessRejected.push({\n      title: it.title || '',\n      link: it.link || '',\n      pubDate: it.pubDate || '',\n      isoDate: it.isoDate || '',\n      ageDays: Number(ageDays.toFixed(2)),\n      reason: 'older_than_180_days'\n    });\n    continue;\n  }\n\n  freshItems.push(it);\n}\n\n// =====================================================\n// STEP 2 — SCORING RELEVANCE + FRESHNESS\n// =====================================================\n\nlet scored = freshItems\n  .map(it => {\n    const ageDays = getAgeDays(it, now);\n    const relevance = relevanceScore(it);\n    const freshness = freshnessScore(ageDays);\n\n    return {\n      it,\n      relevanceScore: relevance,\n      freshnessScore: freshness,\n      totalScore: relevance + freshness,\n      ageDays\n    };\n  })\n  .filter(x => x.relevanceScore > 0);\n\n// =====================================================\n// STEP 3 — SORT TOTAL SCORE\n// =====================================================\n\nscored.sort((a, b) => {\n  if (b.totalScore !== a.totalScore) {\n    return b.totalScore - a.totalScore;\n  }\n\n  if (b.relevanceScore !== a.relevanceScore) {\n    return b.relevanceScore - a.relevanceScore;\n  }\n\n  if (a.ageDays === null && b.ageDays !== null) {\n    return 1;\n  }\n\n  if (a.ageDays !== null && b.ageDays === null) {\n    return -1;\n  }\n\n  if (a.ageDays !== null && b.ageDays !== null) {\n    return a.ageDays - b.ageDays;\n  }\n\n  return 0;\n});\n\n// =====================================================\n// STEP 4 — REMOVE DUPLICATE TITLE DI RSS\n// =====================================================\n\nconst seenTitles = new Set();\n\nscored = scored.filter(x => {\n  const title = (x.it.title || '')\n    .toLowerCase()\n    .trim();\n\n  if (!title) {\n    return false;\n  }\n\n  if (seenTitles.has(title)) {\n    return false;\n  }\n\n  seenTitles.add(title);\n  return true;\n});\n\n// =====================================================\n// STEP 5 — REMOVE URL DARI RETRY\n// =====================================================\n\nscored = scored.filter(\n  x => !excludeUrls.has(x.it.link || '')\n);\n\n// =====================================================\n// DEBUG LIST KANDIDAT\n// =====================================================\n\nconst candidatePreview = scored\n  .slice(0, MAX_DUPLICATE_CHECKS)\n  .map(x => ({\n    title: x.it.title || '',\n    link: x.it.link || '',\n    pubDate: x.it.pubDate || '',\n    isoDate: x.it.isoDate || '',\n    ageDays: x.ageDays !== null\n      ? Number(x.ageDays.toFixed(2))\n      : null,\n    relevanceScore: x.relevanceScore,\n    freshnessScore: x.freshnessScore,\n    totalScore: x.totalScore\n  }));\n\n// =====================================================\n// STEP 6 — DUPLICATE CHECK KE WEBSITE DATABASE\n// =====================================================\n\nlet chosen = null;\nconst debugChecks = [];\n\nconst candidatesToCheck = scored.slice(\n  0,\n  MAX_DUPLICATE_CHECKS\n);\n\nfor (const x of candidatesToCheck) {\n  const link = x.it.link || '';\n  const title = x.it.title || '';\n\n  try {\n    const res = await this.helpers.httpRequest({\n      method: 'GET',\n      url: cfg.siteBaseUrl + '/_api/check.php',\n      qs: {\n        source_url: link,\n        title: title\n      },\n      headers: {\n        'X-Automation-Token': cfg.automationToken\n      },\n      json: true,\n    });\n\n    debugChecks.push({\n      title,\n      link,\n      duplicate: !!res?.duplicate,\n      matched_by: res?.matched_by || null,\n      post_id: res?.post?.id || null,\n      post_status: res?.post?.status || null,\n      post_title: res?.post?.title || null\n    });\n\n    if (res && res.duplicate) {\n      continue;\n    }\n\n    chosen = x;\n    break;\n\n  } catch (e) {\n    debugChecks.push({\n      title,\n      link,\n      duplicate: false,\n      check_error: e.message\n    });\n\n    chosen = x;\n    break;\n  }\n}\n\n// =====================================================\n// STEP 7 — TIDAK ADA KANDIDAT\n// =====================================================\n\nif (!chosen) {\n  return [\n    {\n      json: {\n        hasTopic: false,\n        attemptCount,\n        excludeUrls: Array.from(excludeUrls),\n        debug: {\n          rssCount: items.length,\n          freshCount: freshItems.length,\n          freshnessRejectedCount: freshnessRejected.length,\n          scoredCount: scored.length,\n          checkedCount: debugChecks.length,\n          maxDuplicateChecks: MAX_DUPLICATE_CHECKS,\n          freshnessRejected: freshnessRejected.slice(0, 50),\n          candidatePreview,\n          checks: debugChecks\n        }\n      }\n    }\n  ];\n}\n\n// =====================================================\n// STEP 8 — PENENTUAN TARGET CABANG BERDASARKAN JAM WIB\n// =====================================================\n\n// Ambil waktu lokal WIB (Asia/Jakarta)\nconst wibDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));\nconst hourWib = wibDate.getHours();\nconst dayWib = wibDate.getDay(); // 0 = Minggu, 1 = Senin, 2 = Selasa, dst.\n\n// Slot Jakarta: Jam 11 (10-12) dan Jam 19 (18-20)\nconst isSlot11 = hourWib >= 10 && hourWib < 13;\nconst isSlot19 = hourWib >= 18 && hourWib < 21;\nconst isJakartaSlot = isSlot11 || isSlot19;\n\nlet target_type = 'general';\nlet branch = null;\n\n// Cari data cabang Fatmawati dan Gorebiz (Jakarta Timur)\nconst fatmawati = branches.find(b => b.slug === 'jakarta');\nconst gorebiz   = branches.find(b => b.slug === 'jakarta-timur');\n\nif (isJakartaSlot) {\n  target_type = 'branch';\n  \n  if (isSlot11) {\n    // Slot 11:00 -> Wajib Fatmawati (Jakarta Selatan)\n    branch = fatmawati || branches[0];\n  } else {\n    // Slot 19:00 -> Rotasi: Selasa & Jumat = Gorebiz (Jaktim), hari lain = Fatmawati\n    if (dayWib === 2 || dayWib === 5) {\n      branch = gorebiz || fatmawati || branches[0];\n    } else {\n      branch = fatmawati || branches[0];\n    }\n  }\n} else {\n  // Slot 08:00 & 15:00 -> Jalankan Flow Lama (70% General, 30% Cabang Acak)\n  const isBranch = Math.random() < 0.30;\n  \n  if (isBranch && branches.length) {\n    const doy = Math.floor(Date.now() / 86400000);\n    const priority = [\n      'surabaya',\n      'jakarta',\n      'malang',\n      'surabaya-timur',\n      'surabaya-barat',\n      'jakarta-timur',\n      'gresik',\n      'medan'\n    ];\n\n    const ordered = priority\n      .map(k => branches.find(b => b.slug === k))\n      .filter(Boolean);\n\n    const pool = ordered.length ? ordered : branches;\n    branch = pool[doy % pool.length];\n    target_type = 'branch';\n  }\n}\n\n// =====================================================\n// STEP 9 — OUTPUT KE NODE BERIKUTNYA\n// =====================================================\n\nreturn [\n  {\n    json: {\n      hasTopic: true,\n      topic_title: chosen.it.title || '',\n      topic_summary: (\n        chosen.it.contentSnippet ||\n        chosen.it.content ||\n        ''\n      )\n        .toString()\n        .replace(/<[^>]+>/g, '')\n        .slice(0, 500),\n      source_url: chosen.it.link || '',\n      target_type,\n      branch,\n      is_jakarta_slot: isJakartaSlot, // Flag penanda khusus slot Jakarta\n      attemptCount,\n      excludeUrls: Array.from(excludeUrls)\n    }\n  }\n];"
+      },
+      "id": "0ec8c4da-09e4-411e-8db3-e65860020a1e",
+      "name": "Pick Topic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1630b6d4b968",
+              "leftValue": "={{ $json.hasTopic }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "98d8cd2a-6476-4a2f-a903-e8dae73bda94",
+      "name": "Ada Topik?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Config').first().json.telegramChatId }}",
+        "text": "Automation: tidak ada topik relevan hari ini.",
+        "additionalFields": {}
+      },
+      "id": "44a34faf-cb66-4bad-81a9-47d01577bdf8",
+      "name": "Notif: Tidak Ada Topik",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1792,
+        320
+      ],
+      "webhookId": "b38ed462-edab-4388-a8f7-5ee79f434fbb",
+      "credentials": {
+        "telegramApi": {
+          "id": "8bH0gBAeE1aNdhsm",
+          "name": "Telegram Seo"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Config').first().json;\nconst tax = $('GET Taxonomy').first().json;\nconst topic = $json;\nconst cats = (tax.categories || []).map(c => c.name).join(', ');\nconst tags = (tax.tags || []).map(t => t.name).join(', ');\nlet links = (tax.link_targets || []).map(l => ({ title: l.title, url: l.url }));\n\nlet branchJson = '';\nif (topic.target_type === 'branch' && topic.branch) {\n  branchJson = JSON.stringify(topic.branch, null, 2);\n  if (topic.branch.detail_url) {\n    links.unshift({ \n      title: topic.branch.name + ' (halaman cabang resmi)', \n      url: topic.branch.detail_url \n    });\n  }\n}\n\n// =====================================================\n// MASTER KEYWORDS URBAN OFFICE DARI 165 LIST\n// =====================================================\n\n// 1. Kumpulan Master Keyword Khusus Slot Jakarta (Jam 11 & 19)\nconst masterKeywordsJakarta = [\n  'virtual office scbd',\n  'virtual office tb simatupang',\n  'virtual office sudirman',\n  'virtual office pondok indah',\n  'virtual office kemang',\n  'virtual office kebayoran baru',\n  'virtual office kota kasablanka',\n  'virtual office Jakarta Selatan',\n  'virtual office Fatmawati',\n  'virtual office Jakarta Timur',\n  'sewa virtual office Jakarta',\n  'jasa virtual office Jakarta',\n  'harga virtual office jakarta selatan',\n  'virtual office untuk PT',\n  'virtual office bisa pkp',\n  'kbli virtual office',\n  'pembuatan PT Jakarta'\n];\n\n// 2. Kumpulan Master Keyword Khusus Slot Umum & Surabaya (Jam 08 & 15)\nconst masterKeywordsUmum = [\n  'virtual office Surabaya',\n  'sewa virtual office Surabaya',\n  'harga virtual office Surabaya',\n  'kantor virtual Surabaya',\n  'virtual office Surabaya Timur',\n  'virtual office MERR',\n  'virtual office Klampis',\n  'virtual office untuk PT',\n  'jasa pembuatan PT dan virtual office',\n  'alamat bisnis untuk PT',\n  'sewa kantor Surabaya',\n  'meeting room Surabaya',\n  'coworking space Surabaya',\n  'serviced office Surabaya',\n  'biaya virtual office',\n  'cara kerja virtual office',\n  'keuntungan kantor virtual',\n  'apakah virtual office legal',\n  'aturan virtual office'\n];\n\n// Pilih keyword berdasarkan slot jam yang aktif\nconst selectedKeywords = topic.is_jakarta_slot\n  ? masterKeywordsJakarta.join(', ')\n  : masterKeywordsUmum.join(', ');\n\n// =====================================================\n// SUSUN PROMPT UNTUK LLM\n// =====================================================\n\nconst user = [\n  'TOPIK SUMBER (pemicu sudut pandang — JANGAN disalin/rangkum):',\n  '- judul: ' + (topic.topic_title || ''),\n  '- ringkasan: ' + (topic.topic_summary || ''),\n  '- source_url: ' + (topic.source_url || ''),\n  '',\n  'JENIS ARTIKEL: ' + topic.target_type,\n  '',\n  'DATA CABANG (fakta ASLI — pakai untuk GEO/E-E-A-T; kosong jika general):',\n  branchJson,\n  '',\n  'TARGET MASTER KEYWORDS:',\n  selectedKeywords,\n  '(ATURAN KEYWORD: Wajib pilih 1 kata kunci dari daftar di atas sebagai kata kunci utama di Title, H2, dan Meta Title. Pilih 1-2 kata kunci lain sebagai pendukung di paragraf artikel. HINDARI keyword stuffing!).',\n  '',\n  'KATEGORI TERSEDIA (pilih 1-2 dari sini saja):',\n  cats,\n  '',\n  'TAG TERSEDIA (pilih 6-10 paling relevan, HANYA dari sini):',\n  tags,\n  '',\n  'LINK INTERNAL TERSEDIA (pakai URL persis, prioritaskan link cabang jika artikel branch):',\n  JSON.stringify(links),\n  '',\n  'Tulis artikel sesuai seluruh aturan di system prompt. Keluarkan HANYA JSON.'\n].join('\\n');\n\nreturn [{ \n  json: { \n    system: cfg.systemPrompt, \n    user, \n    source_url: topic.source_url, \n    target_type: topic.target_type, \n    topic_title: topic.topic_title \n  } \n}];"
+      },
+      "id": "4668325e-4ebb-4431-9053-32d5d3ab7727",
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.apiBase }}/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $('Config').first().json.apiModel, temperature: Number($('Config').first().json.temperature), response_format: { type: 'json_object' }, messages: [ { role: 'system', content: $json.system }, { role: 'user', content: $json.user } ] }) }}",
+        "options": {}
+      },
+      "id": "e16cea53-95ea-4c43-b421-d969788df044",
+      "name": "LLM Generate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2016,
+        96
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "g0XOE03xzoACw2dz",
+          "name": "LLM"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = ($json.choices && $json.choices[0] && $json.choices[0].message && $json.choices[0].message.content) || '{}';\nlet txt = String(raw).trim();\nif (txt.startsWith('```')) { txt = txt.replace(/^```(json)?/i, '').replace(/```$/,'').trim(); }\nlet d;\ntry { d = JSON.parse(txt); }\ncatch (e) { d = { reject: true, reject_reason: 'Output LLM bukan JSON valid: ' + e.message }; }\nd.source_url = $('Build Prompt').item.json.source_url || '';\nif (typeof d.categories === 'string') d.categories = [d.categories];\nif (typeof d.tags === 'string') d.tags = [d.tags];\nif (!Array.isArray(d.categories)) d.categories = [];\nif (!Array.isArray(d.tags)) d.tags = [];\nd.reject = d.reject === true;\nreturn [{ json: d }];"
+      },
+      "id": "a56d10d0-5dcc-4055-b715-96e3a8519687",
+      "name": "Parse LLM",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2224,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5f4197fbb6cc",
+              "leftValue": "={{ $json.reject }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "258dd7ce-938e-425c-ab52-24a39ae5e0c6",
+      "name": "LLM Reject?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2448,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Config').first().json.telegramChatId }}",
+        "text": "={{ \"Automation: topik dilewati oleh LLM. Alasan: \" + ($json.reject_reason || \"-\") }}",
+        "additionalFields": {}
+      },
+      "id": "42ff304c-188e-4610-9bc9-d7b080d44c17",
+      "name": "Notif: Ditolak LLM",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2672,
+        -96
+      ],
+      "webhookId": "970d604c-bdc2-4067-be96-e335e47d77c0",
+      "credentials": {
+        "telegramApi": {
+          "id": "8bH0gBAeE1aNdhsm",
+          "name": "Telegram Seo"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://fal.run/{{ $('Config').first().json.falModel }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ prompt: $('Parse LLM').item.json.image_prompt, image_size: 'landscape_16_9', num_images: 1 }) }}",
+        "options": {}
+      },
+      "id": "bc068aa1-1dc7-4483-92aa-5b54b89f8b93",
+      "name": "Fal.ai Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2672,
+        96
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YcdqMtnr2m2EuwLm",
+          "name": "UO Fal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.siteBaseUrl }}/_api/ingest.php",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Automation-Token",
+              "value": "={{ $('Config').first().json.automationToken }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: $('Parse LLM').item.json.title, slug: $('Parse LLM').item.json.slug, excerpt: $('Parse LLM').item.json.excerpt, content: $('Parse LLM').item.json.content, cta: $('Parse LLM').item.json.cta || '', meta_title: $('Parse LLM').item.json.meta_title, meta_description: $('Parse LLM').item.json.meta_description, categories: $('Parse LLM').item.json.categories, tags: $('Parse LLM').item.json.tags, source_url: $('Parse LLM').item.json.source_url, image_url: ($json.images && $json.images[0] ? $json.images[0].url : '') }) }}",
+        "options": {}
+      },
+      "id": "e73780a0-a727-4a5b-9487-6386cd97d8f6",
+      "name": "Ingest Draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2896,
+        96
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ ($('Ingest Draft').item.json.featured_image && $('Ingest Draft').item.json.featured_image.startsWith('http')) ? $('Ingest Draft').item.json.featured_image : ($('Ingest Draft').item.json.featured_image ? $('Config').first().json.siteBaseUrl + '/' + $('Ingest Draft').item.json.featured_image : '') }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3664,
+        -160
+      ],
+      "id": "38d91ba2-3eff-4090-a08c-d47ce3efb842",
+      "name": "Get Hero Image"
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "={{ $('Config').first().json.telegramChatId }}",
+        "binaryData": true,
+        "additionalFields": {
+          "caption": "={{ \"✅ *Artikel Berhasil Dipublish Otomatis!*\\n\\n📌 *\" + $('Parse LLM').item.json.title + \"*\\n\\n🔗 *Live URL:* \" + ($('Auto Publish').item.json.public_url || \"Cek di website\") + \"\\n✏️ *Admin Edit:* \" + $('Ingest Draft').item.json.admin_edit_url + \"\\n\\n📝 \" + ($('Parse LLM').item.json.excerpt || $('Parse LLM').item.json.meta_description || \"\") }}"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3872,
+        -160
+      ],
+      "id": "312b9d1d-8cfb-45ab-900f-5ac408a0b91b",
+      "name": "Telegram Kirim Preview",
+      "webhookId": "fcf39394-f10b-4b78-a354-0082a9e6fde9",
+      "credentials": {
+        "telegramApi": {
+          "id": "8bH0gBAeE1aNdhsm",
+          "name": "Telegram Seo"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        16,
+        336
+      ],
+      "id": "b9d53b71-4a58-4c35-a6a8-3ce553c91876",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "928ed67c-75c3-43a9-96dd-c695a77f02c5",
+              "leftValue": "=   {{ $json.error.message || $json.message || '' }}",
+              "rightValue": "=Duplikat",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3376,
+        256
+      ],
+      "id": "a91559d4-6685-4392-a8ee-337b7e294f10",
+      "name": "Duplikat Topik?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "28072434-6e7e-448f-943a-a65e692842b5",
+              "leftValue": "={{ $('Pick Topic').item.json.attemptCount || 0 }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3712,
+        240
+      ],
+      "id": "51fc76fe-19fb-40e4-8334-cfadae834b2d",
+      "name": "Attempt < 3?"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "oUnVr1WFvVLhLKhk",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/oUnVr1WFvVLhLKhk",
+          "cachedResultName": "Urban Office - Auto Artikel SEO/AIO/GEO"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        4304,
+        224
+      ],
+      "id": "0ca99562-6770-44e2-a416-c826200fae31",
+      "name": "Retry Topik Lain"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Config').first().json.telegramChatId }}",
+        "text": "=={{ \"❌ <b>Automation: Ingest Draft Gagal!</b>\\n\\nServer hosting sempat sibuk/timeout saat memproses gambar (Error 502).\\n\\nSilakan klik tombol di bawah untuk menjalankan ulang workflow setelah server stabil:\" }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🔄 Jalankan Ulang Workflow Sekarang",
+                    "additionalFields": {
+                      "url": "https://n8n.urbanoffice.id/webhook/retry-artikel"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3664,
+        416
+      ],
+      "id": "5d268bc1-1483-4ad8-a5a4-3274a7e9ba4b",
+      "name": "Notif: Error Ingest Lain",
+      "webhookId": "1a2ed3ee-c360-44cf-b0d3-40c9558f19ee",
+      "credentials": {
+        "telegramApi": {
+          "id": "8bH0gBAeE1aNdhsm",
+          "name": "Telegram Seo"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Config').first().json.telegramChatId }}",
+        "text": "={{ \"Automation: sudah 3x percobaan, semua topik kandidat hari ini duplikat/sudah pernah dipakai.\" }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3952,
+        400
+      ],
+      "id": "c697db1e-1a9b-48f5-8cca-db872cf5f82f",
+      "name": "Notif: Semua Kandidat Duplikat",
+      "webhookId": "2824ae71-42ec-4aaa-a3f5-0afd3da51678",
+      "credentials": {
+        "telegramApi": {
+          "id": "8bH0gBAeE1aNdhsm",
+          "name": "Telegram Seo"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Config').first().json.telegramChatId }}",
+        "text": "=   {{ \"⚠️ Automation: 1 feed RSS gagal diambil - \" + ($json.feedUrl || 'URL tidak diketahui') + \". Error: \" + ($json.error?.message || $json.message || 'timeout/tidak diketahui') }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1296,
+        304
+      ],
+      "id": "9aff1059-0a53-4823-967c-8fcb4a1e2cc5",
+      "name": "Notif: Feed RSS Gagal",
+      "webhookId": "8d118ae8-ed44-4585-bd2a-1e6f32cba9cc",
+      "credentials": {
+        "telegramApi": {
+          "id": "8bH0gBAeE1aNdhsm",
+          "name": "Telegram Seo"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const pick = $('Pick Topic').first().json;\nconst parse = $('Parse LLM').first().json;\n\n// Ambil excludeUrls sebelumnya, pastikan selalu Array\nconst previousExclude = Array.isArray(pick.excludeUrls)\n  ? pick.excludeUrls\n  : [];\n\n// Ambil source URL artikel yang baru saja terdeteksi duplikat\nconst currentSourceUrl = String(parse.source_url || '').trim();\n\n// Gabungkan URL lama + URL sekarang\nconst excludeUrls = [\n  ...previousExclude,\n  ...(currentSourceUrl ? [currentSourceUrl] : [])\n];\n\n// Naikkan attempt count\nconst attemptCount = Number(pick.attemptCount || 0) + 1;\n\nreturn [\n  {\n    json: {\n      excludeUrls,\n      attemptCount\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4000,
+        224
+      ],
+      "id": "f2ce88c7-b550-4b9b-8dcd-9270ce13f01c",
+      "name": "Susun Payload Retry1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.siteBaseUrl }}/_api/moderate.php",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Automation-Token",
+              "value": "={{ $('Config').first().json.automationToken }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ post_id: $json.post_id, action: \"approve\" }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3120,
+        -144
+      ],
+      "id": "9063742c-610a-40f4-806f-85f74354e0e5",
+      "name": "Auto Publish",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "chatId": "=={{ $('Config').first().json.telegramChatId }}\n",
+        "text": "=={{ \"❌ <b>Automation Gagal Publish Artikel!</b>\\n\\nID Artikel: \" + $('Ingest Draft').item.json.post_id + \"\\nJudul: \" + $('Parse LLM').item.json.title + \"\\nError: \" + ($json.error?.message || $json.message || \"Gagal menghubungi moderate.php\") }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3424,
+        -48
+      ],
+      "id": "60d242ac-c19c-4c93-884e-879a8c2128ff",
+      "name": "Notif: Gagal Publish",
+      "webhookId": "ca984a0f-4f03-4185-9de0-865733b22741",
+      "credentials": {
+        "telegramApi": {
+          "id": "8bH0gBAeE1aNdhsm",
+          "name": "Telegram Seo"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "retry-artikel",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -96
+      ],
+      "id": "72d0712f-6764-4f17-ab0d-444e05fa8f23",
+      "name": "Webhook",
+      "webhookId": "1e6f3353-3a29-432b-bc37-4dddbf66af24"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule 2x/hari": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "GET Taxonomy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Taxonomy": {
+      "main": [
+        [
+          {
+            "node": "GET Branches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Branches": {
+      "main": [
+        [
+          {
+            "node": "Feed List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Feed List": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Pick Topic",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notif: Feed RSS Gagal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Topic": {
+      "main": [
+        [
+          {
+            "node": "Ada Topik?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ada Topik?": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notif: Tidak Ada Topik",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "LLM Generate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Generate": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM": {
+      "main": [
+        [
+          {
+            "node": "LLM Reject?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Reject?": {
+      "main": [
+        [
+          {
+            "node": "Notif: Ditolak LLM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fal.ai Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fal.ai Image": {
+      "main": [
+        [
+          {
+            "node": "Ingest Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ingest Draft": {
+      "main": [
+        [
+          {
+            "node": "Auto Publish",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Duplikat Topik?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Hero Image": {
+      "main": [
+        [
+          {
+            "node": "Telegram Kirim Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Duplikat Topik?": {
+      "main": [
+        [
+          {
+            "node": "Attempt < 3?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notif: Error Ingest Lain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attempt < 3?": {
+      "main": [
+        [
+          {
+            "node": "Susun Payload Retry1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notif: Semua Kandidat Duplikat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry Topik Lain": {
+      "main": [
+        []
+      ]
+    },
+    "Susun Payload Retry1": {
+      "main": [
+        [
+          {
+            "node": "Retry Topik Lain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auto Publish": {
+      "main": [
+        [
+          {
+            "node": "Get Hero Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notif: Gagal Publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Jakarta",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "e5f05c1f-8a4a-4890-b566-7e75c3df7247",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b696e56bdee788c37c86ebe55bdb36df52696abb1d17246d8fb11d500674de99"
+  },
+  "id": "oUnVr1WFvVLhLKhk",
+  "tags": []
+}

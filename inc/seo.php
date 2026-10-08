@@ -20,24 +20,186 @@ function get_page_seo(string $slug): array {
     // Intercept location detail pages
     $request_uri = $_SERVER['REQUEST_URI'] ?? '';
     if ($request_uri !== '' && strpos($request_uri, '/lokasi-urban-office/') !== false && $slug !== 'lokasi-urban-office' && $slug !== '') {
-        $locations_data_path = dirname(__FILE__) . '/locations_data.php';
-        if (file_exists($locations_data_path)) {
-            require_once $locations_data_path;
-            if (isset($locations_db[$slug])) {
-                $branch = $locations_db[$slug];
+        // header.php already require_once's locations_data.php at global scope, so a
+        // require_once here would be a no-op that never populates a local $locations_db,
+        // silently dropping this page back to the generic default. Pull the global.
+        global $locations_db;
+        if (!isset($locations_db) || !is_array($locations_db)) {
+            $locations_data_path = dirname(__FILE__) . '/locations_data.php';
+            if (file_exists($locations_data_path)) {
+                require $locations_data_path;
+            }
+        }
+        if (isset($locations_db[$slug])) {
+            $branch = $locations_db[$slug];
+            return [
+                'title' => $branch['seo']['title'],
+                'meta_description' => $branch['seo']['description'],
+                'canonical_url' => BASE_URL . 'lokasi-urban-office/' . $slug . '/',
+                'og_title' => $branch['seo']['title'],
+                'og_description' => $branch['seo']['description'],
+                'og_image' => $branch['image'],
+                'schema_faq' => null,
+                'is_location_detail' => true,
+                'branch_data' => $branch
+            ];
+        }
+    }
+
+    // Intercept Virtual Office branch landing pages (/virtual-office-{branch}/)
+    // These branch URLs are virtual routes served by one shared template. Only
+    // 'virtual-office-surabaya' has a curated row in the `pages` table; every other
+    // branch would otherwise fall through to the generic Surabaya default below,
+    // sending a Jakarta visitor a <title> that says Surabaya. Source their SEO from
+    // locations_db per branch instead. An admin-curated `pages` row still wins if one
+    // exists, so this only fills the gap for branches that lack one.
+    if (preg_match('/^virtual-office-([a-z0-9-]+)$/', $slug, $vo_match)) {
+        $has_page_row = false;
+        try {
+            $has_page_row = (bool) Database::fetch("SELECT id FROM pages WHERE slug = ?", [$slug]);
+        } catch (Exception $e) {
+            // DB not ready — fall through to locations_db below
+        }
+
+        if (!$has_page_row) {
+            $vo_branch_key = $vo_match[1]; // e.g. 'jakarta', 'jakarta-timur'
+            // header.php already require_once's locations_data.php at global scope, which
+            // makes a require_once here a no-op that never populates a local $locations_db.
+            // Pull the global instead, loading it ourselves only if no one has yet.
+            global $locations_db;
+            if (!isset($locations_db) || !is_array($locations_db)) {
+                $locations_data_path = dirname(__FILE__) . '/locations_data.php';
+                if (file_exists($locations_data_path)) {
+                    require $locations_data_path;
+                }
+            }
+            if (isset($locations_db[$vo_branch_key]['seo'])) {
+                $vo_b = $locations_db[$vo_branch_key];
                 return [
-                    'title' => $branch['seo']['title'],
-                    'meta_description' => $branch['seo']['description'],
-                    'canonical_url' => BASE_URL . 'lokasi-urban-office/' . $slug . '/',
-                    'og_title' => $branch['seo']['title'],
-                    'og_description' => $branch['seo']['description'],
-                    'og_image' => $branch['image'],
-                    'schema_faq' => null,
-                    'is_location_detail' => true,
-                    'branch_data' => $branch
+                    'title' => $vo_b['seo']['title'],
+                    'meta_description' => $vo_b['seo']['description'],
+                    'canonical_url' => BASE_URL . $slug . '/',
+                    'og_title' => $vo_b['seo']['title'],
+                    'og_description' => $vo_b['seo']['description'],
+                    'og_image' => $vo_b['image'],
+                    'schema_faq' => null
                 ];
             }
         }
+    }
+
+    // Per-city Private Office landing pages (/sewa-kantor-{city}/), pilot for service SEM.
+    // The default 'sewa-kantor-surabaya' keeps its curated `pages` row; other cities get
+    // generated, city-specific SEO so each is a distinct, relevant landing page.
+    if (preg_match('/^sewa-kantor-([a-z0-9-]+)$/', $slug, $sk_match)) {
+        $sk_has_row = false;
+        try {
+            $sk_has_row = (bool) Database::fetch("SELECT id FROM pages WHERE slug = ?", [$slug]);
+        } catch (Exception $e) {
+            // DB not ready — fall through to generated SEO below
+        }
+        if (!$sk_has_row) {
+            $sk_city = ucwords(str_replace('-', ' ', $sk_match[1]));
+            $sk_title = 'Sewa Kantor ' . $sk_city . ' - Private Office Fully Furnished | Urban Office';
+            $sk_desc = 'Sewa kantor privat (serviced office) siap pakai di ' . $sk_city . '. Fully furnished, internet fiber, resepsionis, bebas biaya utilitas, alamat bisnis prestisius.';
+            return [
+                'title' => $sk_title,
+                'meta_description' => $sk_desc,
+                'canonical_url' => BASE_URL . $slug . '/',
+                'og_title' => $sk_title,
+                'og_description' => $sk_desc,
+                'og_image' => BASE_URL . 'assets/images/og-default.png',
+                'schema_faq' => null
+            ];
+        }
+    }
+
+    // Per-city Meeting Room landing pages (/meeting-room-{city}/), pilot pattern for service SEM.
+    if (preg_match('/^meeting-room-([a-z0-9-]+)$/', $slug, $mr_match)) {
+        $mr_has_row = false;
+        try {
+            $mr_has_row = (bool) Database::fetch("SELECT id FROM pages WHERE slug = ?", [$slug]);
+        } catch (Exception $e) {
+            // DB not ready — fall through to generated SEO below
+        }
+        if (!$mr_has_row) {
+            $mr_city = ucwords(str_replace('-', ' ', $mr_match[1]));
+            $mr_title = 'Sewa Ruang Meeting ' . $mr_city . ' - Meeting Room Mulai 125Rb/Jam | Urban Office';
+            $mr_desc = 'Sewa ruang meeting (meeting room) di ' . $mr_city . ' per jam atau harian. Layar LED/proyektor, WiFi cepat, whiteboard, free flow air mineral, lokasi strategis.';
+            return [
+                'title' => $mr_title,
+                'meta_description' => $mr_desc,
+                'canonical_url' => BASE_URL . $slug . '/',
+                'og_title' => $mr_title,
+                'og_description' => $mr_desc,
+                'og_image' => BASE_URL . 'assets/images/og-default.png',
+                'schema_faq' => null
+            ];
+        }
+    }
+
+    // Per-city Coworking Space landing pages (/coworking-space-{city}/)
+    if (preg_match('/^coworking-space-([a-z0-9-]+)$/', $slug, $cs_match) && $cs_match[1] !== 'urban-office') {
+        try {
+            $cs_row = Database::fetch("SELECT * FROM pages WHERE slug = ?", [$slug]);
+            if ($cs_row) {
+                return [
+                    'title' => $cs_row['meta_title'] ?: $cs_row['title'] . ' - Urban Office',
+                    'meta_description' => $cs_row['meta_description'] ?: 'Temukan ruang kerja bersama di ' . ucwords(str_replace('-', ' ', $cs_match[1])),
+                    'canonical_url' => $cs_row['canonical_url'] ?: BASE_URL . $slug . '/',
+                    'og_title' => $cs_row['og_title'] ?: $cs_row['meta_title'] ?: $cs_row['title'],
+                    'og_description' => $cs_row['og_description'] ?: $cs_row['meta_description'],
+                    'og_image' => $cs_row['og_image'] ? (BASE_URL . $cs_row['og_image']) : BASE_URL . 'assets/images/og-default.png',
+                    'schema_faq' => $cs_row['schema_faq'] ? json_decode($cs_row['schema_faq'], true) : null
+                ];
+            }
+        } catch (Exception $e) {
+            // Fall through
+        }
+        $cs_city = ucwords(str_replace('-', ' ', $cs_match[1]));
+        $cs_title = 'Coworking Space ' . $cs_city . ' | Harian & Bulanan - Urban Office';
+        $cs_desc = 'Temukan ruang kerja bersama (coworking space) di ' . $cs_city . '. Meja kerja fleksibel per jam, harian, atau bulanan dengan fasilitas lengkap & internet cepat.';
+        return [
+            'title' => $cs_title,
+            'meta_description' => $cs_desc,
+            'canonical_url' => BASE_URL . $slug . '/',
+            'og_title' => $cs_title,
+            'og_description' => $cs_desc,
+            'og_image' => BASE_URL . 'assets/images/og-default.png',
+            'schema_faq' => null
+        ];
+    }
+
+    // Per-city Event Space landing pages (/event-space-{city}/)
+    if (preg_match('/^event-space-([a-z0-9-]+)$/', $slug, $es_match) && $es_match[1] !== '55k-perjam-urbanoffice') {
+        try {
+            $es_row = Database::fetch("SELECT * FROM pages WHERE slug = ?", [$slug]);
+            if ($es_row) {
+                return [
+                    'title' => $es_row['meta_title'] ?: $es_row['title'] . ' - Urban Office',
+                    'meta_description' => $es_row['meta_description'] ?: 'Sewa event space murah di ' . ucwords(str_replace('-', ' ', $es_match[1])),
+                    'canonical_url' => $es_row['canonical_url'] ?: BASE_URL . $slug . '/',
+                    'og_title' => $es_row['og_title'] ?: $es_row['meta_title'] ?: $es_row['title'],
+                    'og_description' => $es_row['og_description'] ?: $es_row['meta_description'],
+                    'og_image' => $es_row['og_image'] ? (BASE_URL . $es_row['og_image']) : BASE_URL . 'assets/images/og-default.png',
+                    'schema_faq' => $es_row['schema_faq'] ? json_decode($es_row['schema_faq'], true) : null
+                ];
+            }
+        } catch (Exception $e) {
+            // Fall through
+        }
+        $es_city = ucwords(str_replace('-', ' ', $es_match[1]));
+        $es_title = 'Sewa Event Space ' . $es_city . ' | Ruang Seminar & Workshop - Urban Office';
+        $es_desc = 'Sewa event space murah di ' . $es_city . ' untuk seminar, workshop, dan pelatihan bisnis. Kapasitas fleksibel dengan perlengkapan lengkap.';
+        return [
+            'title' => $es_title,
+            'meta_description' => $es_desc,
+            'canonical_url' => BASE_URL . $slug . '/',
+            'og_title' => $es_title,
+            'og_description' => $es_desc,
+            'og_image' => BASE_URL . 'assets/images/og-default.png',
+            'schema_faq' => null
+        ];
     }
 
     $default_seo = [
@@ -155,7 +317,14 @@ function get_page_seo(string $slug): array {
  */
 function render_seo_tags(string $slug): void {
     $seo = get_page_seo($slug);
-    
+
+    // Per-request robots override (e.g. thin tag archives set noindex,follow
+    // before including the header). Keeps such pages out of the index while
+    // still letting Google follow their internal links.
+    if (!empty($GLOBALS['seo_robots_override'])) {
+        $seo['meta_robots'] = $GLOBALS['seo_robots_override'];
+    }
+
     echo '<!-- SEO & Open Graph Tags -->' . "\n";
     echo '<title>' . sanitize($seo['title']) . '</title>' . "\n";
     echo '<meta name="description" content="' . sanitize($seo['meta_description']) . '">' . "\n";
@@ -478,7 +647,7 @@ function render_schema_markup(string $slug): void {
         'sharing-room-office',
         'pajak-dan-akunting'
     ];
-    if (in_array($slug, $speakable_pages)) {
+    if (in_array($slug, $speakable_pages) || preg_match('/^virtual-office-[a-z0-9-]+$/', $slug)) {
         $schemas[] = [
             '@context' => 'https://schema.org',
             '@type' => 'WebPage',

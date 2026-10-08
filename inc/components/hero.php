@@ -71,10 +71,13 @@ $card_desc = $card_desc ?? ($hero_card_content[$current_slug]['desc'] ?? $defaul
                 <span class="badge"><?php echo sanitize($hero_tag); ?></span>
             <?php endif; ?>
             <h1 style="margin-bottom: 20px; line-height: 1.25;"><?php echo sanitize($hero_title); ?></h1>
-            
+            <?php if (!empty($hero_subheading)): ?>
+                <p class="hero-subheading"><i class="bi bi-geo-alt-fill"></i> <?php echo sanitize($hero_subheading); ?></p>
+            <?php endif; ?>
+
             <!-- Mobile Hero Image Representation -->
             <div class="hero-img-wrap-mobile">
-                <img src="<?php echo $hero_img_src; ?>" alt="Urban Office Workspace">
+                <img src="<?php echo $hero_img_src; ?>" alt="Urban Office Workspace" width="1600" height="1000" fetchpriority="high" decoding="async">
                 <div class="hero-floating-card">
                     <p class="floating-card-title"><?php echo sanitize($card_title); ?></p>
                     <p class="floating-card-desc"><?php echo sanitize($card_desc); ?></p>
@@ -97,7 +100,7 @@ $card_desc = $card_desc ?? ($hero_card_content[$current_slug]['desc'] ?? $defaul
         
         <!-- Desktop Hero Image Representation -->
         <div class="hero-img-wrap-desktop">
-            <img src="<?php echo $hero_img_src; ?>" alt="Urban Office Workspace">
+            <img src="<?php echo $hero_img_src; ?>" alt="Urban Office Workspace" width="1600" height="1000" fetchpriority="high" decoding="async">
             <div class="hero-floating-card">
                 <p class="floating-card-title"><?php echo sanitize($card_title); ?></p>
                 <p class="floating-card-desc"><?php echo sanitize($card_desc); ?></p>
@@ -118,6 +121,27 @@ $card_desc = $card_desc ?? ($hero_card_content[$current_slug]['desc'] ?? $defaul
 /* Hero Content Styles */
 .hero-content {
     text-align: left;
+}
+
+/* Branch subheading under H1. Kept smaller than the H1 at every breakpoint;
+   shrunk further on mobile so it never competes with the hero headline. */
+.hero-subheading {
+    margin: -8px 0 20px;
+    font-size: 17px;
+    font-weight: 600;
+    color: #FF6B00;
+    line-height: 1.35;
+}
+@media (max-width: 768px) {
+    .hero-subheading {
+        font-size: 13px;
+        margin: -4px 0 16px;
+    }
+}
+@media (max-width: 576px) {
+    .hero-subheading {
+        font-size: 12px;
+    }
 }
 
 /* Hide mobile image wrap by default (desktop view) */

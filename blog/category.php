@@ -29,25 +29,26 @@ try {
     }
 
     // Query and count posts under this category
-    $count_sql = "SELECT COUNT(*) FROM posts p 
+    $count_sql = "SELECT COUNT(*) as total FROM posts p 
                   JOIN post_categories pc ON p.id = pc.post_id 
                   WHERE pc.category_id = ? AND p.status = 'published'";
     
-    $total_rows = Database::fetch($count_sql, [$category['id']])['COUNT(*)'];
-    $total_pages = ceil($total_rows / $limit);
+    $count_row = Database::fetch($count_sql, [$category['id']]);
+    $total_rows = (int)($count_row['total'] ?? 0);
+    $total_pages = max(1, ceil($total_rows / $limit));
 
     $posts_sql = "SELECT p.*, u.username as author_name FROM posts p 
                   JOIN users u ON p.author_id = u.id 
                   JOIN post_categories pc ON p.id = pc.post_id 
                   WHERE pc.category_id = ? AND p.status = 'published' 
-                  ORDER BY p.published_at DESC LIMIT ? OFFSET ?";
+                  ORDER BY p.published_at DESC LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
     
-    $posts = Database::fetchAll($posts_sql, [$category['id'], $limit, $offset]);
+    $posts = Database::fetchAll($posts_sql, [$category['id']]);
 
     // Fetch all categories for sidebar widget
     $categories = Database::fetchAll("SELECT * FROM categories ORDER BY name ASC");
-    // Fetch all tags for sidebar widget
-    $tags = Database::fetchAll("SELECT * FROM tags ORDER BY name ASC");
+    // Fetch only tags that have published posts
+    $tags = Database::fetchAll("SELECT t.*, COUNT(pt.post_id) as post_count FROM tags t JOIN post_tags pt ON t.id = pt.tag_id GROUP BY t.id HAVING post_count > 0 ORDER BY post_count DESC LIMIT 10");
 
 } catch (Exception $e) {
     error_log("Failed loading category archives: " . $e->getMessage());
@@ -59,48 +60,120 @@ try {
 }
 ?>
 
-<section class="hero-sec" style="padding: 120px 0 60px 0; background: linear-gradient(135deg, hsl(var(--clr-primary-light)) 0%, hsl(var(--clr-bg-primary)) 100%);">
+<style>
+.cat-pill:hover {
+    background-color: #ea580c !important;
+    color: #ffffff !important;
+    border-color: #ea580c !important;
+}
+@media (max-width: 991px) {
+    .blog-grid-container {
+        grid-template-columns: 1fr !important;
+        gap: 24px !important;
+    }
+    .blog-sidebar {
+        display: none !important;
+    }
+    .category-pills-bar {
+        justify-content: flex-start !important;
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        padding-bottom: 8px !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+    .cat-pill {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+}
+@media (max-width: 640px) {
+    .blog-post-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+    }
+    .blog-card-item {
+        border-radius: 10px !important;
+    }
+    .blog-card-img-wrap {
+        width: 100% !important;
+        aspect-ratio: 2 / 1 !important;
+        height: auto !important;
+    }
+    .blog-card-body {
+        padding: 12px 10px !important;
+    }
+    .blog-card-title {
+        font-size: 0.88rem !important;
+        line-height: 1.3 !important;
+        margin-bottom: 6px !important;
+    }
+    .blog-card-meta {
+        font-size: 0.7rem !important;
+        margin-bottom: 4px !important;
+    }
+    .blog-card-excerpt {
+        display: none !important;
+    }
+    .blog-card-link {
+        font-size: 0.78rem !important;
+        margin-top: 6px !important;
+    }
+}
+</style>
+
+<section class="hero-sec" style="padding: 120px 0 50px 0; background: linear-gradient(135deg, hsl(var(--clr-primary-light)) 0%, hsl(var(--clr-bg-primary)) 100%);">
     <div class="container text-center">
         <span class="hero-tag">Arsip Kategori</span>
         <h1 style="font-size: 2.5rem; margin-top: 10px;">Kategori: <?php echo sanitize($category['name']); ?></h1>
-        <p class="section-subtitle" style="margin-bottom: 0;">Menampilkan seluruh artikel di dalam kategori "<?php echo sanitize($category['name']); ?>".</p>
+        <p class="section-subtitle" style="margin-bottom: 20px;">Menampilkan seluruh artikel di dalam kategori "<?php echo sanitize($category['name']); ?>".</p>
+
+        <!-- Horizontal Category Filter Pills -->
+        <?php if (!empty($categories)): ?>
+            <div class="category-pills-bar" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 24px;">
+                <a href="<?php echo BASE_URL; ?>blog/" class="cat-pill" style="padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; background: #ffffff; color: hsl(var(--clr-text-main)); border: 1px solid hsl(var(--clr-border)); text-decoration: none;">Semua</a>
+                <?php foreach ($categories as $cat): 
+                    $isActive = ($cat['slug'] === $cat_slug);
+                ?>
+                    <a href="<?php echo BASE_URL . 'category/' . $cat['slug'] . '/'; ?>" class="cat-pill <?php echo $isActive ? 'active' : ''; ?>" style="padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; background: <?php echo $isActive ? '#ea580c' : '#ffffff'; ?>; color: <?php echo $isActive ? '#ffffff' : 'hsl(var(--clr-text-main))'; ?>; border: 1px solid <?php echo $isActive ? '#ea580c' : 'hsl(var(--clr-border))'; ?>; text-decoration: none; transition: all 0.2s ease;">
+                        <?php echo sanitize($cat['name']); ?>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
     </div>
 </section>
 
-<!-- App Promo Section -->
-<?php include DIR_ROOT . 'inc/components/app_section.php'; ?>
-
-
 <section class="section">
-    <div class="container" style="display: grid; grid-template-columns: 3fr 1fr; gap: 40px;">
+    <div class="container blog-grid-container" style="display: grid; grid-template-columns: 3fr 1fr; gap: 40px;">
         
         <!-- Posts List -->
         <div>
             <?php if (!empty($posts)): ?>
                 <div class="blog-post-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;">
                     <?php foreach ($posts as $post): 
-                        $image_path = $post['featured_image'] ? BASE_URL . $post['featured_image'] : BASE_URL . 'assets/images/og-default.png';
+                        $image_path = media_url($post['featured_image']) ?: BASE_URL . 'assets/images/og-default.png';
                         $pub_date = date('d M Y', strtotime($post['published_at'] ?: $post['created_at']));
                     ?>
-                        <div class="premium-card" style="padding:0; overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; border-color:hsl(var(--clr-border));">
-                            <div style="height: 180px; overflow:hidden; background-color: #ffffff; display: flex; align-items: center; justify-content: center;">
-                                <img src="<?php echo $image_path; ?>" alt="<?php echo sanitize($post['title']); ?>" style="width:100%; height:100%; object-fit:contain;">
+                        <div class="blog-card-item" style="padding: 0 !important; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid hsl(var(--clr-border)); border-radius: 12px; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                            <div class="blog-card-img-wrap" style="height: 180px; width: 100%; overflow: hidden; background-color: #f8fafc; margin: 0; padding: 0;">
+                                <img src="<?php echo $image_path; ?>" alt="<?php echo sanitize($post['title']); ?>" style="width: 100%; height: 100%; object-fit: cover; display: block; margin: 0; padding: 0;">
                             </div>
-                            <div style="padding: 24px; flex-grow:1; display:flex; flex-direction:column; justify-content:space-between;">
+                            <div class="blog-card-body" style="padding: 24px; flex-grow:1; display:flex; flex-direction:column; justify-content:space-between;">
                                 <div>
-                                    <div style="font-size:0.8rem; color:hsl(var(--clr-text-muted)); margin-bottom: 8px;">
+                                    <div class="blog-card-meta" style="font-size:0.8rem; color:hsl(var(--clr-text-muted)); margin-bottom: 8px;">
                                         By <strong><?php echo sanitize($post['author_name']); ?></strong> &bull; <?php echo $pub_date; ?>
                                     </div>
-                                    <h3 style="font-size: 1.15rem; line-height: 1.4; margin-bottom: 12px;">
+                                    <h3 class="blog-card-title" style="font-size: 1.15rem; line-height: 1.4; margin-bottom: 12px;">
                                         <a href="<?php echo BASE_URL . 'blog/' . $post['slug'] . '/'; ?>" style="color: hsl(var(--clr-text-main));">
                                             <?php echo sanitize($post['title']); ?>
                                         </a>
                                     </h3>
-                                    <p style="font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5;">
+                                    <p class="blog-card-excerpt" style="font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5; color: hsl(var(--clr-text-muted));">
                                         <?php echo sanitize($post['excerpt'] ?: substr(strip_tags($post['content']), 0, 100) . '...'); ?>
                                     </p>
                                 </div>
-                                <a href="<?php echo BASE_URL . 'blog/' . $post['slug'] . '/'; ?>" style="font-weight:600; font-size:0.9rem; display:inline-flex; align-items:center; gap:6px;">
+                                <a href="<?php echo BASE_URL . 'blog/' . $post['slug'] . '/'; ?>" class="blog-card-link" style="font-weight:600; font-size:0.9rem; color: #ea580c; display:inline-flex; align-items:center; gap:6px; text-decoration: none;">
                                     Baca Artikel &rarr;
                                 </a>
                             </div>
@@ -140,17 +213,17 @@ try {
                 <h4 style="border-bottom: 2px solid hsl(var(--clr-primary)); padding-bottom: 8px; margin-bottom: 16px; font-size: 1.1rem;">Kategori</h4>
                 <ul style="list-style: none; display: flex; flex-direction: column; gap: 10px;">
                     <?php if (!empty($categories)): foreach ($categories as $cat): ?>
-                        <li><a href="<?php echo BASE_URL . 'category/' . $cat['slug'] . '/'; ?>" style="font-weight: 500; font-size: 0.95rem; color: <?php echo $cat['slug'] === $cat_slug ? 'hsl(var(--clr-primary))' : 'hsl(var(--clr-text-main))'; ?>;">&bull; <?php echo sanitize($cat['name']); ?></a></li>
+                        <li><a href="<?php echo BASE_URL . 'category/' . $cat['slug'] . '/'; ?>" style="font-weight: 500; font-size: 0.95rem; color: <?php echo $cat['slug'] === $cat_slug ? '#ea580c; font-weight:700;' : 'hsl(var(--clr-text-main))'; ?>; text-decoration: none;">&bull; <?php echo sanitize($cat['name']); ?></a></li>
                     <?php endforeach; endif; ?>
                 </ul>
             </div>
 
-            <!-- Tags Widget -->
+            <!-- Tags Widget (Top 8 popular tags only) -->
             <div style="background-color: hsl(var(--clr-bg-surface)); padding: 24px; border-radius: var(--radius-md); border: 1px solid hsl(var(--clr-border));">
                 <h4 style="border-bottom: 2px solid hsl(var(--clr-primary)); padding-bottom: 8px; margin-bottom: 16px; font-size: 1.1rem;">Tags Populer</h4>
                 <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                    <?php if (!empty($tags)): foreach ($tags as $tag): ?>
-                        <a href="<?php echo BASE_URL . 'tag/' . $tag['slug'] . '/'; ?>" class="hero-tag" style="margin: 0; font-size: 0.75rem; text-transform: none; text-decoration: none; padding: 4px 10px; background-color: hsl(var(--clr-bg-secondary)); color: hsl(var(--clr-text-muted)); border: 1px solid hsl(var(--clr-border));">
+                    <?php if (!empty($tags)): foreach (array_slice($tags, 0, 8) as $tag): ?>
+                        <a href="<?php echo BASE_URL . 'tag/' . $tag['slug'] . '/'; ?>" class="hero-tag" style="margin: 0; font-size: 0.75rem; text-transform: none; text-decoration: none; padding: 4px 10px; background-color: hsl(var(--clr-bg-secondary)); color: hsl(var(--clr-text-muted)); border: 1px solid hsl(var(--clr-border)); border-radius: 6px;">
                             #<?php echo sanitize($tag['name']); ?>
                         </a>
                     <?php endforeach; endif; ?>
@@ -160,7 +233,5 @@ try {
 
     </div>
 </section>
-
-
 
 <?php require_once dirname(dirname(__FILE__)) . '/inc/footer.php'; ?>

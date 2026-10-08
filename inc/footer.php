@@ -13,6 +13,8 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'footer.php') {
 }
 ?>
 
+    </main><!-- /#main-content (opened in inc/header.php) -->
+
     <!-- Main Footer -->
     <footer class="footer">
         <div class="container">
@@ -26,18 +28,23 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'footer.php') {
                     <div class="footer-socials">
                         <a href="https://www.facebook.com/urbanoffice.co.id/" target="_blank" class="footer-social-btn fb-btn" aria-label="Facebook">
                             <i class="bi bi-facebook"></i>
+                            <span class="visually-hidden">Facebook Urban Office</span>
                         </a>
                         <a href="https://www.instagram.com/urbanoffice.co.id/" target="_blank" class="footer-social-btn ig-btn" aria-label="Instagram">
                             <i class="bi bi-instagram"></i>
+                            <span class="visually-hidden">Instagram Urban Office</span>
                         </a>
                         <a href="https://x.com/urbanofficecoid" target="_blank" class="footer-social-btn tw-btn" aria-label="Twitter">
                             <i class="bi bi-twitter-x"></i>
+                            <span class="visually-hidden">Twitter X Urban Office</span>
                         </a>
                         <a href="https://id.linkedin.com/company/urbanofficeid" target="_blank" class="footer-social-btn ln-btn" aria-label="LinkedIn">
                             <i class="bi bi-linkedin"></i>
+                            <span class="visually-hidden">LinkedIn Urban Office</span>
                         </a>
                         <a href="https://www.youtube.com/channel/UCxIPwkXzEu-0mmBlIZL2yYw" target="_blank" class="footer-social-btn yt-btn" aria-label="YouTube">
                             <i class="bi bi-youtube"></i>
+                            <span class="visually-hidden">YouTube Urban Office</span>
                         </a>
                     </div>
                 </div>
@@ -85,8 +92,8 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'footer.php') {
                         <p>WA : 081 0762 0100</p>
                     </div>
                     <div class="footer-map-wrapper" style="position: relative; margin-top: 12px;">
-                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.348638974577!2d112.78023107476097!3d-7.318892692689255!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7fa535f29910d%3A0x8bbd360efbe36368!2sUrban%20Office%20Surabaya!5e0!3m2!1sid!2sid!4v1718000000000!5m2!1sid!2sid" width="100%" height="110" style="border:0; border-radius: var(--radius-sm); display: block;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-                        <a href="https://maps.app.goo.gl/nACcB9LqEPn27REY9" target="_blank" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; cursor: pointer;" aria-label="Buka Google Maps"></a>
+                        <iframe title="Peta Lokasi Urban Office Surabaya" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.348638974577!2d112.78023107476097!3d-7.318892692689255!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7fa535f29910d%3A0x8bbd360efbe36368!2sUrban%20Office%20Surabaya!5e0!3m2!1sid!2sid!4v1718000000000!5m2!1sid!2sid" width="100%" height="110" style="border:0; border-radius: var(--radius-sm); display: block;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                        <a href="https://maps.app.goo.gl/nACcB9LqEPn27REY9" target="_blank" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; cursor: pointer;" aria-label="Buka Google Maps"><span class="visually-hidden">Buka Peta Lokasi Google Maps</span></a>
                     </div>
                 </div>
             </div>
@@ -109,6 +116,55 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'footer.php') {
             <span class="wa-icon"><i class="bi bi-whatsapp"></i></span>
         </div>
     </a>
+
+    <!-- Promotional Pop-up Modal Component -->
+    <?php include_once __DIR__ . '/components/popup_banner.php'; ?>
+
+    <!-- Single source of truth for the pricing branch switcher: generated from
+         inc/locations_data.php so prices/address/KPP are maintained in ONE place.
+         Emitted before main.js (which is deferred) so window.branchPricingData is ready. -->
+    <?php
+    require_once __DIR__ . '/locations_data.php';
+    if (isset($locations_db) && is_array($locations_db)):
+        $branch_pricing_js = [];
+        // All branches share the same 3 VO tier prices (Starter/Luxury/Priority); only address
+        // & KPP vary per branch. Take the canonical prices from the 'surabaya' reference so the
+        // switcher always shows 3 tiers for every branch.
+        $bp_canon = [];
+        if (!empty($locations_db['surabaya']['pricing'])) {
+            $bp_keys = ['starter', 'luxury', 'priority'];
+            $bp_ci = 0;
+            foreach ($locations_db['surabaya']['pricing'] as $bp_cp) {
+                if (($bp_cp['category'] ?? '') === 'virtual-office' && isset($bp_keys[$bp_ci])) {
+                    $bp_canon[$bp_keys[$bp_ci]] = $bp_cp['price'];
+                    $bp_ci++;
+                }
+            }
+        }
+        foreach ($locations_db as $bp_slug => $bp_b) {
+            if (empty($bp_b['pricing'])) {
+                continue;
+            }
+            $bp_has_vo = false;
+            foreach ($bp_b['pricing'] as $bp_p) {
+                if (($bp_p['category'] ?? '') === 'virtual-office') {
+                    $bp_has_vo = true;
+                    break;
+                }
+            }
+            if (!$bp_has_vo) {
+                continue;
+            }
+            $branch_pricing_js[$bp_slug] = [
+                'name'    => $bp_b['short_title'] . ' (' . $bp_b['location'] . ')',
+                'address' => $bp_b['address'],
+                'kpp'     => isset($bp_b['kpp']) ? $bp_b['kpp'] : '',
+                'prices'  => $bp_canon,
+            ];
+        }
+    ?>
+    <script>window.branchPricingData = <?php echo json_encode($branch_pricing_js, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;</script>
+    <?php endif; ?>
 
     <!-- Frontend Script file -->
     <script src="<?php echo BASE_URL; ?>assets/js/main.js?v=<?php echo filemtime(dirname(__FILE__) . '/../assets/js/main.js'); ?>" defer></script>

@@ -18,16 +18,25 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'locations_data.php') {
 }
 
 $locations_db = [
-    'merr' => [
-        'slug' => 'merr',
+    'surabaya' => [
+        'slug' => 'surabaya',
         'title' => 'Urban Office - MERR (Surabaya Timur)',
-        'short_title' => 'MERR (Surabaya Timur)',
+        // Real Google Maps reviews (verbatim). Shown with the Google badge because the source IS Google.
+        'google_reviews' => [
+            ['name' => 'Rahmi Izzah Fatihiyah', 'rating' => 5, 'text' => 'Beberapa kali pakai event space di sini, pelayanannya ramah, bersih, nyaman, dan harga terjangkau. Package-nya lengkap dengan coffee break dan lunch.'],
+            ['name' => 'kang kewok1922', 'rating' => 5, 'text' => 'Kantor yang nyaman dan asik, cocok buat yang dinas dari luar kota dan butuh kantor untuk meeting. Harga terjangkau, parkir gratis mobil atau motor.'],
+            ['name' => 'Marta Yudha', 'rating' => 5, 'text' => 'Sewa meeting room di sini sudah ketiga kalinya. Proses booking cepat, admin ramah, dan ruangan nyaman, harga oke.'],
+            ['name' => 'fara diba', 'rating' => 5, 'text' => 'Tempatnya cozy sekali, coworking di sini waktu zoom webinar bareng teman. Menu cafenya juga ramah di kantong.'],
+            ['name' => 'Ayu Masyithoh', 'rating' => 5, 'text' => 'Temboknya penuh desain yang instagramable. Tempatnya cukup luas, banyak colokan, pencahayaan cukup, dan parkir cukup untuk mobil dan motor.'],
+        ],
+        'short_title' => 'MERR',
         'city' => 'Surabaya',
         'location' => 'Surabaya Timur',
         'address' => 'Jl. Dr. Ir. H. Soekarno No.470, Kedung Baruk, Kec. Rungkut, Surabaya, Jawa Timur 60298',
+        'kpp' => 'KPP Rungkut',
         'rating' => '4.9',
         'reviews_count' => '156',
-        'image' => BASE_URL . 'assets/images/branch/urban new (2).png',
+        'image' => BASE_URL . 'assets/images/branch/merr new.png',
         'map_embed' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.348638974577!2d112.78023107476097!3d-7.318892692689255!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7fa535f29910d%3A0x8bbd360efbe36368!2sUrban%20Office%20Surabaya!5e0!3m2!1sid!2sid!4v1718000000000!5m2!1sid!2sid',
         'map_link' => 'https://maps.app.goo.gl/nACcB9LqEPn27REY9',
         'services' => 'VO, Serviced Office, Meeting Room, Coworking, Event Space, Sharing Room Office',
@@ -47,7 +56,7 @@ $locations_db = [
         ],
         'seo' => [
             'title' => 'Sewa Virtual Office & Private Office MERR Surabaya Timur - Urban Office',
-            'description' => 'Sewa Virtual Office & Private Office murah di MERR Surabaya Timur. Fasilitas lengkap: Domisili Resmi, Meeting Room, Internet Cepat, & Free Flow Drinks.',
+            'description' => 'Sewa Virtual Office & Private Office murah di MERR Surabaya Timur. Fasilitas lengkap: Alamat Kantor Prestisius, Meeting Room, Internet Cepat, & Free Flow Drinks.',
             'keywords' => 'virtual office merr, sewa kantor surabaya timur, coworking space merr, meeting room rungkut'
         ],
         'pricing' => [
@@ -56,12 +65,12 @@ $locations_db = [
                 'name' => 'Virtual Office Starter',
                 'price' => '385.000',
                 'period' => 'bulan',
-                'desc' => 'Paket hemat alamat domisili hukum perkantoran resmi untuk PT/CV baru.',
+                'desc' => 'Paket hemat alamat kantor prestisius di gedung komersial.',
                 'features' => [
-                    'Alamat Bisnis Prestisius & Legal',
+                    'Alamat Bisnis Prestisius & Strategis',
                     'Penanganan Surat & Paket Masuk',
                     'Notifikasi Surat Masuk via Email/WA',
-                    'Sertifikat Domisili Resmi',
+                    'Hak Penggunaan Alamat Kantor',
                     'Resepsionis Profesional',
                     'Akses Meeting Room 2x 2 Jam / Bulan'
                 ],
@@ -78,7 +87,7 @@ $locations_db = [
                     'Akses Meeting Room 2x 3 Jam / Bulan',
                     'Nomor Telepon Kantor Bersama (Shared Line)',
                     'Layanan Resepsionis untuk Penerimaan Tamu',
-                    'Sertifikat Domisili Resmi'
+                    'Hak Penggunaan Alamat Kantor'
                 ],
                 'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Luxury di Cabang MERR.'
             ],
@@ -87,12 +96,12 @@ $locations_db = [
                 'name' => 'Virtual Office Priority',
                 'price' => '770.000',
                 'period' => 'bulan',
-                'desc' => 'Layanan premium lengkap termasuk bantuan konsultasi legalitas/pajak.',
+                'desc' => 'Layanan premium lengkap dengan bonus layanan pendukung bisnis pilihan.',
                 'features' => [
                     'Semua Layanan Paket Luxury',
                     'Akses Meeting Room 2x 4 Jam / Bulan',
                     'Nomor Telepon Kantor Bersama',
-                    'Pilihan Layanan Khusus (Tax Consultation / Digital Marketing / Kirim Dokumen Free)'
+                    'Pilihan Layanan Pendukung Bisnis (Digital Marketing / Kirim Dokumen / Virtual Assistant)'
                 ],
                 'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Priority di Cabang MERR.'
             ],
@@ -225,13 +234,22 @@ $locations_db = [
             'image' => 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'
         ]
     ],
-    'klampis' => [
-        'slug' => 'klampis',
+    'surabaya-timur' => [
+        'slug' => 'surabaya-timur',
         'title' => 'Urban Office - Klampis (Surabaya Timur)',
-        'short_title' => 'Klampis (Surabaya Timur)',
+        // Real Google Maps reviews (verbatim). Shown with the Google badge because the source IS Google.
+        'google_reviews' => [
+            ['name' => 'Salim Sholahudin', 'rating' => 5, 'text' => 'Meeting room pilihan di Surabaya, dekat dengan pusat kota, jadi tidak jauh-jauh kalau mau balik ke sini lagi.'],
+            ['name' => 'Ninna Rohali', 'rating' => 5, 'text' => 'Tempatnya nyaman banget buat working, rekomended sih ini. Bikin makin semangat kerja.'],
+            ['name' => 'Dad HHans', 'rating' => 5, 'text' => 'Salah satu pilihan kalau butuh virtual office dan meeting mendadak di sekitar Klampis Jaya.'],
+            ['name' => 'Ayu Agustiningsih', 'rating' => 5, 'text' => 'Akhirnya nemu juga tempat kerja fleksibel, gak ribet, cozy dan ramah di kantong.'],
+            ['name' => 'anisa nurbaiti rahman', 'rating' => 5, 'text' => 'Meeting di sini nyaman banget, ruangannya oke.'],
+        ],
+        'short_title' => 'Klampis',
         'city' => 'Surabaya',
         'location' => 'Surabaya Timur',
         'address' => 'Ruko Klampis Megah, Jl. Klampis Jaya blok B-20, Klampis Ngasem, Kec. Sukolilo, Surabaya, Jawa Timur 60117',
+        'kpp' => 'KPP Gubeng',
         'rating' => '4.8',
         'reviews_count' => '112',
         'image' => BASE_URL . 'assets/images/branch/klampis.png',
@@ -253,7 +271,7 @@ $locations_db = [
         ],
         'seo' => [
             'title' => 'Sewa Kantor & Virtual Office Klampis Surabaya - Urban Office',
-            'description' => 'Sewa kantor murah & Virtual Office di Ruko Klampis Megah, Surabaya. Lengkap dengan Meeting Room, domisili legalitas hukum, dan lingkungan strategis.',
+            'description' => 'Sewa kantor murah & Virtual Office di Ruko Klampis Megah, Surabaya. Lengkap dengan Meeting Room, lingkungan bisnis strategis, dan akses mudah.',
             'keywords' => 'virtual office klampis, sewa kantor klampis jaya, coworking space klampis'
         ],
         'pricing' => [
@@ -262,12 +280,12 @@ $locations_db = [
                 'name' => 'Virtual Office Starter',
                 'price' => '385.000',
                 'period' => 'bulan',
-                'desc' => 'Dapatkan domisili bisnis prestisius di area strategis Klampis jaya.',
+                'desc' => 'Dapatkan alamat bisnis prestisius di area strategis Klampis Jaya.',
                 'features' => [
-                    'Alamat Bisnis Sah untuk Kemenkumham & NIB',
+                    'Alamat Bisnis Prestisius di Gedung Komersial',
                     'Layanan Penanganan Surat & Paket',
                     'Notifikasi Chat WhatsApp Surat Masuk',
-                    'Surat Keterangan Domisili Kelurahan',
+                    'Notifikasi Surat Masuk via WhatsApp',
                     'Diskon Ruang Meeting Khusus Member'
                 ],
                 'cta_wa' => 'Halo Urban Office, saya ingin memesan Virtual Office Starter di Cabang Klampis.'
@@ -277,7 +295,7 @@ $locations_db = [
                 'name' => 'Virtual Office Luxury',
                 'price' => '620.000',
                 'period' => 'bulan',
-                'desc' => 'Sempurna untuk bisnis legalitas mapan dengan akses ruang rapat.',
+                'desc' => 'Sempurna untuk bisnis yang sedang berkembang dengan akses ruang rapat.',
                 'features' => [
                     'Alamat Bisnis Komersial Klampis Megah',
                     'Penerimaan Surat Menyurat & Paket',
@@ -351,16 +369,17 @@ $locations_db = [
             'image' => 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80'
         ]
     ],
-    'grand-sungkono-lagoon' => [
-        'slug' => 'grand-sungkono-lagoon',
+    'surabaya-barat' => [
+        'slug' => 'surabaya-barat',
         'title' => 'Urban Office - Grand Sungkono Lagoon (Surabaya Barat)',
-        'short_title' => 'Grand Sungkono Lagoon (Surabaya Barat)',
+        'short_title' => 'Grand Sungkono Lagoon',
         'city' => 'Surabaya',
         'location' => 'Surabaya Barat',
         'address' => 'PP54+MJW, Jl. KH Abdul Wahab Siamin Surabaya, Dukuh Pakis, Kec. Dukuhpakis, Surabaya, Jawa Timur 60225',
+        'kpp' => 'KPP Karang Pilang',
         'rating' => '4.9',
         'reviews_count' => '94',
-        'image' => BASE_URL . 'assets/images/branch/urban office - grand sungkono lagoon.webp',
+        'image' => BASE_URL . 'assets/images/branch/gsl new.png',
         'map_embed' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.51479860682!2d112.69532587476075!3d-7.295880492711311!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7fde2e8b0e12f%3A0xe54d89694ea519ee!2sGrand%20Sungkono%20Lagoon!5e0!3m2!1sid!2sid!4v1718000000002!5m2!1sid!2sid',
         'map_link' => 'https://maps.app.goo.gl/tJ9DksjK31GjLdC16',
         'services' => 'VO, Meeting Room (Klaim Jatah VO)',
@@ -390,7 +409,7 @@ $locations_db = [
                 'period' => 'bulan',
                 'desc' => 'Alamat kantor virtual di kawasan mixed-use terpadu Sungkono Lagoon.',
                 'features' => [
-                    'Alamat Bisnis Legalitas Prestisius',
+                    'Alamat Bisnis Prestisius & Strategis',
                     'Penerimaan & Penyimpanan Surat Profesional',
                     'Pemberitahuan Instan Surat via WA/Email',
                     'Akses Meeting Room 2x 2 Jam/Bulan',
@@ -431,8 +450,8 @@ $locations_db = [
         ],
         'faq' => [
             [
-                'question' => 'Apakah alamat Grand Sungkono Lagoon bisa digunakan untuk pengurusan PKP?',
-                'answer' => 'Ya, lokasi kami memenuhi syarat zonasi perkantoran komersial sehingga bisa digunakan untuk mendaftar PKP (Pengusaha Kena Pajak) sesuai aturan perpajakan yang berlaku.'
+                'question' => 'Apa keunggulan alamat kantor di Grand Sungkono Lagoon?',
+                'answer' => 'Grand Sungkono Lagoon berada di kawasan perkantoran komersial premium Surabaya Barat dengan citra bisnis yang kuat dan akses yang mudah bagi klien Anda.'
             ],
             [
                 'question' => 'Apakah area gedung terhubung langsung dengan pusat perbelanjaan?',
@@ -442,21 +461,31 @@ $locations_db = [
         'testimonial' => [
             'name' => 'Hendra Wijaya',
             'role' => 'Managing Partner Law Firm Wijaya',
-            'text' => 'Mengalihkan alamat legalitas firma hukum kami ke Grand Sungkono Lagoon adalah keputusan terbaik. Citra perusahaan kami di mata klien sangat meningkat berkat representasi alamat prestisius ini.',
+            'text' => 'Mengalihkan alamat kantor perusahaan kami ke Grand Sungkono Lagoon adalah keputusan terbaik. Citra perusahaan kami di mata klien sangat meningkat berkat representasi alamat prestisius ini.',
             'rating' => 5,
             'image' => 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80'
         ]
     ],
-    'fatmawati' => [
-        'slug' => 'fatmawati',
+    'jakarta' => [
+        'slug' => 'jakarta',
         'title' => 'Urban Office - Fatmawati (Jakarta Selatan)',
-        'short_title' => 'Fatmawati (Jakarta Selatan)',
+        'short_title' => 'Fatmawati',
         'city' => 'Jakarta',
         'location' => 'Jakarta Selatan',
+        'nearby' => 'dekat MRT Fatmawati & TB Simatupang',
+        // Real Google Maps reviews (verbatim). Shown with the Google badge because the source IS Google.
+        'google_reviews' => [
+            ['name' => 'Muhammad Heriyanto', 'rating' => 5, 'text' => 'Pelayanannya mantap dan timnya murah senyum.'],
+            ['name' => 'Hermin Yuliawati', 'rating' => 5, 'text' => 'Letak sangat strategis, harga cukup bersaing, parkir mudah.'],
+            ['name' => 'Frezcup', 'rating' => 5, 'text' => 'Ternyata bisa juga buat bantu urus legalitas, jadi gak pusing ke depannya.'],
+            ['name' => 'Maulana Sechuti', 'rating' => 5, 'text' => 'Pelayanan ramah dan sesuai dengan yang saya inginkan.'],
+            ['name' => 'Techno Clip', 'rating' => 5, 'text' => 'Tempatnya masih baru namun pelayanannya sudah profesional. Rekomended untuk tempat kumpul bagi yang punya bisnis startup.'],
+        ],
         'address' => 'Jl. RS. Fatmawati Raya No.35A 2, RT.2/RW.5, Cilandak Bar., Kec. Cilandak, Jakarta, Daerah Khusus Ibukota Jakarta 12430',
+        'kpp' => 'KPP Cilandak',
         'rating' => '4.8',
         'reviews_count' => '108',
-        'image' => BASE_URL . 'assets/images/branch/urban office fatmawati.jpg',
+        'image' => BASE_URL . 'assets/images/branch/urban office fatmawati.webp',
         'map_embed' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3965.955375497274!2d106.79426917475143!3d-6.269601093719049!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69f1a0e9b9cf99%3A0x6b453e1a63c64e6b!2sJl.%20R.S.%20Fatmawati%20Raya%2C%20Cilandak%2C%20Kota%20Jakarta%20Selatan%2C%20Daerah%20Khusus%20Ibukota%20Jakarta!5e0!3m2!1sid!2sid!4v1718000000003!5m2!1sid!2sid',
         'map_link' => 'https://maps.app.goo.gl/e7m1Bcy75H9zRjC8A',
         'services' => 'VO, Serviced Office, Meeting Room, Coworking, Event Space, Sharing Room Office',
@@ -475,7 +504,7 @@ $locations_db = [
         ],
         'seo' => [
             'title' => 'Virtual Office Jakarta Selatan MRT Fatmawati - Urban Office',
-            'description' => 'Sewa Virtual Office & Ruang Kantor di Fatmawati Jakarta Selatan. Strategis dekat Stasiun MRT & CBD TB Simatupang. Alamat domisili resmi.',
+            'description' => 'Sewa Virtual Office & Ruang Kantor di Fatmawati Jakarta Selatan. Strategis dekat Stasiun MRT & CBD TB Simatupang. Alamat kantor prestisius.',
             'keywords' => 'virtual office fatmawati, sewa kantor jakarta selatan, office dekat mrt fatmawati'
         ],
         'pricing' => [
@@ -484,7 +513,7 @@ $locations_db = [
                 'name' => 'Virtual Office Starter',
                 'price' => '385.000',
                 'period' => 'bulan',
-                'desc' => 'Dapatkan alamat kantor Jakarta Selatan resmi untuk pendirian PT/CV Anda.',
+                'desc' => 'Dapatkan alamat kantor prestisius di Jakarta Selatan untuk bisnis Anda.',
                 'features' => [
                     'Alamat Bisnis Sah & Zoned Perkantoran Jaksel',
                     'Penerimaan Dokumen & Paket Surat Menyurat',
@@ -629,13 +658,14 @@ $locations_db = [
             'image' => 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80'
         ]
     ],
-    'gorebiz' => [
-        'slug' => 'gorebiz',
+    'jakarta-timur' => [
+        'slug' => 'jakarta-timur',
         'title' => 'Urban Office - Gorebiz (Jakarta Timur)',
-        'short_title' => 'Gorebiz (Jakarta Timur)',
+        'short_title' => 'Gorebiz',
         'city' => 'Jakarta',
         'location' => 'Jakarta Timur',
         'address' => 'Jl. Raya Bekasi.KM.17, RT.4/RW.3, Jatinegara, Kec. Cakung, Kota Jakarta Timur, Daerah Khusus Ibukota Jakarta 13930',
+        'kpp' => 'KPP Cakung Satu', // TODO: verifikasi nama KPP yang benar
         'rating' => '4.7',
         'reviews_count' => '78',
         'image' => BASE_URL . 'assets/images/branch/gorebiz.png',
@@ -644,7 +674,7 @@ $locations_db = [
         'services' => 'VO, Serviced Office, Meeting Room',
         'advantages' => [
             'Akses langsung ke jalan arteri utama Jl. Raya Bekasi KM 17',
-            'Zonasi komersial resmi untuk kemudahan perizinan badan usaha Jakarta',
+            'Kawasan bisnis komersial strategis di Jakarta Timur (Cakung/Jatinegara)',
             'Layanan surat-menyurat aman dan tepercaya dengan pemberitahuan real-time',
             'Fasilitas internet serat optik dedicated',
             'Pantry bersama & Free Flow minuman hangat/dingin',
@@ -657,7 +687,7 @@ $locations_db = [
         ],
         'seo' => [
             'title' => 'Virtual Office Jakarta Timur Murah PT/CV - Urban Office',
-            'description' => 'Sewa Virtual Office murah di Cakung Jatinegara Jakarta Timur. Memenuhi syarat domisili zonasi usaha komersial Jakarta Timur.',
+            'description' => 'Sewa Virtual Office murah di Cakung Jatinegara Jakarta Timur. Alamat kantor prestisius di kawasan bisnis komersial Jakarta Timur.',
             'keywords' => 'virtual office jakarta timur, sewa kantor cakung, virtual office murah resignation'
         ],
         'pricing' => [
@@ -666,11 +696,11 @@ $locations_db = [
                 'name' => 'Virtual Office Starter',
                 'price' => '385.000',
                 'period' => 'bulan',
-                'desc' => 'Solusi domisili bisnis legal di wilayah administratif Jakarta Timur.',
+                'desc' => 'Solusi alamat bisnis prestisius di wilayah strategis Jakarta Timur.',
                 'features' => [
-                    'Alamat Legal untuk NIB & Akta Notaris',
+                    'Alamat Bisnis Prestisius di Gedung Komersial',
                     'Penyimpanan Surat & Notifikasi via WA',
-                    'Gratis Surat Keterangan Domisili',
+                    'Gratis Hak Penggunaan Alamat Kantor',
                     'Diskon Member untuk Rental Meeting Room'
                 ],
                 'cta_wa' => 'Halo Urban Office, saya tertarik dengan paket Virtual Office Starter di Gorebiz Jakarta Timur.'
@@ -680,7 +710,7 @@ $locations_db = [
                 'name' => 'Virtual Office Luxury',
                 'price' => '620.000',
                 'period' => 'bulan',
-                'desc' => 'Paket kantor virtual premium untuk mempercepat izin PKP di Jakarta Timur.',
+                'desc' => 'Paket kantor virtual premium dengan fasilitas lengkap di Jakarta Timur.',
                 'features' => [
                     'Semua Fasilitas Paket Starter',
                     'Nomor Telepon Bersama Jakarta (021)',
@@ -723,8 +753,8 @@ $locations_db = [
         ],
         'faq' => [
             [
-                'question' => 'Apakah zonasi di Jl. Raya Bekasi mendukung untuk usaha logistik dan perdagangan?',
-                'answer' => 'Ya, lokasi Gorebiz berada di zonasi komersial perdagangan dan industri sehingga sangat ideal untuk perusahaan perdagangan besar, logistik, maupun penyedia jasa lainnya.'
+                'question' => 'Apakah lokasi Jl. Raya Bekasi cocok untuk usaha logistik dan perdagangan?',
+                'answer' => 'Ya, lokasi Gorebiz berada di kawasan komersial perdagangan dan industri sehingga sangat ideal untuk perusahaan perdagangan besar, logistik, maupun penyedia jasa lainnya.'
             ]
         ],
         'testimonial' => [
@@ -735,13 +765,14 @@ $locations_db = [
             'image' => 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=150&q=80'
         ]
     ],
-    'ptgm-tower' => [
-        'slug' => 'ptgm-tower',
+    'gresik' => [
+        'slug' => 'gresik',
         'title' => 'Urban Office - PTGM Tower (Gresik)',
-        'short_title' => 'PTGM Tower (Gresik)',
+        'short_title' => 'PTGM Tower',
         'city' => 'Gresik',
         'location' => 'Gresik',
         'address' => 'Jl. Dr. Wahidin Sudirohusodo No.708, Kembangan, Kec. Kebomas, Kabupaten Gresik, Jawa Timur 61161',
+        'kpp' => 'KPP Gresik Utara', // TODO: verifikasi nama KPP yang benar
         'rating' => '4.8',
         'reviews_count' => '86',
         'image' => BASE_URL . 'assets/images/branch/ptgm.png',
@@ -750,7 +781,7 @@ $locations_db = [
         'services' => 'VO, Serviced Office, Meeting Room',
         'advantages' => [
             'Berada di gedung perkantoran prestisius PTGM Tower Kebomas Gresik',
-            'Zonasi perkantoran modern sangat cocok bagi industri manufaktur & pelayaran',
+            'Kawasan perkantoran modern sangat cocok bagi industri manufaktur & pelayaran',
             'Alamat bisnis strategis di pusat administrasi Kabupaten Gresik',
             'Fasilitas resepsionis profesional dan penanganan paket dokumen korporat',
             'Internet Dedicated Wi-Fi & ruang meeting ber-AC lengkap',
@@ -777,7 +808,7 @@ $locations_db = [
                     'Alamat Bisnis Prestisius PTGM Tower',
                     'Layanan Handling Surat Menyurat & Paket',
                     'Notifikasi Real-time via WhatsApp',
-                    'Pengurusan Domisili Kelurahan Gresik',
+                    'Hak Penggunaan Alamat Kantor di Gresik',
                     'Akses Area Lounge Kerja'
                 ],
                 'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Starter di PTGM Tower Gresik.'
@@ -831,7 +862,7 @@ $locations_db = [
         'faq' => [
             [
                 'question' => 'Apakah lokasi kantor dekat dengan kantor pemerintahan Gresik?',
-                'answer' => 'Ya, lokasi PTGM Tower sangat dekat dengan kantor Bupati (Pemkab) Gresik serta BPN Gresik, memudahkan pengurusan perizinan fisik.'
+                'answer' => 'Ya, lokasi PTGM Tower sangat strategis di pusat Kota Gresik, dekat dengan kawasan pemerintahan dan pusat bisnis utama.'
             ]
         ],
         'testimonial' => [
@@ -849,6 +880,7 @@ $locations_db = [
         'city' => 'Medan',
         'location' => 'Sumatera Utara',
         'address' => 'Jl. Sutrisno No.258, Medan Area, Kota Medan, Sumatera Utara 20211',
+        'kpp' => '',
         'rating' => '4.8',
         'reviews_count' => '64',
         'image' => BASE_URL . 'assets/images/branch/medan.png',
@@ -857,7 +889,7 @@ $locations_db = [
         'services' => 'VO',
         'advantages' => [
             'Berlokasi di pusat niaga utama Jl. Sutrisno Medan (Akses mudah)',
-            'Zonasi komersial resmi memperlancar pengurusan izin usaha di Medan',
+            'Kawasan komersial strategis di pusat bisnis Kota Medan',
             'Pemberitahuan surat & dokumen masuk real-time via email & WA',
             'Koneksi internet dedicated Wi-Fi berkecepatan tinggi',
             'Pantry modern dengan air mineral & minuman hangat gratis',
@@ -869,8 +901,8 @@ $locations_db = [
             'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=800&q=80'
         ],
         'seo' => [
-            'title' => 'Virtual Office Medan Sutrisno Domisili Murah - Urban Office',
-            'description' => 'Sewa Virtual Office & Serviced Office murah di Medan Area. Alamat bisnis prestisius, penanganan surat profesional, dan legalitas PKP.',
+            'title' => 'Virtual Office Medan Sutrisno Murah - Urban Office',
+            'description' => 'Sewa Virtual Office & Serviced Office murah di Medan Area. Alamat bisnis prestisius, penanganan surat profesional, dan lokasi strategis di pusat bisnis Medan.',
             'keywords' => 'virtual office medan, sewa kantor medan area, virtual office murah medan'
         ],
         'pricing' => [
@@ -879,12 +911,12 @@ $locations_db = [
                 'name' => 'Virtual Office Starter',
                 'price' => '385.000',
                 'period' => 'bulan',
-                'desc' => 'Dapatkan alamat kantor legalitas resmi di kota Medan untuk izin usaha NIB.',
+                'desc' => 'Dapatkan alamat kantor prestisius di kota Medan untuk kebutuhan bisnis Anda.',
                 'features' => [
                     'Alamat Bisnis Komersial Sah di Jl. Sutrisno',
                     'Layanan Penerimaan Surat & Paket Masuk',
                     'Notifikasi Chat WhatsApp Real-Time',
-                    'Surat Keterangan Domisili Medan Area',
+                    'Hak Penggunaan Alamat Kantor di Medan',
                     'Resepsionis Penerima Tamu',
                     'Akses Meeting Room 2x 2 Jam/Bulan'
                 ],
@@ -907,14 +939,14 @@ $locations_db = [
         ],
         'faq' => [
             [
-                'question' => 'Apakah saya bisa menggunakan alamat Medan untuk PKP?',
-                'answer' => 'Ya, lokasi cabang Medan kami berada di kawasan komersial resmi yang mendukung untuk registrasi PKP (Pengusaha Kena Pajak).'
+                'question' => 'Apa keunggulan alamat kantor di Medan Area?',
+                'answer' => 'Cabang Medan kami berada di kawasan komersial strategis Medan Area dengan citra bisnis yang kuat dan akses yang mudah.'
             ]
         ],
         'testimonial' => [
             'name' => 'Rudy Sinaga',
             'role' => 'Pemilik CV Medan Jaya Mandiri',
-            'text' => 'Mengurus perizinan CV dengan Virtual Office Urban sangat cepat dan murah. Alamatnya prestisius dan staffnya sangat sigap memberikan update surat masuk.',
+            'text' => 'Menyewa Virtual Office Urban sangat cepat dan mudah. Alamatnya prestisius dan staffnya sangat sigap memberikan update surat masuk.',
             'rating' => 4,
             'image' => 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80'
         ]
@@ -926,6 +958,7 @@ $locations_db = [
         'city' => 'Malang',
         'location' => 'Jawa Timur',
         'address' => 'Jl. Blimbing Indah Megah No.10A Blok B7, Polowijen, Blimbing, Malang City, East Java 65126',
+        'kpp' => '',
         'rating' => '4.8',
         'reviews_count' => '45',
         'image' => BASE_URL . 'assets/images/branch/Malang.jpeg',
@@ -959,7 +992,7 @@ $locations_db = [
                     'Alamat Bisnis Prestisius',
                     'Penerimaan Surat Menyurat',
                     'Notifikasi via WhatsApp/Email',
-                    'Gratis Keterangan Domisili'
+                    'Gratis Hak Penggunaan Alamat Kantor'
                 ],
                 'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Starter di Cabang Malang.'
             ],

@@ -3,7 +3,19 @@
  * Urban Office - Event Space Landing Page
  */
 
-$page_slug = 'event-space-55k-perjam-urbanoffice';
+require_once dirname(dirname(__FILE__)) . '/inc/config.php';
+require_once dirname(dirname(__FILE__)) . '/inc/functions.php';
+require_once dirname(dirname(__FILE__)) . '/inc/locations_data.php';
+
+$svc_category  = 'event-space';
+$svc_city_slug = isset($_GET['lokasi']) ? strtolower(trim($_GET['lokasi'])) : '';
+
+if (!empty($svc_city_slug) && $svc_city_slug !== '55k-perjam-urbanoffice') {
+    $page_slug = 'event-space-' . $svc_city_slug;
+} else {
+    $page_slug = 'event-space-55k-perjam-urbanoffice';
+}
+
 require_once dirname(dirname(__FILE__)) . '/inc/header.php';
 ?>
 
@@ -11,6 +23,9 @@ require_once dirname(dirname(__FILE__)) . '/inc/header.php';
 <?php
 $hero_tag = 'Premium Event Space';
 $hero_title = 'Sewa Event Space Mulai 45Rb/Pax';
+// Reflect the ?lokasi city (validated against locations_data) in the hero for relevance.
+$svc_city = service_city_from_query('event-space');
+if ($svc_city !== '') { $hero_tag .= ' ' . $svc_city; $hero_title = 'Sewa Event Space di ' . $svc_city . ' Mulai 45Rb/Pax'; }
 $hero_desc = 'Miliki ruang seminar, workshop, launching produk, atau rapat pemegang saham berkapasitas 30-80 orang dengan fasilitas lengkap. Berada di lokasi strategis dan mudah diakses.';
 $hero_cta_text = 'Dapatkan Quote Harga';
 $hero_cta_url = '#pricing';

@@ -30,3 +30,6 @@ Thumbs.db
 # Dependency dirs (in case any tooling adds these later)
 node_modules/
 vendor/
+
+# Throwaway automation readiness diagnostic (do not deploy)
+_check_automation_readiness.php

@@ -3,7 +3,19 @@
  * Urban Office - Coworking Space Landing Page
  */
 
-$page_slug = 'coworking-space-urban-office';
+require_once dirname(dirname(__FILE__)) . '/inc/config.php';
+require_once dirname(dirname(__FILE__)) . '/inc/functions.php';
+require_once dirname(dirname(__FILE__)) . '/inc/locations_data.php';
+
+$svc_category  = 'coworking';
+$svc_city_slug = isset($_GET['lokasi']) ? strtolower(trim($_GET['lokasi'])) : '';
+
+if (!empty($svc_city_slug) && $svc_city_slug !== 'urban-office') {
+    $page_slug = 'coworking-space-' . $svc_city_slug;
+} else {
+    $page_slug = 'coworking-space-urban-office';
+}
+
 require_once dirname(dirname(__FILE__)) . '/inc/header.php';
 ?>
 
@@ -11,6 +23,9 @@ require_once dirname(dirname(__FILE__)) . '/inc/header.php';
 <?php
 $hero_tag = 'Premium Coworking Space';
 $hero_title = 'Sewa Coworking Space Mulai 10Rb/Jam';
+// Reflect the ?lokasi city (validated against locations_data) in the hero for relevance.
+$svc_city = service_city_from_query('coworking');
+if ($svc_city !== '') { $hero_tag .= ' ' . $svc_city; $hero_title = 'Sewa Coworking Space di ' . $svc_city . ' Mulai 10Rb/Jam'; }
 $hero_desc = 'Temukan meja kerja per jam, harian, atau bulanan yang fleksibel. Sangat cocok untuk freelancer, remote worker, mahasiswa, dan startup founder. Nikmati WiFi cepat dan free flow coffee & tea sepuasnya.';
 $hero_cta_text = 'Lihat Paket Desk';
 $hero_cta_url = '#pricing';

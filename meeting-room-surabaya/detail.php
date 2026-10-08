@@ -75,6 +75,22 @@ $types_data = [
 ];
 
 $office = $types_data[$type];
+
+// Full price breakdown (durasi x coffee break) rendered as crawlable HTML on the detail page.
+$is_big = strpos($office['name'], 'Big') !== false;
+$price_rows = $is_big ? [
+    ['4 Jam (tanpa coffee break)', 'Rp 45.000 / pax'],
+    ['8 Jam (tanpa coffee break)', 'Rp 90.000 / pax'],
+    ['4 Jam + 1x coffee break', 'Rp 55.000 / pax'],
+    ['8 Jam + 1x coffee break', 'Rp 100.000 / pax'],
+    ['8 Jam + 2x coffee break', 'Rp 110.000 / pax'],
+] : [
+    ['Per Jam', 'Rp 125.000'],
+    ['4 Jam (tanpa coffee break)', 'Rp 300.000'],
+    ['8 Jam (tanpa coffee break)', 'Rp 550.000'],
+    ['4 Jam + 1x coffee break', 'Rp 350.000'],
+    ['8 Jam + 1x coffee break', 'Rp 650.000'],
+];
 ?>
 
 <!-- Detail Banner Hero -->
@@ -113,10 +129,7 @@ $office = $types_data[$type];
         
         <!-- Right Image Column -->
         <div class="hero-image-col">
-            <img src="<?php echo BASE_URL; ?>assets/images/meetingroom/<?php echo $office['img']; ?>" alt="<?php echo $office['name']; ?>" style="width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); aspect-ratio: 4/3; object-fit: cover; border: 1px solid hsl(var(--clr-border));">
-            <span style="position: absolute; top: 20px; right: 20px; background-color: hsl(var(--clr-primary)); color: #FFFFFF; font-size: 0.85rem; font-weight: 800; padding: 6px 14px; border-radius: var(--radius-full); text-transform: uppercase; box-shadow: var(--shadow-md);">
-                <?php echo $office['pax']; ?>
-            </span>
+            <img src="<?php echo BASE_URL; ?>assets/images/meetingroom/<?php echo $office['img']; ?>" alt="<?php echo $office['name']; ?>" style="width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); aspect-ratio: 4/3; object-fit: cover; object-position: center; border: 1px solid hsl(var(--clr-border));">
         </div>
     </div>
 </div>
@@ -140,10 +153,6 @@ $office = $types_data[$type];
                         <td class="spec-value">Jl. Dr. Ir. H. Soekarno No.470, Kedung Baruk, Rungkut</td>
                     </tr>
                     <tr>
-                        <td class="spec-label">Kapasitas Ruangan</td>
-                        <td class="spec-value"><?php echo sanitize($office['capacity']); ?></td>
-                    </tr>
-                    <tr>
                         <td class="spec-label">Ukuran Fisik</td>
                         <td class="spec-value"><?php echo sanitize($office['size']); ?></td>
                     </tr>
@@ -160,6 +169,19 @@ $office = $types_data[$type];
                         <td class="spec-value">Sesuai Jam Operasional / Jadwal Booking</td>
                     </tr>
                 </table>
+
+                <h3 class="specs-subtitle">Daftar Harga Lengkap</h3>
+                <table class="specs-table">
+                    <?php foreach ($price_rows as $pr): ?>
+                    <tr>
+                        <td class="spec-label"><?php echo sanitize($pr[0]); ?></td>
+                        <td class="spec-value"><?php echo sanitize($pr[1]); ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </table>
+                <p style="font-size: 0.78rem; color: hsl(var(--clr-text-muted)); margin-top: 10px;">
+                    <?php echo $is_big ? '+ Over time Rp 21.000 / orang / jam' : '+ Extra lunch Rp 30.000 / pax (opsional)'; ?>
+                </p>
             </div>
             
             <!-- Right Info Block -->

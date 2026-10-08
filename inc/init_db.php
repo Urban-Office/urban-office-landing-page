@@ -78,12 +78,14 @@ try {
         meta_description VARCHAR(255) NULL,
         status VARCHAR(20) DEFAULT 'draft',
         views INT DEFAULT 0,
+        source_url VARCHAR(512) NULL,
         published_at DATETIME NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
         INDEX idx_post_slug (slug),
-        INDEX idx_post_status (status, published_at DESC)
+        INDEX idx_post_status (status, published_at DESC),
+        INDEX idx_post_source (source_url)
     ) ENGINE=InnoDB;");
     echo "Posts table verified.\n";
 
@@ -92,6 +94,45 @@ try {
         $db->exec("ALTER TABLE posts ADD COLUMN IF NOT EXISTS views INT DEFAULT 0 AFTER status");
     } catch (Exception $e) {
         // Column already exists, safe to ignore
+    }
+
+    // 5.6 Ensure source_url column + index exist on older installations.
+    // Used by the automation pipeline (_api/ingest.php) to dedup RSS topics
+    // so the same source article is never turned into two posts.
+    // NOTE: "ADD COLUMN IF NOT EXISTS" is a MariaDB-only extension and errors
+    // on Oracle MySQL, so we probe information_schema first (portable to both).
+    try {
+        $hasCol = Database::fetch(
+            "SELECT COUNT(*) AS c FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'posts' AND COLUMN_NAME = 'source_url'",
+            [DB_NAME]
+        );
+        if (!$hasCol || (int)$hasCol['c'] === 0) {
+            $db->exec("ALTER TABLE posts ADD COLUMN source_url VARCHAR(512) NULL AFTER views");
+            echo "posts.source_url column added.\n";
+        } else {
+            // Widen legacy 255-wide columns (RSS source URLs, esp. Google News, exceed 255).
+            $len = Database::fetch(
+                "SELECT CHARACTER_MAXIMUM_LENGTH AS len FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'posts' AND COLUMN_NAME = 'source_url'",
+                [DB_NAME]
+            );
+            if ($len && (int)$len['len'] < 512) {
+                $db->exec("ALTER TABLE posts MODIFY source_url VARCHAR(512) NULL");
+                echo "posts.source_url widened to 512.\n";
+            }
+        }
+        $hasIdx = Database::fetch(
+            "SELECT COUNT(*) AS c FROM information_schema.STATISTICS
+             WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'posts' AND INDEX_NAME = 'idx_post_source'",
+            [DB_NAME]
+        );
+        if (!$hasIdx || (int)$hasIdx['c'] === 0) {
+            $db->exec("ALTER TABLE posts ADD INDEX idx_post_source (source_url)");
+            echo "posts.idx_post_source index added.\n";
+        }
+    } catch (Exception $e) {
+        echo "source_url migration skipped: " . $e->getMessage() . "\n";
     }
 
     // 6. Create Post Categories Join Table
@@ -172,6 +213,34 @@ try {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB;");
     echo "Settings table verified.\n";
+
+    // 13. Create Popups Table
+    $db->exec("CREATE TABLE IF NOT EXISTS popups (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(150) NOT NULL,
+        slug VARCHAR(100) NOT NULL UNIQUE,
+        image_path VARCHAR(255) NOT NULL,
+        target_url TEXT NULL,
+        link_type VARCHAR(20) DEFAULT 'url',
+        wa_number VARCHAR(50) DEFAULT '085107620100',
+        wa_message TEXT NULL,
+        alt_text VARCHAR(255) NULL,
+        display_target VARCHAR(50) DEFAULT 'all',
+        target_pages TEXT NULL,
+        frequency VARCHAR(20) DEFAULT 'daily',
+        frequency_days INT DEFAULT 1,
+        delay_seconds INT DEFAULT 2,
+        start_date DATETIME NULL,
+        end_date DATETIME NULL,
+        status TINYINT DEFAULT 1,
+        views_count INT DEFAULT 0,
+        clicks_count INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_popup_status (status, start_date, end_date),
+        INDEX idx_popup_slug (slug)
+    ) ENGINE=InnoDB;");
+    echo "Popups table verified.\n";
 
     // Seed Default Admin User
     $check_admin = Database::fetch("SELECT id FROM users WHERE username = 'admin'");

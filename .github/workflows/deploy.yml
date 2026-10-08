@@ -1,0 +1,88 @@
+name: Deploy to Production (VPS LEMP)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Memungkinkan tombol 'Run workflow' manual di dashboard GitHub Actions
+
+jobs:
+  deploy:
+    name: Deploy to VPS Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            echo "🚀 Memulai Deployment ke Server..."
+            
+            # 1. Pindah ke direktori web root (Mendukung aaPanel dan LEMP standar)
+            TARGET_PATH="${{ secrets.SERVER_PATH }}"
+            if [ -z "$TARGET_PATH" ]; then
+              if [ -d "/www/wwwroot/urbanoffice.co.id" ]; then
+                TARGET_PATH="/www/wwwroot/urbanoffice.co.id"
+              elif [ -d "/www/wwwroot/urbanoffice" ]; then
+                TARGET_PATH="/www/wwwroot/urbanoffice"
+              else
+                TARGET_PATH="/var/www/urbanoffice/public_html"
+              fi
+            fi
+            
+            if [ ! -d "$TARGET_PATH" ]; then
+              echo "❌ Error: Direktori $TARGET_PATH tidak ditemukan di server!"
+              exit 1
+            fi
+            
+            cd "$TARGET_PATH"
+            echo "📂 Direktori aktif: $(pwd)"
+            
+            # 2. Tarik kode terbaru dari GitHub
+            echo "📥 Mengambil kode terbaru (git pull)..."
+            git pull origin main
+            
+            # 3. Pastikan folder penting tersedia dengan hak akses yang tepat
+            echo "📁 Menyiapkan folder dan hak akses..."
+            mkdir -p assets/images/popups
+            mkdir -p uploads
+            mkdir -p cache/sessions
+            
+            # Atur kepemilikan (dukung user 'www' milik aaPanel dan 'www-data' milik Ubuntu standar)
+            chown -R www:www assets/images/popups uploads cache 2>/dev/null || chown -R www-data:www-data assets/images/popups uploads cache 2>/dev/null || true
+            chmod -R 755 assets/images/popups uploads 2>/dev/null || true
+            chmod -R 775 cache 2>/dev/null || true
+            
+            # 4. Deteksi PHP binary (dukung PHP 8.3 aaPanel / sistem)
+            PHP_BIN=$(which php 2>/dev/null || echo "/www/server/php/83/bin/php")
+            echo "🐘 Menggunakan PHP: $PHP_BIN"
+            
+            # 5. Jalankan script inisialisasi / migrasi database otomatis
+            echo "🗄️ Memeriksa struktur database..."
+            if [ -f "inc/init_db.php" ]; then
+              $PHP_BIN inc/init_db.php || true
+            fi
+            
+            # 6. Bersihkan cache halaman HTML
+            echo "🧹 Membersihkan page cache..."
+            $PHP_BIN -r "if (file_exists('inc/functions.php')) { require 'inc/functions.php'; clear_page_cache(); echo 'Cache cleared.'; }" || true
+            
+            # 7. Reload PHP-FPM untuk mereset OPcache (aaPanel / systemd)
+            if [ -f "/etc/init.d/php-fpm-83" ]; then
+              /etc/init.d/php-fpm-83 reload 2>/dev/null || true
+              echo "🔄 PHP 8.3 (aaPanel) berhasil direload."
+            elif systemctl is-active --quiet php8.3-fpm 2>/dev/null; then
+              systemctl reload php8.3-fpm 2>/dev/null || true
+              echo "🔄 PHP 8.3-FPM berhasil direload."
+            fi
+            
+            echo "✅ Deployment selesai dengan sukses!"

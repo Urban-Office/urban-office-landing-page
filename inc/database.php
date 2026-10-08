@@ -16,21 +16,57 @@ class Database {
      */
     public static function getConnection(): PDO {
         if (self::$instance === null) {
-            $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+            $hosts = [DB_HOST];
+            if (DB_HOST === 'localhost') {
+                $hosts[] = '127.0.0.1';
+            } elseif (DB_HOST === '127.0.0.1') {
+                $hosts[] = 'localhost';
+            }
+
             $options = [
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES   => false,
+                PDO::ATTR_TIMEOUT            => 5,
             ];
 
-            try {
-                self::$instance = new PDO($dsn, DB_USER, DB_PASS, $options);
-            } catch (PDOException $e) {
-                // In development mode log error, in production hide technical details
+            $lastException = null;
+            foreach ($hosts as $host) {
+                $dsn = "mysql:host=" . $host . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+                try {
+                    self::$instance = new PDO($dsn, DB_USER, DB_PASS, $options);
+                    break;
+                } catch (PDOException $e) {
+                    $lastException = $e;
+                    usleep(100000); // 100ms backoff before next host/retry
+                }
+            }
+
+            if (self::$instance === null) {
+                error_log("DB Connection Failure: " . ($lastException ? $lastException->getMessage() : 'Unknown error'));
+                
+                // Detect if current request is from API
+                $is_api = (strpos($_SERVER['REQUEST_URI'] ?? '', '/_api/') !== false) 
+                          || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+                          || !empty($_SERVER['HTTP_X_AUTOMATION_TOKEN']);
+
+                if ($is_api) {
+                    if (!headers_sent()) {
+                        header('Content-Type: application/json; charset=utf-8');
+                        http_response_code(500);
+                    }
+                    echo json_encode([
+                        'ok' => false, 
+                        'error' => 'Koneksi database gagal: ' . ($lastException ? $lastException->getMessage() : 'Gagal terhubung ke MySQL.')
+                    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    exit;
+                }
+
                 if (DEV_MODE) {
-                    die("Database connection failed: " . $e->getMessage());
+                    http_response_code(500);
+                    die("Database connection failed: " . ($lastException ? $lastException->getMessage() : 'Unknown'));
                 } else {
-                    error_log("DB Connection Failure: " . $e->getMessage());
+                    http_response_code(500);
                     die("A system error occurred. Please try again later.");
                 }
             }

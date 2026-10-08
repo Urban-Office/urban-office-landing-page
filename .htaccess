@@ -21,6 +21,16 @@ RewriteRule ^sitemap\.xml$ sitemap.php [L]
 # Rewrites /blog/post-slug/ to /blog/article.php?slug=post-slug
 RewriteRule ^blog/([a-zA-Z0-9\-]+)/?$ blog/article.php?slug=$1 [L,QSA]
 
+# 2.4 Legacy branch-name location URLs -> new city-based slugs (301, SEO preserving)
+# Branch keys were renamed from building names to city/area names; these keep the
+# previously indexed URLs alive. Must run BEFORE the detail rewrite below.
+RewriteRule ^lokasi-urban-office/merr/?$ /lokasi-urban-office/surabaya/ [R=301,L]
+RewriteRule ^lokasi-urban-office/klampis/?$ /lokasi-urban-office/surabaya-timur/ [R=301,L]
+RewriteRule ^lokasi-urban-office/grand-sungkono-lagoon/?$ /lokasi-urban-office/surabaya-barat/ [R=301,L]
+RewriteRule ^lokasi-urban-office/fatmawati/?$ /lokasi-urban-office/jakarta/ [R=301,L]
+RewriteRule ^lokasi-urban-office/gorebiz/?$ /lokasi-urban-office/jakarta-timur/ [R=301,L]
+RewriteRule ^lokasi-urban-office/ptgm-tower/?$ /lokasi-urban-office/gresik/ [R=301,L]
+
 # 2.5 Dynamic Location Detail mappings
 # Rewrites /lokasi-urban-office/location-slug/ to /lokasi-urban-office/detail.php?slug=location-slug
 RewriteRule ^lokasi-urban-office/([a-zA-Z0-9\-]+)/?$ lokasi-urban-office/detail.php?slug=$1 [L,QSA]
@@ -31,6 +41,28 @@ RewriteRule ^lokasi-urban-office/([a-zA-Z0-9\-]+)/?$ lokasi-urban-office/detail.
 # excluded via the -d check below so it keeps being served directly, unaffected by this rule.
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^virtual-office-([a-zA-Z0-9\-]+)/?$ virtual-office-surabaya/index.php?branch=$1 [L,QSA]
+
+# 2.7 Per-city Private Office landing pages (pilot)
+# /sewa-kantor-{city}/ -> sewa-kantor-surabaya/index.php?lokasi={city}. The real folder
+# sewa-kantor-surabaya/ is the Surabaya default and is excluded via the -d check.
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^sewa-kantor-([a-zA-Z0-9\-]+)/?$ sewa-kantor-surabaya/index.php?lokasi=$1 [L,QSA]
+
+# 2.8 Per-city Meeting Room landing pages
+# /meeting-room-{city}/ -> meeting-room-surabaya/index.php?lokasi={city}. Real folder excluded.
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^meeting-room-([a-zA-Z0-9\-]+)/?$ meeting-room-surabaya/index.php?lokasi=$1 [L,QSA]
+
+# 2.9 Per-city Coworking Space landing pages
+# /coworking-space-{city}/ -> coworking-space-urban-office/index.php?lokasi=$1. Real folder excluded.
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^coworking-space-([a-zA-Z0-9\-]+)/?$ coworking-space-urban-office/index.php?lokasi=$1 [L,QSA]
+
+# 2.10 Per-city Event Space landing pages
+# /event-space-{city}/ -> event-space-55k-perjam-urbanoffice/index.php?lokasi=$1. Real folder excluded.
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^event-space-([a-zA-Z0-9\-]+)/?$ event-space-55k-perjam-urbanoffice/index.php?lokasi=$1 [L,QSA]
+
 
 # Rewrites /category/category-slug/ to /blog/category.php?slug=category-slug
 RewriteRule ^category/([a-zA-Z0-9\-]+)/?$ blog/category.php?slug=$1 [L,QSA]

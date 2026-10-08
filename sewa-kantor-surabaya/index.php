@@ -3,17 +3,42 @@
  * Urban Office - Private Office (Sewa Kantor Surabaya) Landing Page
  */
 
-$page_slug = 'sewa-kantor-surabaya';
+require_once dirname(dirname(__FILE__)) . '/inc/config.php';
+require_once dirname(dirname(__FILE__)) . '/inc/functions.php';
+require_once dirname(dirname(__FILE__)) . '/inc/locations_data.php';
+
+// Per-city Private Office landing (pilot). The clean URL /sewa-kantor-{city}/ is rewritten to
+// this file with ?lokasi={city}; the real /sewa-kantor-surabaya/ folder is the Surabaya default.
+$svc_category  = 'private-office';
+$svc_city_slug = isset($_GET['lokasi']) ? strtolower(trim($_GET['lokasi'])) : 'surabaya';
+$svc_branches  = service_city_branches($svc_category, $svc_city_slug);
+if (empty($svc_branches)) {
+    $svc_city_slug = 'surabaya';
+    $svc_branches  = service_city_branches($svc_category, $svc_city_slug);
+}
+$po_city_label = !empty($svc_branches) ? $svc_branches[0]['city'] : 'Surabaya';
+
+// Per-city page slug so SEO tags + canonical vary per city (and cache keys don't collide).
+$page_slug = 'sewa-kantor-' . $svc_city_slug;
 require_once dirname(dirname(__FILE__)) . '/inc/header.php';
 ?>
 
+<!-- Expose current city so the "Cabang Kami" filter defaults to it -->
+<script>window.currentBranchCity = <?php echo json_encode($svc_city_slug); ?>;</script>
+
 <!-- Hero Section -->
 <?php
-$hero_tag = 'Serviced Office';
-$hero_title = 'Sewa Ruang Kantor Privat (Fully Furnished)';
-$hero_desc = 'Kantor privat siap pakai (ready-to-work) dengan desain modern. Lengkap dengan meja kursi premium, AC, jaringan internet serat optik, dan gratis biaya utilitas (listrik/air).';
+$hero_tag = 'Serviced Office ' . $po_city_label;
+$hero_title = 'Sewa Ruang Kantor Privat (Fully Furnished) di ' . $po_city_label;
+$hero_desc = 'Kantor privat siap pakai (ready-to-work) di ' . $po_city_label . ' dengan desain modern. Lengkap dengan meja kursi premium, AC, jaringan internet serat optik, dan gratis biaya utilitas (listrik/air).';
 $hero_cta_text = 'Dapatkan Price List';
 $hero_cta_url = '#pricing';
+// Hero image + floating card follow the city's branch so they change per location.
+if (!empty($svc_branches[0]['image'])) {
+    $hero_img = $svc_branches[0]['image'];
+}
+$card_title = 'Private Office ' . $po_city_label;
+$card_desc = !empty($svc_branches[0]['address']) ? $svc_branches[0]['address'] : '';
 include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
 ?>
 
@@ -36,6 +61,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
             'period' => 'Bulan',
             'description' => 'Ideal untuk startup kecil atau cabang perwakilan dengan kapasitas 2 orang.',
             'features' => [
+                'Kapasitas 2 orang',
                 'Ukuran Ruangan 6m²'
             ],
             'cta_text' => 'Pesan Ruangan',
@@ -51,21 +77,23 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
             'popular' => true,
             'description' => 'Sempurna untuk tim berkembang dengan kapasitas 4-5 orang.',
             'features' => [
-                'Ukuran Ruangan 9m² - 14m²'
+                'Kapasitas 4-5 orang',
+                'Ukuran Ruangan 10m² - 12m²'
             ],
             'cta_text' => 'Pesan Ruangan',
             'cta_link' => '#contact'
         ],
         [
             'name' => 'Private Office Corporate',
-            'price_monthly' => '10.000.000',
-            'price_yearly' => '90.000.000',
-            'price_yearly_monthly' => '7.500.000',
+            'price_monthly' => '6.000.000',
+            'price_yearly' => '54.000.000',
+            'price_yearly_monthly' => '4.500.000',
             'branch' => 'MERR',
             'period' => 'Bulan',
-            'description' => 'Sangat ideal untuk tim korporat berskala menengah dengan kapasitas hingga 10 orang.',
+            'description' => 'Ruang lega berkelas korporat untuk tim 5-6 orang di ruangan terluas.',
             'features' => [
-                'Ukuran Ruangan 16m²'
+                'Kapasitas 5-6 orang',
+                'Ukuran Ruangan 14m² - 16m²'
             ],
             'cta_text' => 'Pesan Ruangan',
             'cta_link' => '#contact'
@@ -74,6 +102,40 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
     include dirname(dirname(__FILE__)) . '/inc/components/pricing_cards.php';
     ?>
 </div>
+
+<!-- Per-city local content: real branch address, map & advantages (unique per city, from
+     locations_data.php) so each city page is genuinely differentiated, not a thin duplicate. -->
+<section class="section">
+    <div class="container">
+        <div class="text-center">
+            <h2 class="section-title">Lokasi Private Office di <?php echo sanitize($po_city_label); ?></h2>
+            <p class="section-subtitle">Kantor privat Urban Office di <?php echo sanitize($po_city_label); ?> berada di lokasi strategis dengan alamat bisnis prestisius. Berikut cabang yang melayani sewa kantor di <?php echo sanitize($po_city_label); ?>.</p>
+        </div>
+        <div class="local-branch-grid<?php echo count($svc_branches) === 1 ? ' local-branch-grid--single' : ''; ?>">
+            <?php foreach ($svc_branches as $svc_b): ?>
+            <div class="premium-card" style="text-align: left; display: flex; flex-direction: column;">
+                <h3 style="font-size: 1.2rem; margin-bottom: 8px;"><?php echo sanitize($svc_b['title'] ?? ('Urban Office ' . $svc_b['short_title'])); ?></h3>
+                <p style="color: hsl(var(--clr-text-muted)); font-size: 0.9rem; margin-bottom: 10px;"><i class="bi bi-geo-alt-fill"></i> <?php echo sanitize($svc_b['address']); ?></p>
+                <?php if (!empty($svc_b['rating'])): ?>
+                <p style="font-size: 0.9rem; margin-bottom: 12px;">⭐ <?php echo sanitize($svc_b['rating']); ?> · <?php echo sanitize($svc_b['reviews_count'] ?? '0'); ?> ulasan Google</p>
+                <?php endif; ?>
+                <?php if (!empty($svc_b['advantages'])): ?>
+                <ul class="card-features-list">
+                    <?php foreach (array_slice($svc_b['advantages'], 0, 5) as $svc_adv): ?>
+                    <li><?php echo sanitize($svc_adv); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+                <?php endif; ?>
+                <?php if (!empty($svc_b['map_embed'])): ?>
+                <div style="margin-top: auto; padding-top: 16px; border-radius: var(--radius-sm); overflow: hidden;">
+                    <iframe src="<?php echo sanitize($svc_b['map_embed']); ?>" width="100%" height="180" style="border:0; display:block; border-radius: var(--radius-sm);" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Peta <?php echo sanitize($svc_b['short_title']); ?>"></iframe>
+                </div>
+                <?php endif; ?>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
 
 <!-- Features Component -->
 <?php
@@ -137,14 +199,14 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
             <div class="office-gallery-wrapper" id="office-gallery-slider" style="display: flex; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform;">
                 <?php
                 $gallery_items = [
-                    ['img' => 'private-office-small.webp', 'title' => 'Private Office Small', 'desc' => 'Kapasitas: 2 Orang', 'pax' => '2 Pax', 'type_id' => 1],
-                    ['img' => 'private-office-medium.webp', 'title' => 'Private Office Medium', 'desc' => 'Kapasitas: 4 Orang', 'pax' => '4 Pax', 'type_id' => 2],
-                    ['img' => 'private-office-corporate.webp', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas: 6 Orang', 'pax' => '6 Pax', 'type_id' => 3],
-                    ['img' => 'private-office-4.webp', 'title' => 'Private Office Medium', 'desc' => 'Kapasitas: 3 Orang', 'pax' => '3 Pax', 'type_id' => 4],
-                    ['img' => 'private-office-5.webp', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas: 6 Orang', 'pax' => '6 Pax', 'type_id' => 5],
-                    ['img' => 'private-office-6.webp', 'title' => 'Private Office Small', 'desc' => 'Kapasitas: 2 Orang', 'pax' => '2 Pax', 'type_id' => 6],
-                    ['img' => 'private-office-7.webp', 'title' => 'Private Office Small', 'desc' => 'Kapasitas: 1 Orang (Eksekutif)', 'pax' => '1 Pax', 'type_id' => 7],
-                    ['img' => 'private-office-8.webp', 'title' => 'Private Office Medium', 'desc' => 'Kapasitas: 4 Orang', 'pax' => '4 Pax', 'type_id' => 8],
+                    ['img' => 'private-office-small.webp', 'title' => 'Private Office Small', 'desc' => 'Kapasitas 2 Orang · 6m²', 'pax' => '2 Pax', 'type_id' => 1],
+                    ['img' => 'private-office-medium.webp', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas 5 Orang · 14m²', 'pax' => '5 Pax', 'type_id' => 2],
+                    ['img' => 'private-office-corporate.webp', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas 5 Orang · 14m²', 'pax' => '5 Pax', 'type_id' => 3],
+                    ['img' => 'private-office-4.webp', 'title' => 'Private Office Medium', 'desc' => 'Kapasitas 4 Orang · 12m²', 'pax' => '4 Pax', 'type_id' => 4],
+                    ['img' => 'private-office-5.webp', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas 6 Orang · 16m²', 'pax' => '6 Pax', 'type_id' => 5],
+                    ['img' => 'private-office-6.webp', 'title' => 'Private Office Small', 'desc' => 'Kapasitas 2 Orang · 6m²', 'pax' => '2 Pax', 'type_id' => 6],
+                    ['img' => 'private-office-7.webp', 'title' => 'Private Office Small', 'desc' => 'Kapasitas 2 Orang · 6m²', 'pax' => '2 Pax', 'type_id' => 7],
+                    ['img' => 'private-office-8.webp', 'title' => 'Private Office Medium', 'desc' => 'Kapasitas 5 Orang · 10m²', 'pax' => '5 Pax', 'type_id' => 8],
                 ];
                 
                 foreach ($gallery_items as $item):
@@ -201,13 +263,14 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
 .gallery-img-container {
     position: relative;
     overflow: hidden;
-    height: 150px; /* Shrunk from 200px */
+    aspect-ratio: 4 / 3; /* Match detail hero framing so the card preview == the detail crop */
 }
 
 .gallery-img-container img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center; /* Same focal point as the detail hero */
     transition: transform 0.5s ease;
 }
 
@@ -276,9 +339,6 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
 
 /* Responsive Overrides via CSS */
 @media (max-width: 991px) {
-    .gallery-img-container {
-        height: 130px;
-    }
     .gallery-body-content {
         padding: 12px;
     }
@@ -298,9 +358,6 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
 }
 
 @media (max-width: 576px) {
-    .gallery-img-container {
-        height: 150px;
-    }
     .gallery-body-content {
         padding: 16px 12px;
     }
