@@ -43,6 +43,18 @@ require_once dirname(dirname(__FILE__)) . '/inc/header.php';
 #locations .branch-card {
     min-height: 500px;
 }
+#locations .branch-img-wrap {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    height: auto;
+    overflow: hidden;
+}
+#locations .branch-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+}
 .branch-body-content {
     padding: 24px;
     text-align: left;
