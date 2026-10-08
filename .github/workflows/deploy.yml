@@ -25,6 +25,7 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
+            set -e
             echo "🚀 Memulai Deployment ke Server..."
             
             # 1. Pindah ke direktori web root (Mendukung aaPanel dan LEMP standar)
@@ -39,6 +40,7 @@ jobs:
               fi
             fi
             
+            TARGET_PATH="${TARGET_PATH%/}"
             if [ ! -d "$TARGET_PATH" ]; then
               echo "❌ Error: Direktori $TARGET_PATH tidak ditemukan di server!"
               exit 1
@@ -47,17 +49,42 @@ jobs:
             cd "$TARGET_PATH"
             echo "📂 Direktori aktif: $(pwd)"
             
-            # 2. Tarik kode terbaru dari GitHub
-            echo "📥 Mengambil kode terbaru (git pull)..."
-            git pull origin main
+            # Bypass isu kepemilikan git jika root mengakses file milik user 'www'
+            git config --global --add safe.directory "$TARGET_PATH" 2>/dev/null || true
+            git config --global --add safe.directory "*" 2>/dev/null || true
+            
+            # Backup inc/config.php server agar konfigurasi DB produksi tetap aman
+            if [ -f "inc/config.php" ]; then
+              echo "💾 Mencadangkan inc/config.php produksi..."
+              cp inc/config.php /tmp/urban_config_backup.php
+            fi
+            
+            # 2. Sinkronisasi repository git
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            echo "🔗 Repository target: $REPO_URL"
+            
+            if [ ! -d ".git" ]; then
+              echo "⚠️ Git belum diinisialisasi di server. Menginisialisasi..."
+              git init -b main
+              git remote add origin "$REPO_URL"
+            else
+              git remote set-url origin "$REPO_URL" 2>/dev/null || true
+            fi
+            
+            echo "📥 Mengambil kode terbaru dari GitHub..."
+            git fetch origin main
+            git reset --hard origin/main
+            
+            # Pulihkan inc/config.php produksi jika ada
+            if [ -f "/tmp/urban_config_backup.php" ]; then
+              echo "♻️ Memulihkan inc/config.php produksi..."
+              cp /tmp/urban_config_backup.php inc/config.php
+              git update-index --assume-unchanged inc/config.php 2>/dev/null || true
+            fi
             
             # 3. Pastikan folder penting tersedia dengan hak akses yang tepat
             echo "📁 Menyiapkan folder dan hak akses..."
-            mkdir -p assets/images/popups
-            mkdir -p uploads
-            mkdir -p cache/sessions
-            
-            # Atur kepemilikan (dukung user 'www' milik aaPanel dan 'www-data' milik Ubuntu standar)
+            mkdir -p assets/images/popups uploads cache/sessions
             chown -R www:www assets/images/popups uploads cache 2>/dev/null || chown -R www-data:www-data assets/images/popups uploads cache 2>/dev/null || true
             chmod -R 755 assets/images/popups uploads 2>/dev/null || true
             chmod -R 775 cache 2>/dev/null || true
@@ -84,5 +111,9 @@ jobs:
               systemctl reload php8.3-fpm 2>/dev/null || true
               echo "🔄 PHP 8.3-FPM berhasil direload."
             fi
+            
+            # 8. Tulis status deployment
+            COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "ok")
+            echo "{\"status\":\"ok\",\"commit\":\"$COMMIT_HASH\",\"deployed_at\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > _deploy_status.json
             
             echo "✅ Deployment selesai dengan sukses!"
