@@ -543,7 +543,8 @@ $p_delay     = max(2, (int)$active_popup['delay_seconds']);
     }
 
     /* 6. Schedule Display */
-    const delayMs = config.isForced ? 100 : (config.delaySeconds * 1000);
+    const isTestMode = config.isForced || (window.location.search.indexOf('test_popup') !== -1);
+    const delayMs = isTestMode ? 100 : (config.delaySeconds * 1000);
     setTimeout(openPopup, delayMs);
 })();
 </script>
