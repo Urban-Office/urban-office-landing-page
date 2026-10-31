@@ -319,6 +319,7 @@ function uo_build_end_cta(): string {
         require_once $path;
         if (isset($locations_db) && is_array($locations_db)) {
             foreach ($locations_db as $b) {
+                if (isset($b['is_public']) && $b['is_public'] === false) continue;
                 $city = trim($b['city'] ?? '');
                 if ($city === '') continue;
                 $area = trim($b['short_title'] ?? ($b['location'] ?? ''));

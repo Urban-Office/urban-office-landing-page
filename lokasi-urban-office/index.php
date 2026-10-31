@@ -174,7 +174,7 @@ require_once dirname(dirname(__FILE__)) . '/inc/header.php';
 
 <?php
 require_once dirname(dirname(__FILE__)) . '/inc/locations_data.php';
-$locations = array_values($locations_db);
+$locations = array_values(array_filter($locations_db, 'is_public_location'));
 ?>
 
 <!-- Hero Section -->

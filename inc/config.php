@@ -42,7 +42,9 @@ if (php_sapi_name() === 'cli') {
     define('DIR_SUBFOLDER', $subfolder);
 }
 define('SITE_NAME', 'Urban Office');
-define('WHATSAPP_NUMBER', '6285107620100'); // Standardized international format
+define('WHATSAPP_NUMBER', '6285107620100'); // Standardized international format (legacy fallback)
+define('WHATSAPP_NUMBER_SALES', '628212338100'); // Nomor Sales & Konsultasi Produk
+define('WHATSAPP_NUMBER_CS', '6285107620100'); // Nomor Customer Service & Komplain
 define('WHATSAPP_MESSAGE', 'Halo, saya ingin menanyakan perihal layanan Urban Office.');
 
 // Database Credentials

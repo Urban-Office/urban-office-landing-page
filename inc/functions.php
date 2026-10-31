@@ -33,6 +33,14 @@ function media_url(?string $path): string {
 }
 
 /**
+ * Public visibility flag for branch/location data.
+ * Missing flags remain public for backwards compatibility.
+ */
+function is_public_location(array $location): bool {
+    return !array_key_exists('is_public', $location) || $location['is_public'] !== false;
+}
+
+/**
  * For service landing pages that share one URL across cities (filtered via ?lokasi=),
  * return the proper-cased City label from the ?lokasi query param — but ONLY when a branch
  * in that city actually offers the given service category (per locations_data.php). Returns
@@ -54,6 +62,9 @@ function service_city_from_query(string $category): string {
         return ucwords(str_replace('-', ' ', $lokasi));
     }
     foreach ($locations_db as $key => $branch) {
+        if (!is_public_location($branch)) {
+            continue;
+        }
         $matches_loc = (isset($branch['city']) && strtolower($branch['city']) === $lokasi)
                     || $key === $lokasi
                     || (isset($branch['slug']) && $branch['slug'] === $lokasi);
@@ -87,6 +98,9 @@ function service_city_branches(string $category, string $city_slug): array {
         return $out;
     }
     foreach ($locations_db as $key => $branch) {
+        if (!is_public_location($branch)) {
+            continue;
+        }
         $matches_loc = (isset($branch['city']) && strtolower($branch['city']) === $city_slug)
                     || $key === $city_slug
                     || (isset($branch['slug']) && $branch['slug'] === $city_slug);

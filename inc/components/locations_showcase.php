@@ -24,11 +24,6 @@ $bundle_locations = [
         'image' => BASE_URL . 'assets/images/branch/urban office - grand sungkono lagoon.webp'
     ],
     [
-        'title' => 'Fatmawati (Jakarta Selatan)',
-        'address' => 'Jl. RS. Fatmawati Raya No.35A 2, RT.2/RW.5, Cilandak Bar., Kec. Cilandak, Jakarta, Daerah Khusus Ibukota Jakarta 12430',
-        'image' => BASE_URL . 'assets/images/branch/urban office fatmawati.jpg'
-    ],
-    [
         'title' => 'Gorebiz (Jakarta Timur)',
         'address' => 'Jl. Raya Bekasi.KM.17, RT.4/RW.3, Jatinegara, Kec. Cakung, Kota Jakarta Timur, Daerah Khusus Ibukota Jakarta 13930 Timur, RT.1/RW.3, Jatinegara Kaum, Kec. Pulo Gadung, Kota Jakarta Timur, Daerah Khusus Ibukota Jakarta 13930',
         'image' => BASE_URL . 'assets/images/branch/gorebiz.png'

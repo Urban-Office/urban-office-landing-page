@@ -203,14 +203,20 @@ function get_page_seo(string $slug): array {
     }
 
     $default_seo = [
-        'title' => 'Sewa Virtual Office & Ruang Kantor Surabaya - Urban Office',
-        'meta_description' => 'Sewa Virtual Office Surabaya Murah. Dapatkan alamat bisnis prestisius, gratis pembuatan PT/CV, meeting room, & coworking space di Urban Office.',
+        'title' => 'Urban Office | Ruang Kerja, Virtual Office & Layanan Bisnis',
+        'meta_description' => 'Temukan ruang kerja, Virtual Office, ruang meeting, serta dukungan pendirian usaha dan administrasi bisnis sesuai kebutuhan Anda.',
         'canonical_url' => BASE_URL . ($slug ? $slug . '/' : ''),
-        'og_title' => 'Sewa Virtual Office & Ruang Kantor Surabaya - Urban Office',
-        'og_description' => 'Sewa Virtual Office Surabaya Murah. Dapatkan alamat bisnis prestisius, gratis pembuatan PT/CV, meeting room, & coworking space di Urban Office.',
+        'og_title' => 'Urban Office | Ruang Kerja, Virtual Office & Layanan Bisnis',
+        'og_description' => 'Temukan ruang kerja, Virtual Office, ruang meeting, serta dukungan pendirian usaha dan administrasi bisnis sesuai kebutuhan Anda.',
         'og_image' => BASE_URL . 'assets/images/og-default.png',
         'schema_faq' => null
     ];
+
+    // The homepage has its own benefit-led positioning. Keep it independent
+    // from legacy city-specific metadata that may still exist in the CMS.
+    if ($slug === '') {
+        return $default_seo;
+    }
 
     try {
         // First check if it's a blog post slug (if the page is loading a blog article)

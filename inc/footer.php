@@ -24,7 +24,7 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'footer.php') {
                     <a href="<?php echo BASE_URL; ?>" class="footer-logo" aria-label="Urban Office Homepage" style="margin-bottom: 20px; display: block;">
                         <img src="<?php echo BASE_URL; ?>assets/images/imgcomponent/urban%20office%20new%20logo.png" alt="Urban Office Logo" style="max-height: 50px; width: auto;">
                     </a>
-                    <p>Urban Office adalah penyedia layanan ruang kerja profesional. Menyediakan Ruang Kerja Virtual Office, Meeting Room, Private Office, dan Event Space, Coworking Space di berbagai lokasi strategis, dan layanan bisnis lainnya.</p>
+                    <p>Urban Office menyediakan ruang kerja, alamat bisnis, serta dukungan pendirian usaha, akuntansi, dan perpajakan sesuai tahap dan kebutuhan bisnis Anda.</p>
                     <div class="footer-socials">
                         <a href="https://www.facebook.com/urbanoffice.co.id/" target="_blank" class="footer-social-btn fb-btn" aria-label="Facebook">
                             <i class="bi bi-facebook"></i>
@@ -89,7 +89,7 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'footer.php') {
                         <strong>Gedung Urban Office</strong>
                         <p>Jl. Dr. Ir. H. Soekarno No.470, Kedung Baruk, Surabaya, Jawa Timur 60298, Indonesia</p>
                         <p>Phone : 62-31-87855578</p>
-                        <p>WA : 081 0762 0100</p>
+                        <p>WA : 0851-0762-0100</p>
                     </div>
                     <div class="footer-map-wrapper" style="position: relative; margin-top: 12px;">
                         <iframe title="Peta Lokasi Urban Office Surabaya" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.348638974577!2d112.78023107476097!3d-7.318892692689255!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7fa535f29910d%3A0x8bbd360efbe36368!2sUrban%20Office%20Surabaya!5e0!3m2!1sid!2sid!4v1718000000000!5m2!1sid!2sid" width="100%" height="110" style="border:0; border-radius: var(--radius-sm); display: block;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
@@ -112,13 +112,16 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'footer.php') {
        class="floating-wa-widget" 
        aria-label="Hubungi kami melalui WhatsApp">
         <div class="wa-button">
-            <span class="wa-text">Hubungi CS</span>
+            <span class="wa-text">Chat WhatsApp</span>
             <span class="wa-icon"><i class="bi bi-whatsapp"></i></span>
         </div>
     </a>
 
     <!-- Promotional Pop-up Modal Component -->
     <?php include_once __DIR__ . '/components/popup_banner.php'; ?>
+
+    <!-- WhatsApp Channel Selector Modal Component -->
+    <?php include_once __DIR__ . '/components/wa_modal.php'; ?>
 
     <!-- Single source of truth for the pricing branch switcher: generated from
          inc/locations_data.php so prices/address/KPP are maintained in ONE place.
@@ -142,6 +145,9 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'footer.php') {
             }
         }
         foreach ($locations_db as $bp_slug => $bp_b) {
+            if (!is_public_location($bp_b)) {
+                continue;
+            }
             if (empty($bp_b['pricing'])) {
                 continue;
             }

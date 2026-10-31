@@ -160,27 +160,6 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
                     </div>
                 </div>
                 
-                <!-- Gallery Item 3 -->
-                <div class="gallery-card-slide">
-                    <div class="gallery-item-card">
-                        <!-- Image Container with Badge -->
-                        <div class="gallery-img-container">
-                            <img src="<?php echo BASE_URL; ?>assets/images/coworkingspace/Foto Coworking Space Jakarta Selatan Fatmawati.webp" alt="Coworking Space Fatmawati" draggable="false">
-                            <span class="gallery-pax-badge">Fatmawati Area</span>
-                        </div>
-                        <!-- Body Content -->
-                        <div class="gallery-body-content">
-                            <div class="gallery-text-wrap">
-                                <h4 class="gallery-card-title">Coworking Space Fatmawati</h4>
-                                <p class="gallery-card-desc">Workspace bulanan fleksibel di lokasi prestisius dan tenang.</p>
-                            </div>
-                            <a href="<?php echo BASE_URL; ?>coworking-space-urban-office/detail.php?type=3" class="btn btn-primary gallery-cta-btn" draggable="false">
-                                Detail <i class="bi bi-arrow-right"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                
             </div>
         </div>
     </div>

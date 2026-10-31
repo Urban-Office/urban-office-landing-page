@@ -26,6 +26,9 @@ require_once __DIR__ . '/../inc/locations_data.php';
 $out = [];
 if (isset($locations_db) && is_array($locations_db)) {
     foreach ($locations_db as $key => $b) {
+        if (isset($b['is_public']) && $b['is_public'] === false) {
+            continue;
+        }
         // Compact pricing: category / name / price / period only.
         $pricing = [];
         foreach (($b['pricing'] ?? []) as $p) {

@@ -3771,3 +3771,518 @@ textarea.form-control {
     border: 0 !important;
 }
 
+/* ==========================================================================
+   WhatsApp Channel Selector Modal (Sales vs CS/Complain) & Direct Bypass
+   ========================================================================== */
+.uo-wa-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.24s ease, visibility 0.24s ease;
+}
+
+.uo-wa-modal.is-active {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.uo-wa-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(18, 12, 7, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    cursor: pointer;
+}
+
+.uo-wa-modal-container {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 530px;
+    padding: 20px;
+    margin: auto;
+}
+
+.uo-wa-modal-dialog {
+    position: relative;
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 30px 28px 24px;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    transform: translateY(18px) scale(0.96);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.uo-wa-modal.is-active .uo-wa-modal-dialog {
+    transform: translateY(0) scale(1);
+}
+
+.uo-wa-modal-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid #efeae2;
+    background: #faf8f5;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.uo-wa-modal-close:hover {
+    background: #f0eae1;
+    color: #111;
+    transform: rotate(90deg);
+}
+
+.uo-wa-header-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: rgba(37, 211, 102, 0.12);
+    color: #0d8a43;
+    font-size: 12px;
+    font-weight: 750;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.uo-wa-header-pill.uo-wa-header-pill--sales {
+    background: rgba(255, 107, 0, 0.12);
+    color: #c94f00;
+}
+
+.uo-wa-header-icon {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.uo-wa-modal-title {
+    font-size: 23px;
+    font-weight: 800;
+    color: #18120e;
+    margin: 0 0 6px;
+    line-height: 1.25;
+}
+
+.uo-wa-modal-desc {
+    font-size: 13.5px;
+    color: #6f6258;
+    line-height: 1.5;
+    margin: 0 0 20px;
+}
+
+.uo-wa-modal-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.uo-wa-card {
+    position: relative;
+    width: 100%;
+    text-align: left;
+    padding: 16px 18px 18px;
+    border-radius: 18px;
+    border: 2px solid #ede7dc;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    outline: none;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.uo-wa-card:hover,
+.uo-wa-card:focus-visible {
+    transform: translateY(-2px);
+}
+
+.uo-wa-card--sales:hover,
+.uo-wa-card--sales:focus-visible {
+    border-color: #ff6b00;
+    background: #fffcf8;
+    box-shadow: 0 12px 28px rgba(255, 107, 0, 0.12);
+}
+
+.uo-wa-card--cs:hover,
+.uo-wa-card--cs:focus-visible {
+    border-color: #25d366;
+    background: #f7fdf9;
+    box-shadow: 0 12px 28px rgba(37, 211, 102, 0.12);
+}
+
+/* Card Topbar: Cat Label & Badge */
+.uo-wa-card-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.uo-wa-card-cat {
+    font-size: 11.5px;
+    font-weight: 650;
+    color: #8a7c72;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.uo-wa-card-cat i {
+    color: #ff6b00;
+}
+
+.uo-wa-card--cs .uo-wa-card-cat i {
+    color: #25d366;
+}
+
+.uo-wa-card-badge {
+    font-size: 10.5px;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 9px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #faf8f5;
+    color: #6f6258;
+    border: 1px solid #ede7dc;
+    white-space: nowrap;
+}
+
+.uo-wa-dot {
+    width: 6.5px;
+    height: 6.5px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.uo-wa-dot--sales {
+    background: #ff6b00;
+    box-shadow: 0 0 6px rgba(255, 107, 0, 0.85);
+}
+
+.uo-wa-dot--cs {
+    background: #25d366;
+    box-shadow: 0 0 6px rgba(37, 211, 102, 0.85);
+}
+
+.uo-wa-card-main {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.uo-wa-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    flex-shrink: 0;
+}
+
+.uo-wa-card-icon--sales {
+    background: #fff0e5;
+    color: #ff6b00;
+}
+
+.uo-wa-card-icon--cs {
+    background: #eafaf1;
+    color: #16a34a;
+}
+
+.uo-wa-card-body {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.uo-wa-card-title {
+    font-size: 15.5px;
+    font-weight: 750;
+    color: #1f170f;
+    display: block;
+    line-height: 1.25;
+    margin-bottom: 2px;
+}
+
+.uo-wa-card-number {
+    font-size: 14px;
+    font-weight: 800;
+    color: #ff6b00;
+    letter-spacing: 0.02em;
+    margin: 2px 0 4px;
+    font-family: monospace, sans-serif;
+}
+
+.uo-wa-card--cs .uo-wa-card-number {
+    color: #15803d;
+}
+
+.uo-wa-card-desc {
+    font-size: 12px;
+    color: #6f6258;
+    line-height: 1.45;
+    margin: 0;
+}
+
+.uo-wa-card-action {
+    flex-shrink: 0;
+    margin-left: 6px;
+}
+
+.uo-wa-arrow-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #faf8f5;
+    color: #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.uo-wa-card--sales:hover .uo-wa-arrow-btn {
+    background: #ff6b00;
+    color: #ffffff;
+    transform: translateX(3px);
+}
+
+.uo-wa-card--cs:hover .uo-wa-arrow-btn {
+    background: #25d366;
+    color: #ffffff;
+    transform: translateX(3px);
+}
+
+/* Big Prominent Action Button inside Sales Card (when in sales_only mode) */
+.uo-wa-card-cta-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 14px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: #ff6b00;
+    color: #ffffff;
+    font-size: 13.5px;
+    font-weight: 750;
+    transition: all 0.2s ease;
+}
+
+.uo-wa-card:hover .uo-wa-card-cta-btn {
+    background: #e65e00;
+}
+
+/* Mode: sales_only (Khusus Cabang, Paket Layanan, Form Submission) */
+.uo-wa-modal[data-mode="sales_only"] .uo-wa-card--cs {
+    display: none !important;
+}
+
+.uo-wa-modal[data-mode="sales_only"] .uo-wa-card--sales {
+    display: block !important;
+    border-color: #ff6b00;
+    background: #fffdfa;
+    box-shadow: 0 14px 34px rgba(255, 107, 0, 0.14);
+    padding: 20px 20px;
+}
+
+.uo-wa-modal[data-mode="sales_only"] .uo-wa-card-cta-btn--sales {
+    display: flex !important;
+}
+
+.uo-wa-modal[data-mode="sales_only"] .uo-wa-arrow-btn {
+    display: none !important;
+}
+
+.uo-wa-modal[data-mode="sales_only"] #uo-wa-alt-link {
+    display: block !important;
+}
+
+/* Mode: cs_only (Khusus Komplain / Customer Service) */
+.uo-wa-modal[data-mode="cs_only"] .uo-wa-card--sales {
+    display: none !important;
+}
+
+.uo-wa-modal[data-mode="cs_only"] .uo-wa-card--cs {
+    display: block !important;
+    border-color: #25d366;
+    background: #f7fdf9;
+    box-shadow: 0 14px 34px rgba(37, 211, 102, 0.14);
+    padding: 20px 20px;
+}
+
+.uo-wa-modal[data-mode="cs_only"] .uo-wa-card-cta-btn--cs {
+    display: flex !important;
+    background: #16a34a;
+}
+
+.uo-wa-modal[data-mode="cs_only"] .uo-wa-card--cs:hover .uo-wa-card-cta-btn--cs {
+    background: #15803d;
+}
+
+.uo-wa-modal[data-mode="cs_only"] .uo-wa-arrow-btn {
+    display: none !important;
+}
+
+.uo-wa-modal[data-mode="cs_only"] #uo-wa-alt-link {
+    display: block !important;
+}
+
+/* Mode: all (Default / Floating Widget) */
+.uo-wa-modal[data-mode="all"] .uo-wa-card--sales,
+.uo-wa-modal[data-mode="all"] .uo-wa-card--cs {
+    display: block !important;
+}
+
+.uo-wa-modal[data-mode="all"] #uo-wa-alt-link {
+    display: none !important;
+}
+
+.uo-wa-modal[data-mode="all"] .uo-wa-card-cta-btn {
+    display: none !important;
+}
+
+.uo-wa-modal[data-mode="all"] .uo-wa-arrow-btn {
+    display: flex !important;
+}
+
+/* Context Box */
+.uo-wa-context-box {
+    margin: -8px 0 18px;
+    padding: 9px 14px;
+    border-radius: 12px;
+    background: #fbf7f1;
+    border: 1px solid #f1e4d3;
+    border-left: 4px solid #ff6b00;
+    font-size: 12.5px;
+    color: #4a3e35;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.4;
+    text-align: left;
+}
+
+.uo-wa-context-box i {
+    color: #ff6b00;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.uo-wa-header-pill--cs {
+    background: rgba(37, 211, 102, 0.14) !important;
+    color: #0b7537 !important;
+}
+
+/* Alt link for CS in sales_only mode */
+.uo-wa-alt-link {
+    display: none;
+    text-align: center;
+    margin-top: 14px;
+}
+
+.uo-wa-text-btn {
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: #7a6e65;
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.2s ease;
+}
+
+.uo-wa-text-btn span {
+    color: #0d8a43;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.uo-wa-text-btn:hover {
+    color: #111;
+}
+
+.uo-wa-modal-footer {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px dashed #eee7dd;
+    text-align: center;
+}
+
+.uo-wa-notice {
+    font-size: 11.5px;
+    color: #85786f;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.4;
+}
+
+.uo-wa-notice i {
+    color: #ff6b00;
+    font-size: 12px;
+}
+
+@media (max-width: 540px) {
+    .uo-wa-modal-container {
+        padding: 12px;
+    }
+    .uo-wa-modal-dialog {
+        padding: 22px 16px 18px;
+        border-radius: 20px;
+    }
+    .uo-wa-modal-title {
+        font-size: 19px;
+    }
+    .uo-wa-card {
+        padding: 14px 14px;
+    }
+    .uo-wa-card-topbar {
+        margin-bottom: 8px;
+    }
+    .uo-wa-card-badge {
+        font-size: 10px;
+    }
+    .uo-wa-card-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 18px;
+    }
+    .uo-wa-card-title {
+        font-size: 14.5px;
+    }
+    .uo-wa-card-desc {
+        font-size: 11.5px;
+    }
+}
+
+

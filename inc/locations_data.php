@@ -467,6 +467,8 @@ $locations_db = [
         ]
     ],
     'jakarta' => [
+        // Temporarily hidden from public discovery. Keep the data for a future reactivation.
+        'is_public' => false,
         'slug' => 'jakarta',
         'title' => 'Urban Office - Fatmawati (Jakarta Selatan)',
         'short_title' => 'Fatmawati',

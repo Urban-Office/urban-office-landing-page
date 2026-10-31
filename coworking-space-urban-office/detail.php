@@ -34,7 +34,7 @@ $types_data = [
     ],
     3 => [
         'name' => 'Coworking Monthly',
-        'img' => 'Foto Coworking Space Jakarta Selatan Fatmawati.webp',
+        'img' => 'Foto Coworking Space.webp',
         'pax' => '1 Pax',
         'capacity' => '1 Orang',
         'size' => 'Area Komunal',

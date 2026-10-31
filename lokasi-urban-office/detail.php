@@ -30,6 +30,11 @@ if (empty($slug) || !isset($locations_db[$slug])) {
     exit;
 }
 
+if (!is_public_location($locations_db[$slug])) {
+    header('Location: ' . BASE_URL . 'lokasi-urban-office/', true, 302);
+    exit;
+}
+
 // Retrieve selected branch details
 $branch = $locations_db[$slug];
 
@@ -481,7 +486,7 @@ require_once dirname(dirname(__FILE__)) . '/inc/header.php';
                 <div class="branches-track">
                     <?php 
                     foreach ($locations_db as $key => $loc):
-                        if ($key === $slug) continue;
+                        if ($key === $slug || !is_public_location($loc)) continue;
                         
                         $wa_message = "Halo Urban Office, saya tertarik dengan layanan di Cabang *" . $loc['title'] . "*";
                         $wa_url = "https://api.whatsapp.com/send?phone=" . WHATSAPP_NUMBER . "&text=" . urlencode($wa_message);

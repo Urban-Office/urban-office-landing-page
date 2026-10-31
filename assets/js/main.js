@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initHomepageSearch();
     initBranchesFilter();
     initMobileLogosMarquee();
+    initWhatsAppModal();
     if (typeof resetOfferMode === 'function') {
         resetOfferMode();
     }
@@ -285,12 +286,13 @@ function initContactForm() {
         }
 
         if (isOfferMode) {
-            if (!name || !email || !phone || !service || !budgetVal || !pesanVal) {
+            if (!name || !phone || !service || !budgetVal || !pesanVal) {
                 alert('Harap isi semua kolom wajib (*).');
                 return;
             }
         } else {
-            if (!name || !email || !phone || !service || !dateVal) {
+            const requiresVisitDate = Boolean(dateInput && dateInput.required);
+            if (!name || !phone || !service || (requiresVisitDate && !dateVal)) {
                 alert('Harap isi semua kolom wajib (*).');
                 return;
             }
@@ -334,9 +336,16 @@ function initContactForm() {
                     waText += `\n*Cabang / Lokasi:* ${locationVal}`;
                     waText += `\n*Ekspektasi Budget:* ${budgetVal}`;
                     waText += `\n*Pesan:* ${pesanVal}`;
-                    waText += `\n\n*Email:* ${email}\n*No. HP:* ${phone}`;
+                    if (email) {
+                        waText += `\n\n*Email:* ${email}`;
+                    }
+                    waText += `\n*No. HP:* ${phone}`;
                 } else {
-                    waText = `Halo Urban Office, saya *${name}*.\n\n*Saya ingin berkonsultasi mengenai:* ${service}\n*Email:* ${email}\n*No. HP:* ${phone}`;
+                    waText = `Halo Urban Office, saya *${name}*.\n\n*Saya ingin berkonsultasi mengenai:* ${service}`;
+                    if (email) {
+                        waText += `\n*Email:* ${email}`;
+                    }
+                    waText += `\n*No. HP:* ${phone}`;
                     if (peopleVal) {
                         waText += `\n*Jumlah Orang:* ${peopleVal} Orang`;
                     }
@@ -345,17 +354,21 @@ function initContactForm() {
                     }
                 }
                 
-                const waUrl = `https://api.whatsapp.com/send/?phone=6285107620100&text=${encodeURIComponent(waText)}`;
-                
                 // Reset form and offer mode
                 form.reset();
                 if (typeof resetOfferMode === 'function') {
                     resetOfferMode();
                 }
-                submitBtn.innerHTML = 'Sukses! Mengarahkan...';
-                
-                // Open WhatsApp in a new tab/window
-                window.open(waUrl, '_blank');
+                submitBtn.innerHTML = 'Sukses!';
+
+                // Direct to WhatsApp via Channel Selector Modal (Khusus Sales untuk pengajuan formulir)
+                if (typeof window.uoOpenWaModal === 'function') {
+                    window.uoOpenWaModal(waText, 'sales_only');
+                } else if (typeof window.uoDirectOpenWhatsApp === 'function') {
+                    window.uoDirectOpenWhatsApp('628212338100', waText);
+                } else {
+                    window.open(`https://api.whatsapp.com/send/?phone=628212338100&text=${encodeURIComponent(waText)}`, '_blank');
+                }
             } else {
                 alert('Gagal mengirim pesan: ' + (result.message || 'Error tidak diketahui.'));
             }
@@ -1021,7 +1034,6 @@ const cityBranches = {
         { id: 'surabaya-barat', label: 'Grand Sungkono (Surabaya Barat)' }
     ],
     'jakarta': [
-        { id: 'jakarta', label: 'Fatmawati (Jakarta Selatan)' },
         { id: 'jakarta-timur', label: 'Gorebiz (Jakarta Timur)' }
     ],
     'gresik': [
@@ -1048,7 +1060,7 @@ function renderBranchButtons(city, preferredBranchId = null) {
 
     // Which branch's pricing to show first: the one from the page URL (?branch=) when it
     // belongs to this city, otherwise the city's first branch. This keeps a Jakarta Timur
-    // (Gorebiz) landing page from defaulting to Fatmawati, etc.
+    // (Gorebiz) landing page from defaulting to another branch, etc.
     const initialId = branches.some(b => b.id === preferredBranchId) ? preferredBranchId : (branches[0] ? branches[0].id : null);
 
     if (branches.length > 1) {
@@ -1333,4 +1345,443 @@ function togglePricingFeatures(btn) {
 }
 
 window.togglePricingFeatures = togglePricingFeatures;
+
+/**
+ * Direct WhatsApp Bypass Helper
+ * - On Mobile: launches WhatsApp app directly via whatsapp:// URI scheme (skips interstitial browser prompt)
+ * - On Desktop: opens WhatsApp Web directly via web.whatsapp.com (skips api.whatsapp.com 'Continue to Chat' page)
+ */
+function uoDirectOpenWhatsApp(phone, message) {
+    let cleanPhone = String(phone || '').replace(/\D/g, '');
+    if (cleanPhone.startsWith('0')) {
+        cleanPhone = '62' + cleanPhone.substring(1);
+    }
+    if (!cleanPhone) {
+        cleanPhone = '628212338100';
+    }
+
+    const encodedMsg = message ? encodeURIComponent(message) : '';
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (isMobile) {
+        const appUrl = `whatsapp://send?phone=${cleanPhone}${encodedMsg ? '&text=' + encodedMsg : ''}`;
+        const fallbackUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}${encodedMsg ? '&text=' + encodedMsg : ''}`;
+        
+        const start = Date.now();
+        window.location.href = appUrl;
+
+        // Fallback for mobile devices without WhatsApp installed
+        setTimeout(() => {
+            if (Date.now() - start < 2200 && document.hasFocus()) {
+                window.location.href = fallbackUrl;
+            }
+        }, 1500);
+    } else {
+        const webUrl = `https://web.whatsapp.com/send?phone=${cleanPhone}${encodedMsg ? '&text=' + encodedMsg : ''}`;
+        window.open(webUrl, '_blank', 'noopener,noreferrer');
+    }
+}
+window.uoDirectOpenWhatsApp = uoDirectOpenWhatsApp;
+
+/**
+ * Smart WhatsApp Message Template Generator
+ * Builds tailored, context-aware messages for Sales vs Customer Service based on:
+ * - Specific branch location (MERR, Klampis, Grand Sungkono Lagoon, Fatmawati, Gorebiz, Gresik, Medan, Malang, etc.)
+ * - Specific service / package / product (Virtual Office, Serviced Office, Coworking Space, Meeting Room, Legalitas PT/CV, Kemitraan)
+ * - Form submission payload
+ * - Current page and DOM context
+ */
+function uoBuildWhatsAppMessages(rawText, triggerEl = null) {
+    const raw = (typeof rawText === 'string') ? rawText.trim() : '';
+
+    // 1. Detect if this is a submitted contact form
+    const isForm = raw.includes('[Pengajuan Penawaran]') ||
+                   raw.includes('[Pemesanan Kunjungan]') ||
+                   raw.includes('Saya ingin mengajukan penawaran') ||
+                   raw.includes('Saya ingin berkonsultasi mengenai:');
+
+    if (isForm) {
+        return {
+            summary: 'Formulir Pengajuan Website',
+            salesMessage: raw,
+            csMessage: `Halo Tim Customer Service Urban Office, saya telah mengisi formulir di website dan ingin berkonsultasi / menyampaikan kendala operasional:\n\n${raw}`
+        };
+    }
+
+    // 2. Extract Branch context
+    let branchName = '';
+    let branchLoc = '';
+
+    // Check DOM trigger first (closest .branch-card / .location-card)
+    if (triggerEl && typeof triggerEl.closest === 'function') {
+        const branchCard = triggerEl.closest('.branch-card, .location-card, .lokasi-card');
+        if (branchCard) {
+            const h = branchCard.querySelector('h3, h4, .branch-title, .location-title');
+            const l = branchCard.querySelector('.branch-loc, .location-address, p');
+            if (h) branchName = h.innerText.replace(/[\r\n]+/g, ' ').trim();
+            if (l) branchLoc = l.innerText.replace(/[\r\n]+/g, ' ').trim();
+        }
+    }
+
+    // Extract branch from rawText if not found in DOM
+    if (!branchName && raw) {
+        const m1 = raw.match(/Cabang:\s*\*?([^\n*]+)\*?/i);
+        const m2 = raw.match(/(?:di\s+)?Cabang\s+([A-Za-z0-9\s\-]+?)(?:\s*\(|\.|\n|$)/i);
+        const m3 = raw.match(/(Urban\s+Office\s*-\s*[A-Za-z0-9\s]+?)(?:\s*\(|\.|\n|$)/i);
+
+        if (m1) {
+            branchName = m1[1].trim();
+        } else if (m2) {
+            branchName = 'Cabang ' + m2[1].trim();
+        } else if (m3) {
+            branchName = m3[1].trim();
+        }
+
+        const locMatch = raw.match(/Lokasi:\s*\*?([^\n*]+)\*?/i);
+        if (locMatch) {
+            branchLoc = locMatch[1].trim();
+        }
+    }
+
+    if (branchName) {
+        branchName = branchName.replace(/\s+/g, ' ').trim().replace(/[.,;:]$/, '');
+    }
+
+    // 3. Extract Product / Service context
+    let productName = '';
+
+    // Check DOM trigger for pricing or package cards
+    if (triggerEl && typeof triggerEl.closest === 'function') {
+        const pkgCard = triggerEl.closest('.pricing-card, .package-card, .price-card, .service-card');
+        if (pkgCard) {
+            const pkgTitle = pkgCard.querySelector('h3, h4, .package-name, .pricing-title, .title');
+            if (pkgTitle) productName = pkgTitle.innerText.replace(/[\r\n]+/g, ' ').trim();
+        }
+    }
+
+    // Check rawText
+    if (!productName && raw) {
+        const p1 = raw.match(/tertarik\s+dengan\s+(?:paket\s+|layanan\s+)?\*?([^\n*.]+)\*?/i);
+        if (p1) {
+            productName = p1[1].trim();
+        } else if (raw.toLowerCase().includes('kemitraan')) {
+            productName = 'Kemitraan Urban Office';
+        } else if (raw.toLowerCase().includes('virtual office')) {
+            productName = 'Virtual Office';
+        } else if (raw.toLowerCase().includes('coworking')) {
+            productName = 'Coworking Space';
+        } else if (raw.toLowerCase().includes('sewa kantor') || raw.toLowerCase().includes('serviced office')) {
+            productName = 'Sewa Kantor / Serviced Office';
+        } else if (raw.toLowerCase().includes('meeting room') || raw.toLowerCase().includes('ruang meeting')) {
+            productName = 'Meeting Room';
+        }
+    }
+
+    // Check page URL if neither branch nor product found yet
+    const path = window.location.pathname.toLowerCase();
+    if (!productName) {
+        if (path.includes('virtual-office')) {
+            productName = 'Virtual Office';
+        } else if (path.includes('coworking')) {
+            productName = 'Coworking Space';
+        } else if (path.includes('sewa-kantor')) {
+            productName = 'Sewa Kantor / Serviced Office';
+        } else if (path.includes('meeting-room')) {
+            productName = 'Meeting Room';
+        } else if (path.includes('pendirian-pt')) {
+            productName = 'Pendirian PT + Virtual Office';
+        } else if (path.includes('pendirian-cv')) {
+            productName = 'Pendirian CV + Virtual Office';
+        } else if (path.includes('pendirian-perorangan')) {
+            productName = 'PT Perorangan + Virtual Office';
+        } else if (path.includes('pendirian-pma')) {
+            productName = 'PT PMA + Virtual Office';
+        } else if (path.includes('pajak-dan-akunting')) {
+            productName = 'Pajak & Akunting';
+        } else if (path.includes('perizinan-dan-perubahan')) {
+            productName = 'Perizinan & Perubahan Perusahaan';
+        }
+    }
+
+    // If still no branch, check if on branch detail page
+    if (!branchName && path.includes('lokasi-urban-office')) {
+        const pageHeading = document.querySelector('h1, .page-title, .hero-title');
+        if (pageHeading) {
+            const hText = pageHeading.innerText.replace(/[\r\n]+/g, ' ').trim();
+            if (hText.toLowerCase().includes('urban office') || hText.toLowerCase().includes('cabang')) {
+                branchName = hText;
+            }
+        }
+    }
+
+    // 4. Construct message for Sales and Customer Service
+    // Sales Message: Tetap pertahankan setup kalimat asli bawaan website dari masing-masing tombol / link
+    const salesMsg = raw || 'Halo Urban Office, saya tertarik dengan layanan Urban Office. Mohon info selengkapnya.';
+
+    // Customer Service Message: Disesuaikan secara relevan dengan konteks trigger (cabang / layanan / operasional / kendala)
+    let summary = '';
+    let csMsg = '';
+
+    const isKemitraan = (productName && productName.toLowerCase().includes('kemitraan')) || raw.toLowerCase().includes('kemitraan');
+
+    if (isKemitraan) {
+        summary = 'Kemitraan Bisnis Urban Office';
+        csMsg = 'Halo Tim Customer Service Urban Office, saya mitra / pengelola ingin berkoordinasi dan menyampaikan pertanyaan operasional terkait kemitraan Urban Office. Mohon dibantu.';
+    } else if (branchName && productName) {
+        summary = `${productName} • ${branchName}`;
+        csMsg = `Halo Tim Customer Service Urban Office, saya pengguna/member layanan *${productName}* di *${branchName}* dan butuh bantuan / ingin menyampaikan pertanyaan operasional. Mohon dibantu.`;
+    } else if (branchName) {
+        summary = `Cabang: ${branchName}`;
+        csMsg = `Halo Tim Customer Service Urban Office, saya butuh bantuan / ingin menyampaikan pertanyaan operasional maupun kendala fasilitas terkait cabang *${branchName}*. Mohon dibantu.`;
+    } else if (productName) {
+        summary = `Layanan: ${productName}`;
+        csMsg = `Halo Tim Customer Service Urban Office, saya ingin bertanya seputar informasi operasional / butuh bantuan terkait layanan *${productName}*. Mohon dibantu.`;
+    } else {
+        summary = '';
+        csMsg = 'Halo Tim Customer Service Urban Office, saya butuh bantuan operasional / ingin menyampaikan kendala atau keluhan terkait layanan Urban Office. Mohon bantuannya.';
+    }
+
+    return {
+        summary,
+        branchName,
+        productName,
+        salesMessage: salesMsg,
+        csMessage: csMsg
+    };
+}
+window.uoBuildWhatsAppMessages = uoBuildWhatsAppMessages;
+
+/**
+ * Global WhatsApp Channel Selector Modal
+ * Intercepts all WhatsApp button triggers across the site and lets the visitor select:
+ * 1. Sales & Konsultasi Produk (0821-2338-100 / 628212338100)
+ * 2. Customer Service & Komplain (0851-0762-0100 / 6285107620100)
+ */
+function initWhatsAppModal() {
+    const modal = document.getElementById('uo-wa-modal');
+    if (!modal) return;
+
+    const salesNumber = modal.getAttribute('data-wa-sales') || '628212338100';
+    const csNumber    = modal.getAttribute('data-wa-cs') || '6285107620100';
+
+    let pendingSalesMessage = '';
+    let pendingCsMessage = '';
+
+    function openModal(message, mode = 'all', triggerEl = null) {
+        // Build distinct, context-relevant messages for Sales vs CS
+        const msgData = uoBuildWhatsAppMessages(message, triggerEl);
+        pendingSalesMessage = msgData.salesMessage;
+        pendingCsMessage = msgData.csMessage;
+
+        // Determine active mode
+        let activeMode = 'all';
+        if (mode === 'sales_only' || mode === 'sales') {
+            activeMode = 'sales_only';
+        } else if (mode === 'cs_only' || mode === 'cs') {
+            activeMode = 'cs_only';
+        } else {
+            activeMode = 'all';
+        }
+
+        modal.setAttribute('data-mode', activeMode);
+
+        const titleEl   = document.getElementById('uo-wa-modal-title');
+        const descEl    = document.getElementById('uo-wa-modal-desc');
+        const badgeEl   = document.getElementById('uo-wa-header-badge');
+        const pillEl    = document.getElementById('uo-wa-header-pill');
+        const contextEl = document.getElementById('uo-wa-context-box');
+        const contextTx = document.getElementById('uo-wa-context-text');
+        const altLinkEl = document.getElementById('uo-wa-alt-link');
+
+        // Update context badge text
+        if (contextEl && contextTx) {
+            if (msgData.summary) {
+                contextTx.textContent = msgData.summary;
+                contextEl.style.display = 'inline-flex';
+            } else {
+                contextEl.style.display = 'none';
+            }
+        }
+
+        if (activeMode === 'sales_only') {
+            const isForm = (typeof message === 'string') && (
+                message.includes('Saya ingin mengajukan penawaran') ||
+                message.includes('Saya ingin berkonsultasi mengenai') ||
+                message.includes('[Pengajuan Penawaran]') ||
+                message.includes('[Pemesanan Kunjungan]')
+            );
+            if (titleEl) titleEl.textContent = isForm ? 'Formulir Berhasil Terkirim!' : 'Hubungi Tim Sales Produk';
+            if (descEl) descEl.textContent = isForm 
+                ? 'Data pengajuan Anda sudah tersimpan. Klik tombol di bawah untuk langsung terhubung dengan Tim Sales via WhatsApp:'
+                : 'Terhubung langsung dengan Tim Sales kami untuk info ketersediaan ruang, penawaran harga resmi, dan survey:';
+            if (badgeEl) badgeEl.textContent = 'Sales WhatsApp';
+            if (pillEl) {
+                pillEl.className = 'uo-wa-header-pill uo-wa-header-pill--sales';
+            }
+            if (altLinkEl) {
+                altLinkEl.innerHTML = '<button type="button" class="uo-wa-text-btn" data-wa-switch="cs">Bukan calon penyewa atau butuh bantuan kendala operasional? <span>Hubungi Customer Service</span></button>';
+                altLinkEl.style.display = 'block';
+            }
+        } else if (activeMode === 'cs_only') {
+            if (titleEl) titleEl.textContent = 'Customer Service & Komplain';
+            if (descEl) descEl.textContent = 'Tim Customer Service siap membantu member aktif, operasional surat & paket masuk, dan penyelesaian kendala:';
+            if (badgeEl) badgeEl.textContent = 'CS & Komplain';
+            if (pillEl) {
+                pillEl.className = 'uo-wa-header-pill uo-wa-header-pill--cs';
+            }
+            if (altLinkEl) {
+                altLinkEl.innerHTML = '<button type="button" class="uo-wa-text-btn" data-wa-switch="sales">Ingin sewa ruang kantor baru atau tanya penawaran? <span>Hubungi Sales Produk</span></button>';
+                altLinkEl.style.display = 'block';
+            }
+        } else {
+            // Mode 'all' (Default for branch cards, pricing packages, floating widget)
+            if (titleEl) titleEl.textContent = 'Hubungi Tim Urban Office';
+            if (descEl) descEl.textContent = 'Silakan pilih jalur komunikasi yang sesuai agar pesan Anda langsung ditangani oleh tim yang tepat:';
+            if (badgeEl) badgeEl.textContent = 'Direct WhatsApp';
+            if (pillEl) {
+                pillEl.className = 'uo-wa-header-pill';
+            }
+            if (altLinkEl) {
+                altLinkEl.style.display = 'none';
+            }
+        }
+
+        modal.classList.add('is-active');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        modal.classList.remove('is-active');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    window.uoOpenWaModal = openModal;
+    window.uoCloseWaModal = closeModal;
+
+    // Close triggers
+    modal.querySelectorAll('[data-wa-close]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeModal();
+        });
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('is-active')) {
+            closeModal();
+        }
+    });
+
+    // Choice 1: Sales & Konsultasi Produk
+    const salesBtn = modal.querySelector('[data-wa-choice="sales"]');
+    if (salesBtn) {
+        salesBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const msg = pendingSalesMessage || 'Halo Tim Sales Urban Office, saya tertarik untuk konsultasi layanan dan sewa ruang kerja.';
+            uoDirectOpenWhatsApp(salesNumber, msg);
+            closeModal();
+        });
+    }
+
+    // Choice 2: Customer Service & Komplain
+    modal.querySelectorAll('[data-wa-choice="cs"]').forEach((csBtn) => {
+        csBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const msg = pendingCsMessage || 'Halo Tim Customer Service Urban Office, saya ingin bertanya / menyampaikan kendala terkait layanan Urban Office.';
+            uoDirectOpenWhatsApp(csNumber, msg);
+            closeModal();
+        });
+    });
+
+    // Handle dynamic switch link (e.g. switch between single modes)
+    modal.addEventListener('click', (e) => {
+        const switchBtn = e.target.closest('[data-wa-switch]');
+        if (switchBtn) {
+            e.preventDefault();
+            const targetMode = switchBtn.getAttribute('data-wa-switch') === 'cs' ? 'cs_only' : 'sales_only';
+            modal.setAttribute('data-mode', targetMode);
+
+            const titleEl = document.getElementById('uo-wa-modal-title');
+            const descEl  = document.getElementById('uo-wa-modal-desc');
+            const badgeEl = document.getElementById('uo-wa-header-badge');
+            const pillEl  = document.getElementById('uo-wa-header-pill');
+            const altLinkEl = document.getElementById('uo-wa-alt-link');
+
+            if (targetMode === 'cs_only') {
+                if (titleEl) titleEl.textContent = 'Customer Service & Komplain';
+                if (descEl) descEl.textContent = 'Tim Customer Service siap membantu member aktif, operasional surat & paket masuk, dan penyelesaian kendala:';
+                if (badgeEl) badgeEl.textContent = 'CS & Komplain';
+                if (pillEl) pillEl.className = 'uo-wa-header-pill uo-wa-header-pill--cs';
+                if (altLinkEl) {
+                    altLinkEl.innerHTML = '<button type="button" class="uo-wa-text-btn" data-wa-switch="sales">Ingin sewa ruang kantor baru atau tanya penawaran? <span>Hubungi Sales Produk</span></button>';
+                }
+            } else {
+                if (titleEl) titleEl.textContent = 'Hubungi Tim Sales Produk';
+                if (descEl) descEl.textContent = 'Terhubung langsung dengan Tim Sales kami untuk info ketersediaan ruang, penawaran harga resmi, dan survey:';
+                if (badgeEl) badgeEl.textContent = 'Sales WhatsApp';
+                if (pillEl) pillEl.className = 'uo-wa-header-pill uo-wa-header-pill--sales';
+                if (altLinkEl) {
+                    altLinkEl.innerHTML = '<button type="button" class="uo-wa-text-btn" data-wa-switch="cs">Bukan calon penyewa atau butuh bantuan kendala operasional? <span>Hubungi Customer Service</span></button>';
+                }
+            }
+        }
+    });
+
+    // Global click interceptor across ALL WhatsApp links & buttons on the website
+    document.addEventListener('click', (e) => {
+        // Do not intercept clicks inside the modal itself
+        if (e.target.closest('#uo-wa-modal')) return;
+
+        // Check if the clicked target is a WhatsApp link or button
+        const trigger = e.target.closest(
+            'a[href*="api.whatsapp.com"], a[href*="web.whatsapp.com"], a[href*="wa.me"], a[href*="whatsapp://"], .floating-wa-widget, .btn-wa-icon, .btn-wa-icon-only, [data-wa-trigger]'
+        );
+
+        if (!trigger) return;
+
+        // Intercept action
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Extract message from href query param (?text=...) or data attribute
+        let extractedMsg = '';
+        const href = trigger.getAttribute('href') || '';
+        if (href) {
+            try {
+                const parsed = new URL(href, window.location.origin);
+                extractedMsg = parsed.searchParams.get('text') || '';
+            } catch (err) {
+                const match = href.match(/[?&]text=([^&]+)/);
+                if (match) {
+                    extractedMsg = decodeURIComponent(match[1].replace(/\+/g, ' '));
+                }
+            }
+        }
+
+        if (!extractedMsg && trigger.getAttribute('data-wa-text')) {
+            extractedMsg = trigger.getAttribute('data-wa-text');
+        }
+
+        // Mode Determination:
+        // - Semua tombol WA dari lokasi cabang, opsi paket produk, maupun floating pojok kanan bawah
+        //   TETAP MENAMPILKAN DUA OPSI (mode: 'all').
+        // - Khusus yang hanya ke Sales adalah hasil pengisian formulir kontak (mode: 'sales_only').
+        let detectedMode = 'all';
+        const explicitChannel = trigger.getAttribute('data-wa-channel');
+        const explicitMode = trigger.getAttribute('data-wa-mode');
+
+        if (explicitMode === 'sales_only') {
+            detectedMode = 'sales_only';
+        } else if (explicitChannel === 'cs' || explicitMode === 'cs_only') {
+            detectedMode = 'cs_only';
+        } else {
+            detectedMode = 'all';
+        }
+
+        openModal(extractedMsg, detectedMode, trigger);
+    }, true);
+}
+
 

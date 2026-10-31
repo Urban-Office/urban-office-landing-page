@@ -39,8 +39,12 @@ try {
 
     // 1. Add static landing pages from DB
     $pages = Database::fetchAll("SELECT slug, updated_at FROM pages");
+    $hidden_page_slugs = ['virtual-office-jakarta'];
     foreach ($pages as $page) {
         $slug = $page['slug'];
+        if (in_array($slug, $hidden_page_slugs, true)) {
+            continue;
+        }
         $url = BASE_URL . ($slug ? $slug . '/' : '');
         $date = date('c', strtotime($page['updated_at']));
         $priority = ($slug === '') ? '1.0' : '0.8';
@@ -103,6 +107,9 @@ try {
         foreach ($sitemap_service_bases as $sm_cat => $sm_base) {
             $sm_seen = [];
             foreach ($locations_db as $sm_branch) {
+                if (!is_public_location($sm_branch)) {
+                    continue;
+                }
                 if (empty($sm_branch['pricing']) || empty($sm_branch['city'])) {
                     continue;
                 }

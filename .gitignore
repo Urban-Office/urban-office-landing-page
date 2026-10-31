@@ -33,3 +33,6 @@ vendor/
 
 # Throwaway automation readiness diagnostic (do not deploy)
 _check_automation_readiness.php
+
+# Local backups
+_backup_desain_baru/

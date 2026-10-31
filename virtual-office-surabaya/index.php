@@ -14,8 +14,15 @@ require_once dirname(dirname(__FILE__)) . '/inc/locations_data.php';
 
 // Branches that offer Virtual Office, in display order for the branch switcher
 $vo_branch_slugs = ['surabaya', 'surabaya-timur', 'surabaya-barat', 'jakarta', 'jakarta-timur', 'gresik', 'medan', 'malang'];
+$vo_branch_slugs = array_values(array_filter($vo_branch_slugs, static function (string $slug) use ($locations_db): bool {
+    return isset($locations_db[$slug]) && is_public_location($locations_db[$slug]);
+}));
 
 $requested_branch = isset($_GET['branch']) ? trim($_GET['branch']) : 'surabaya';
+if (isset($locations_db[$requested_branch]) && !is_public_location($locations_db[$requested_branch])) {
+    header('Location: ' . BASE_URL . 'virtual-office-surabaya/', true, 302);
+    exit;
+}
 if (!in_array($requested_branch, $vo_branch_slugs, true) || !isset($locations_db[$requested_branch])) {
     $requested_branch = 'surabaya';
 }

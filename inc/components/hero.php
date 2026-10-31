@@ -13,7 +13,7 @@ $hero_images = [
     'virtual-office-surabaya' => 'assets/images/branch/urban new (2).png',
     'sewa-kantor-surabaya' => 'assets/images/privateoffice/offie 301 people.png',
     'meeting-room-surabaya' => 'assets/images/meetingroom/Meeting 18 pax.png',
-    'coworking-space-urban-office' => 'assets/images/coworkingspace/Foto Coworking Space Jakarta Selatan Fatmawati.jpeg',
+    'coworking-space-urban-office' => 'assets/images/coworkingspace/Foto Coworking Space.webp',
     'event-space-55k-perjam-urbanoffice' => 'assets/images/eventspace/Grand Event Space.png',
     'sharing-room-office' => 'assets/images/sharingroom/Sharing Room Office.png'
 ];

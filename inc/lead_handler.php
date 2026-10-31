@@ -44,14 +44,15 @@ if (!empty($data['email_confirm'])) {
 
 // 3. Extract and sanitize parameters
 $name = sanitize($data['name'] ?? '');
-$email = filter_var($data['email'] ?? '', FILTER_VALIDATE_EMAIL);
+$email_raw = trim((string)($data['email'] ?? ''));
+$email = $email_raw === '' ? '' : filter_var($email_raw, FILTER_VALIDATE_EMAIL);
 $phone = sanitize($data['phone'] ?? '');
 $service = sanitize($data['service'] ?? '');
 $message = sanitize($data['message'] ?? '');
 $ip_address = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 
 // 4. Validate mandatory values
-if (empty($name) || !$email || empty($phone) || empty($service)) {
+if (empty($name) || empty($phone) || empty($service) || ($email_raw !== '' && $email === false)) {
     http_response_code(422);
     echo json_encode(['success' => false, 'message' => 'Harap isi semua kolom wajib dengan data valid.']);
     exit;

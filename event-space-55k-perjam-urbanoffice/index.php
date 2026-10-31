@@ -131,7 +131,6 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
                 $gallery_items = [
                     ['img' => 'Foto Event Space (2).jpeg', 'title' => 'Event Space Classroom', 'desc' => 'Tata letak meja-kursi untuk kelas/workshop.', 'pax' => '30-80 Pax'],
                     ['img' => 'Foto Event Space (4).jpeg', 'title' => 'Grand Event Space', 'desc' => 'Area luas dengan kelengkapan panggung & audio visual.', 'pax' => '30-80 Pax'],
-                    ['img' => 'Foto Event Space Jakarta Selatan Fatmawati.jpeg', 'title' => 'Event Space Fatmawati', 'desc' => 'Event space modern kelas premium di lokasi eksklusif.', 'pax' => '30-80 Pax'],
                     ['img' => 'WhatsApp Image 2026-06-08 at 11.44.08.jpeg', 'title' => 'Event Space Boardroom', 'desc' => 'Layout U-shape/boardroom untuk rapat besar.', 'pax' => '30-80 Pax'],
                     ['img' => 'WhatsApp Image 2026-06-08 at 11.44.58.jpeg', 'title' => 'Theater Event Layout', 'desc' => 'Tata ruang Theater untuk konferensi & press release.', 'pax' => '30-80 Pax'],
                 ];
