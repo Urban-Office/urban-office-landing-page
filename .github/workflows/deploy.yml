@@ -71,6 +71,10 @@ jobs:
               git remote set-url origin "$REPO_URL" 2>/dev/null || true
             fi
             
+            # Lepas bit assume-unchanged & bersihkan status index agar git reset --hard tidak terblokir
+            git update-index --no-assume-unchanged inc/config.php 2>/dev/null || true
+            git checkout -f inc/config.php 2>/dev/null || true
+            
             echo "📥 Mengambil kode terbaru dari GitHub..."
             git fetch origin main
             git reset --hard origin/main
