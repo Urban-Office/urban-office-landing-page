@@ -56,13 +56,6 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
 <!-- App Promo Section -->
 <?php include DIR_ROOT . 'inc/components/app_section.php'; ?>
 
-<?php
-$geo_service_cat = 'event-space';
-$geo_city_slug   = $es_city_slug;
-$geo_branch      = $svc_branches[0];
-include DIR_ROOT . 'inc/components/geo_summary.php';
-?>
-
 
 <!-- Pricing Configuration -->
 <div id="pricing">
@@ -94,6 +87,14 @@ include DIR_ROOT . 'inc/components/geo_summary.php';
     include dirname(dirname(__FILE__)) . '/inc/components/pricing_cards.php';
     ?>
 </div>
+
+<!-- Per-city local branch address, map & advantages -->
+<?php
+$local_section_title    = 'Lokasi Event Space di ' . $es_city_label;
+$local_section_subtitle = 'Aula dan ruang acara Urban Office di ' . $es_city_label . ' berada di lokasi strategis dan mudah dijangkau peserta acara.';
+$local_city_slug        = $es_city_slug;
+include DIR_ROOT . 'inc/components/local_branch_section.php';
+?>
 
 <!-- Features Component -->
 <?php

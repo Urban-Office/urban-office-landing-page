@@ -47,13 +47,6 @@ $card_desc = !empty($svc_branches[0]['address']) ? $svc_branches[0]['address'] :
 include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
 ?>
 
-<?php
-$geo_service_cat = 'meeting-room';
-$geo_city_slug   = $svc_city_slug;
-$geo_branch      = $svc_branches[0];
-include DIR_ROOT . 'inc/components/geo_summary.php';
-?>
-
 
 <!-- Pricing Configurations -->
 <!-- Meeting Room pricing has two axes (durasi + coffee break). We keep just 2 products

@@ -60,13 +60,6 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
 <!-- App Promo Section -->
 <?php include DIR_ROOT . 'inc/components/app_section.php'; ?>
 
-<?php
-$geo_service_cat = 'coworking';
-$geo_city_slug   = $cs_city_slug;
-$geo_branch      = $svc_branches[0];
-include DIR_ROOT . 'inc/components/geo_summary.php';
-?>
-
 
 <!-- Pricing Card Configuration -->
 <div id="pricing">
@@ -108,6 +101,14 @@ include DIR_ROOT . 'inc/components/geo_summary.php';
     include dirname(dirname(__FILE__)) . '/inc/components/pricing_cards.php';
     ?>
 </div>
+
+<!-- Per-city local branch address, map & advantages -->
+<?php
+$local_section_title    = 'Lokasi Coworking Space di ' . $cs_city_label;
+$local_section_subtitle = 'Area kerja bersama Urban Office di ' . $cs_city_label . ' berada di lokasi strategis dengan akses mudah dan fasilitas lengkap.';
+$local_city_slug        = $cs_city_slug;
+include DIR_ROOT . 'inc/components/local_branch_section.php';
+?>
 
 <!-- Features Component -->
 <?php

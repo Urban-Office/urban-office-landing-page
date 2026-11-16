@@ -45,13 +45,6 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
 <!-- App Promo Section -->
 <?php include DIR_ROOT . 'inc/components/app_section.php'; ?>
 
-<?php
-$geo_service_cat = 'private-office';
-$geo_city_slug   = $svc_city_slug;
-$geo_branch      = $svc_branches[0];
-include DIR_ROOT . 'inc/components/geo_summary.php';
-?>
-
 
 <!-- Pricing Card Configuration -->
 <div id="pricing">

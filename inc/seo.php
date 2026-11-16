@@ -862,7 +862,7 @@ function render_schema_markup(string $slug): void {
             'url' => $seo['canonical_url'],
             'speakable' => [
                 '@type' => 'SpeakableSpecification',
-                'cssSelector' => ['.hero-sec h1', '.geo-summary-title', '.geo-summary-text', '.section-title', '.faq-question']
+                'cssSelector' => ['.hero-sec h1', '.section-title', '.faq-question']
             ]
         ];
     }

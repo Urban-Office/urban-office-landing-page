@@ -84,13 +84,6 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
 <!-- App Promo Section -->
 <?php include DIR_ROOT . 'inc/components/app_section.php'; ?>
 
-<?php
-$geo_service_cat = 'virtual-office';
-$geo_city_slug   = $requested_branch;
-$geo_branch      = $vo_branch;
-include DIR_ROOT . 'inc/components/geo_summary.php';
-?>
-
 
 <!-- Why VO Slider Section -->
 <style>
