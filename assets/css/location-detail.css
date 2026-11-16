@@ -689,6 +689,15 @@
     flex-shrink: 0;
     margin-top: 2px;
 }*/
+.pkg-price-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #FF6B00;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+}
+
 .pkg-card-top h3 {
     font-size: 1rem;
     font-weight: 700;

@@ -3,8 +3,21 @@
  * Urban Office - Coworking Space Detail Page
  */
 
-$page_slug = 'coworking-space-urban-office';
-require_once dirname(dirname(__FILE__)) . '/inc/header.php';
+require_once dirname(dirname(__FILE__)) . '/inc/config.php';
+require_once dirname(dirname(__FILE__)) . '/inc/functions.php';
+require_once dirname(dirname(__FILE__)) . '/inc/locations_data.php';
+
+$cs_lokasi = isset($_GET['lokasi']) ? strtolower(trim($_GET['lokasi'])) : 'surabaya';
+$cs_branches = service_city_branches('coworking', $cs_lokasi);
+if (empty($cs_branches)) {
+    $cs_lokasi = 'surabaya';
+    $cs_branches = service_city_branches('coworking', $cs_lokasi);
+}
+$cs_branch       = $cs_branches[0];
+$cs_city_label   = ($cs_lokasi === 'surabaya-timur') ? 'Surabaya Timur' : ($cs_branch['city'] ?? 'Surabaya');
+$cs_branch_label = get_private_office_branch_label($cs_lokasi, $cs_branch);
+
+$page_slug = ($cs_lokasi === 'surabaya') ? 'coworking-space-urban-office' : ('coworking-space-' . $cs_lokasi);
 
 $type = isset($_GET['type']) ? (int)$_GET['type'] : 1;
 if ($type < 1 || $type > 3) {
@@ -14,7 +27,7 @@ if ($type < 1 || $type > 3) {
 $types_data = [
     1 => [
         'name' => 'Coworking Hours',
-        'img' => 'Foto Coworking Space.webp',
+        'img' => 'assets/images/coworkingspace/Foto Coworking Space.webp',
         'pax' => '1 Pax',
         'capacity' => '1 Orang',
         'size' => 'Area Komunal',
@@ -24,7 +37,7 @@ $types_data = [
     ],
     2 => [
         'name' => 'Coworking Daily',
-        'img' => 'Foto Coworking Space Klampis(2).webp',
+        'img' => 'assets/images/coworkingspace/Foto Coworking Space Klampis(2).webp',
         'pax' => '1 Pax',
         'capacity' => '1 Orang',
         'size' => 'Area Komunal',
@@ -34,7 +47,7 @@ $types_data = [
     ],
     3 => [
         'name' => 'Coworking Monthly',
-        'img' => 'Foto Coworking Space.webp',
+        'img' => 'assets/images/sharingroom/sharing-room-desk.webp',
         'pax' => '1 Pax',
         'capacity' => '1 Orang',
         'size' => 'Area Komunal',
@@ -45,18 +58,46 @@ $types_data = [
 ];
 
 $office = $types_data[$type];
+
+$GLOBALS['seo_title_override'] = $office['name'] . ' - Coworking Space ' . $cs_city_label . ' | Urban Office';
+$GLOBALS['seo_desc_override']  = $office['name'] . ' di Urban Office ' . $cs_city_label . '. Mulai Rp ' . $office['price'] . '/' . strtolower($office['period']) . ', WiFi cepat hingga 100 Mbps, kursi ergonomis, & free flow kopi/teh.';
+require_once dirname(dirname(__FILE__)) . '/inc/header.php';
+
+$cs_gallery = get_coworking_city_gallery($cs_lokasi, $cs_branch);
+$cs_type_img_overrides = ($cs_lokasi === 'malang') ? [
+    1 => 'assets/images/privateoffice/open space malang.jpeg',
+    2 => 'assets/images/sharingroom/sharing-room-desk.webp',
+    3 => 'assets/images/sharingroom/sharing-room-lounge.webp',
+] : [];
+$cs_hero_img_rel = $cs_type_img_overrides[$type] ?? $office['img'];
+$requested_cs_img = isset($_GET['img']) ? trim($_GET['img']) : '';
+if ($requested_cs_img !== '') {
+    foreach ($cs_gallery as $cs_gal_item) {
+        if ($cs_gal_item['img'] === $requested_cs_img) {
+            $cs_hero_img_rel = $cs_gal_item['img'];
+            break;
+        }
+    }
+}
+$cs_back_url = ($cs_lokasi === 'surabaya')
+    ? BASE_URL . 'coworking-space-urban-office/#gallery'
+    : BASE_URL . 'coworking-space-' . $cs_lokasi . '/#gallery';
 ?>
 
 <!-- Detail Banner Hero -->
 <div class="container" style="margin-top: 120px; margin-bottom: 60px;">
     <!-- Breadcrumb back link -->
+    <a href="<?php echo sanitize($cs_back_url); ?>" class="back-breadcrumb">
+        <i class="bi bi-arrow-left"></i> Kembali ke Galeri <?php echo sanitize($cs_city_label); ?>
+    </a>
+
     <div class="hero-detail-grid">
         <!-- Left details column -->
         <div class="hero-details-col">
-            <span class="badge" style="background-color: hsl(var(--clr-primary)); color: white; border-radius: var(--radius-sm); margin-bottom: 12px;">Coworking Space</span>
+            <span class="badge" style="background-color: hsl(var(--clr-primary)); color: white; border-radius: var(--radius-sm); margin-bottom: 12px;">Coworking Space <?php echo sanitize($cs_city_label); ?></span>
             <h1 style="font-size: 2.2rem; line-height: 1.25; margin: 0 0 10px 0; font-weight: 800; color: #111111;"><?php echo sanitize($office['name']); ?></h1>
             <p style="font-size: 1.05rem; color: #555555; margin-bottom: 24px;">
-                <i class="bi bi-geo-alt-fill" style="color: hsl(var(--clr-primary));"></i> Jawa Timur, Indonesia
+                <i class="bi bi-geo-alt-fill" style="color: hsl(var(--clr-primary));"></i> <?php echo sanitize($cs_branch_label . ', ' . ($cs_branch['location'] ?? $cs_city_label)); ?>
             </p>
             
             <!-- Price box -->
@@ -71,7 +112,7 @@ $office = $types_data[$type];
             <!-- Call to Actions -->
             <div class="hero-cta-container">
                 <a href="#contact" class="btn btn-primary" onclick="window.activateDetailOfferMode('<?php echo sanitize($office['name']); ?>')">Ajukan Penawaran</a>
-                <a href="https://api.whatsapp.com/send?phone=6285107620100&text=Halo%20Urban%20Office%2C%20saya%20tertarik%20dengan%20layanan%20<?php echo urlencode($office['name']); ?>.%20Mohon%20info%20selengkapnya." class="btn btn-outline" target="_blank">
+                <a href="https://api.whatsapp.com/send?phone=6285107620100&text=<?php echo urlencode('Halo Urban Office, saya tertarik dengan layanan ' . $office['name'] . ' di Cabang ' . $cs_branch_label . ' (' . $cs_city_label . '). Mohon info selengkapnya.'); ?>" class="btn btn-outline" target="_blank" rel="noopener">
                     <i class="bi bi-whatsapp"></i> WhatsApp
                 </a>
             </div>
@@ -79,9 +120,9 @@ $office = $types_data[$type];
         
         <!-- Right Image Column -->
         <div class="hero-image-col">
-            <img src="<?php echo BASE_URL; ?>assets/images/coworkingspace/<?php echo $office['img']; ?>" alt="<?php echo $office['name']; ?>" style="width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); aspect-ratio: 4/3; object-fit: cover; border: 1px solid hsl(var(--clr-border));">
+            <img src="<?php echo sanitize(encode_asset_url(BASE_URL . $cs_hero_img_rel)); ?>" alt="<?php echo sanitize($office['name'] . ' di Urban Office ' . $cs_city_label); ?>" style="width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); aspect-ratio: 4/3; object-fit: cover; border: 1px solid hsl(var(--clr-border));">
             <span style="position: absolute; top: 20px; right: 20px; background-color: hsl(var(--clr-primary)); color: #FFFFFF; font-size: 0.85rem; font-weight: 800; padding: 6px 14px; border-radius: var(--radius-full); text-transform: uppercase; box-shadow: var(--shadow-md);">
-                <?php echo $office['pax']; ?>
+                <?php echo sanitize($office['pax']); ?>
             </span>
         </div>
     </div>
@@ -103,7 +144,7 @@ $office = $types_data[$type];
                 <table class="specs-table">
                     <tr>
                         <td class="spec-label">Alamat Lengkap</td>
-                        <td class="spec-value">Jl. Dr. Ir. H. Soekarno No.470, Kedung Baruk, Rungkut</td>
+                        <td class="spec-value"><?php echo sanitize($cs_branch['address']); ?></td>
                     </tr>
                     <tr>
                         <td class="spec-label">Kapasitas Desk</td>
@@ -186,14 +227,15 @@ $office = $types_data[$type];
                     // Get other items
                     foreach ($types_data as $id => $item):
                         if ($id === $type) continue;
+                        $other_img = $cs_type_img_overrides[$id] ?? $item['img'];
                     ?>
                     <div class="serviced-card-slide">
-                        <a href="?type=<?php echo $id; ?>" style="text-decoration: none; display: block; color: inherit;">
+                        <a href="?type=<?php echo $id; ?>&lokasi=<?php echo urlencode($cs_lokasi); ?>&img=<?php echo urlencode($other_img); ?>" style="text-decoration: none; display: block; color: inherit;">
                             <div class="serviced-gallery-item">
                                 <div class="image-wrapper">
-                                    <img src="<?php echo BASE_URL; ?>assets/images/coworkingspace/<?php echo $item['img']; ?>" alt="<?php echo $item['name']; ?>" draggable="false">
+                                    <img src="<?php echo sanitize(encode_asset_url(BASE_URL . $other_img)); ?>" alt="<?php echo sanitize($item['name'] . ' di Urban Office ' . $cs_city_label); ?>" loading="lazy" decoding="async" draggable="false">
                                 </div>
-                                <h4><?php echo $item['name']; ?> (<?php echo $item['pax']; ?>)</h4>
+                                <h4><?php echo sanitize($item['name']); ?> (<?php echo sanitize($item['pax']); ?>)</h4>
                             </div>
                         </a>
                     </div>
@@ -529,6 +571,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateSlideStyles() {
         const visibleCount = getVisibleCount();
+        const fitsAll = slides.length <= visibleCount;
+        slider.style.justifyContent = fitsAll ? 'center' : 'flex-start';
+        container.style.cursor = fitsAll ? 'default' : 'grab';
         slides.forEach(slide => {
             slide.style.flex = `0 0 ${100 / visibleCount}%`;
             slide.style.width = `${100 / visibleCount}%`;
@@ -826,7 +871,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 window.activateDetailOfferMode = function(packageName) {
     if (typeof activateOfferMode === 'function') {
-        activateOfferMode(packageName, 'Coworking Space', 'MERR');
+        activateOfferMode(packageName, 'Coworking Space', <?php echo json_encode($cs_branch_label); ?>);
     }
 };
 </script>

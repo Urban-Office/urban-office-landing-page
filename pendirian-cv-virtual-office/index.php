@@ -991,20 +991,7 @@ include DIR_ROOT . 'inc/components/locations_showcase.php';
 ?>
 
 <?php
-$faqs = [
-    [
-        'question' => 'Berapa lama proses pendirian PT / CV selesai?',
-        'answer' => 'Proses pendirian PT / CV kurang lebih membutuhkan waktu 1 minggu setelah semua persyaratan dokumen dinyatakan lengkap.'
-    ],
-    [
-        'question' => 'Dokumen apa saja yang dibutuhkan untuk mendirikan CV?',
-        'answer' => 'Dokumen dan data yang diperlukan untuk pendirian CV meliputi: nama CV, alamat domisili CV, NPWP direktur, bidang usaha (KBLI), nomor telepon CV, serta alamat email dan password.'
-    ],
-    [
-        'question' => 'Apakah bisa konsultasi terlebih dahulu sebelum memutuskan jenis badan usaha?',
-        'answer' => 'Tentu saja bisa. Anda dapat melakukan konsultasi gratis terlebih dahulu dengan tim legal kami untuk menentukan jenis badan usaha yang paling tepat untuk model bisnis Anda.'
-    ]
-];
+$faqs = get_pendirian_faqs('pendirian-cv-virtual-office');
 include dirname(dirname(__FILE__)) . '/inc/components/faq.php';
 ?>
 

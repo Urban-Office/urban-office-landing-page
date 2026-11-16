@@ -3,8 +3,21 @@
  * Urban Office - Private Office Detail Page
  */
 
-$page_slug = 'sewa-kantor-surabaya';
-require_once dirname(dirname(__FILE__)) . '/inc/header.php';
+require_once dirname(dirname(__FILE__)) . '/inc/config.php';
+require_once dirname(dirname(__FILE__)) . '/inc/functions.php';
+require_once dirname(dirname(__FILE__)) . '/inc/locations_data.php';
+
+$po_lokasi = isset($_GET['lokasi']) ? strtolower(trim($_GET['lokasi'])) : 'surabaya';
+$po_branches = service_city_branches('private-office', $po_lokasi);
+if (empty($po_branches)) {
+    $po_lokasi = 'surabaya';
+    $po_branches = service_city_branches('private-office', $po_lokasi);
+}
+$po_branch = $po_branches[0];
+$po_city_label = $po_branch['city'] ?? 'Surabaya';
+$po_branch_label = get_private_office_branch_label($po_lokasi, $po_branch);
+$po_seo_city = ($po_lokasi === 'jakarta') ? 'Jakarta Timur' : $po_city_label;
+$page_slug = 'sewa-kantor-' . $po_lokasi;
 
 $type = isset($_GET['type']) ? (int)$_GET['type'] : 1;
 if ($type < 1 || $type > 8) {
@@ -14,103 +27,118 @@ if ($type < 1 || $type > 8) {
 $types_data = [
     1 => [
         'name' => 'Private Office Small',
-        'img' => 'private-office-small.webp',
+        'img' => 'Foto ruangan 2 pax.webp',
         'pax' => '2 Pax',
         'capacity' => '2 Orang',
         'size' => '6m²',
         'monthly' => '4.000.000',
-        'yearly' => '36.000.000',
+        'yearly' => '48.000.000',
         'desc' => 'Ruang kantor privat 6m² untuk 2 orang, fully furnished dan siap pakai. Ideal untuk startup kecil atau kantor perwakilan yang butuh alamat bisnis prestisius sekaligus ruang kerja profesional.'
     ],
     2 => [
         'name' => 'Private Office Corporate',
-        'img' => 'private-office-medium.webp',
+        'img' => 'offie 301 people.webp',
         'pax' => '5 Pax',
         'capacity' => '5 Orang',
         'size' => '14m²',
         'monthly' => '6.000.000',
-        'yearly' => '54.000.000',
+        'yearly' => '72.000.000',
         'desc' => 'Ruang kerja korporat 14m² berkapasitas 5 orang dengan layout lega. Cocok untuk tim inti perusahaan yang membutuhkan privasi dan kenyamanan penuh dalam satu ruang.'
     ],
     3 => [
         'name' => 'Private Office Corporate',
-        'img' => 'private-office-corporate.webp',
+        'img' => '305.png',
         'pax' => '5 Pax',
         'capacity' => '5 Orang',
         'size' => '14m²',
         'monthly' => '7.000.000',
-        'yearly' => '63.000.000',
+        'yearly' => '84.000.000',
         'desc' => 'Ruang kantor eksklusif 14m² untuk tim 5 orang dengan desain berkelas korporat, pencahayaan optimal, dan furnitur premium. Menghadirkan citra profesional bagi perusahaan Anda.'
     ],
     4 => [
         'name' => 'Private Office Medium',
-        'img' => 'private-office-4.webp',
+        'img' => 'Foto ruangan 4 pax.webp',
         'pax' => '4 Pax',
         'capacity' => '4 Orang',
         'size' => '12m²',
         'monthly' => '5.500.000',
-        'yearly' => '49.500.000',
+        'yearly' => '66.000.000',
         'desc' => 'Ruang kerja privat 12m² berkapasitas 4 orang dengan sekat modern. Ukuran pas untuk tim yang sedang berkembang, lengkap dengan meja, kursi ergonomis, dan AC dedicated.'
     ],
     5 => [
         'name' => 'Private Office Corporate',
-        'img' => 'private-office-5.webp',
+        'img' => 'Foto ruangan 4 pax.webp',
         'pax' => '6 Pax',
         'capacity' => '6 Orang',
         'size' => '16m²',
         'monthly' => '7.500.000',
-        'yearly' => '67.500.000',
+        'yearly' => '90.000.000',
         'desc' => 'Ruang kantor terluas 16m² untuk tim hingga 6 orang. Ruang paling lapang di lantai ini, ideal untuk divisi operasional atau tim yang butuh keleluasaan maksimal.'
     ],
     6 => [
         'name' => 'Private Office Small',
-        'img' => 'private-office-6.webp',
+        'img' => 'Meeting 2 Pax.webp',
         'pax' => '2 Pax',
         'capacity' => '2 Orang',
         'size' => '6m²',
         'monthly' => '5.000.000',
-        'yearly' => '45.000.000',
+        'yearly' => '60.000.000',
         'desc' => 'Ruang kantor privat 6m² untuk 2 orang di lantai 2 dengan akses strategis. Nyaman dan profesional untuk duo founder atau tim kecil yang butuh ruang fokus.'
     ],
     7 => [
         'name' => 'Private Office Small',
-        'img' => 'private-office-7.webp',
+        'img' => '304.webp',
         'pax' => '2 Pax',
         'capacity' => '2 Orang',
         'size' => '6m²',
         'monthly' => '4.000.000',
-        'yearly' => '36.000.000',
+        'yearly' => '48.000.000',
         'desc' => 'Ruang kerja privat 6m² berkapasitas 2 orang dengan harga paling terjangkau. Pilihan tepat untuk profesional atau konsultan yang memulai kehadiran kantor fisik.'
     ],
     8 => [
         'name' => 'Private Office Medium',
-        'img' => 'private-office-8.webp',
+        'img' => 'Meeting 6 pax.webp',
         'pax' => '5 Pax',
         'capacity' => '5 Orang',
         'size' => '10m²',
         'monthly' => '6.500.000',
-        'yearly' => '58.500.000',
+        'yearly' => '78.000.000',
         'desc' => 'Ruang kerja 10m² yang efisien untuk tim hingga 5 orang. Tata letak kompak namun fungsional, cocok untuk tim yang mengutamakan kolaborasi erat.'
     ]
 ];
 
 $office = $types_data[$type];
+$GLOBALS['seo_title_override'] = $office['name'] . ' (' . $office['pax'] . ') - Sewa Kantor ' . $po_seo_city . ' | Urban Office';
+$GLOBALS['seo_desc_override'] = $office['name'] . ' kapasitas ' . $office['capacity'] . ' (' . $office['size'] . ') di Urban Office ' . $po_seo_city . '. Mulai Rp ' . $office['monthly'] . '/bulan, fully furnished siap kerja.';
+require_once dirname(dirname(__FILE__)) . '/inc/header.php';
+
+$po_hero_img_rel = 'assets/images/privateoffice/' . $office['img'];
+$requested_img = isset($_GET['img']) ? trim($_GET['img']) : '';
+if ($requested_img !== '') {
+    foreach (get_private_office_city_gallery($po_lokasi, $po_branch) as $gal_item) {
+        if ($gal_item['img'] === $requested_img) {
+            $po_hero_img_rel = $gal_item['img'];
+            break;
+        }
+    }
+}
+$po_back_url = BASE_URL . 'sewa-kantor-' . $po_lokasi . '/#gallery';
 ?>
 
 <!-- Detail Banner Hero -->
 <div class="container" style="margin-top: 120px; margin-bottom: 60px;">
     <!-- Breadcrumb back link -->
-    <a href="<?php echo BASE_URL; ?>sewa-kantor-surabaya/" class="back-breadcrumb">
-        <i class="bi bi-arrow-left"></i> Kembali ke Halaman Utama
+    <a href="<?php echo sanitize($po_back_url); ?>" class="back-breadcrumb">
+        <i class="bi bi-arrow-left"></i> Kembali ke Galeri <?php echo sanitize($po_city_label); ?>
     </a>
     
     <div class="hero-detail-grid">
         <!-- Left details column -->
         <div class="hero-details-col">
-            <span class="badge" style="background-color: hsl(var(--clr-primary)); color: white; border-radius: var(--radius-sm); margin-bottom: 12px;">Private Office Room</span>
+            <span class="badge" style="background-color: hsl(var(--clr-primary)); color: white; border-radius: var(--radius-sm); margin-bottom: 12px;">Private Office <?php echo sanitize($po_city_label); ?></span>
             <h1 style="font-size: 2.2rem; line-height: 1.25; margin: 0 0 10px 0; font-weight: 800; color: #111111;"><?php echo sanitize($office['name']); ?></h1>
             <p style="font-size: 1.05rem; color: #555555; margin-bottom: 24px;">
-                <i class="bi bi-geo-alt-fill" style="color: hsl(var(--clr-primary));"></i> Jawa Timur, Indonesia
+                <i class="bi bi-geo-alt-fill" style="color: hsl(var(--clr-primary));"></i> <?php echo sanitize($po_branch_label . ', ' . ($po_branch['location'] ?? $po_city_label)); ?>
             </p>
             
             <!-- Price box -->
@@ -120,18 +148,17 @@ $office = $types_data[$type];
                     Rp <?php echo sanitize($office['monthly']); ?> <span style="font-size: 1.2rem; color: #666666; font-weight: 500;">/ Bulan</span>
                 </div>
                 <?php if (!empty($office['yearly'])): ?>
-                <div style="font-size: 1rem; color: hsl(var(--clr-success)); font-weight: 700; margin-top: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                    <i class="bi bi-tag-fill"></i> Rp <?php echo sanitize($office['yearly']); ?> / Tahun
-                    <span style="font-weight: 500; color: #666666; font-size: 0.85rem;">(bayar 9 bulan untuk sewa 1 tahun)</span>
+                <div style="font-size: 1rem; color: hsl(var(--clr-primary)); font-weight: 700; margin-top: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    <i class="bi bi-calendar-check-fill"></i> Rp <?php echo sanitize($office['yearly']); ?> / Tahun
                 </div>
                 <?php endif; ?>
-                <p style="font-size: 0.75rem; color: #666666; margin-top: 8px; margin-bottom: 0;">*Minimum kontrak 1 tahun. Harga tahunan sudah termasuk promo bayar 9 bulan.</p>
+                <p style="font-size: 0.75rem; color: #666666; margin-top: 8px; margin-bottom: 0;">*Minimum kontrak 1 tahun.</p>
             </div>
             
             <!-- Call to Actions -->
             <div class="hero-cta-container">
-                <a href="#contact" class="btn btn-primary" onclick="window.activateDetailOfferMode('<?php echo sanitize($office['name']); ?>')">Ajukan Penawaran</a>
-                <a href="https://api.whatsapp.com/send?phone=6285107620100&text=Halo%20Urban%20Office%2C%20saya%20tertarik%20dengan%20<?php echo urlencode($office['name']); ?>.%20Mohon%20info%20selengkapnya." class="btn btn-outline" target="_blank">
+                <a href="#contact" class="btn btn-primary" onclick="window.activateDetailOfferMode(<?php echo sanitize(json_encode($office['name'])); ?>)">Ajukan Penawaran</a>
+                <a href="https://api.whatsapp.com/send?phone=6285107620100&text=<?php echo urlencode('Halo Urban Office, saya tertarik dengan ' . $office['name'] . ' di Cabang ' . $po_branch_label . ' (' . $po_city_label . '). Mohon info selengkapnya.'); ?>" class="btn btn-outline" target="_blank" rel="noopener">
                     <i class="bi bi-whatsapp"></i> WhatsApp
                 </a>
             </div>
@@ -139,7 +166,7 @@ $office = $types_data[$type];
         
         <!-- Right Image Column -->
         <div class="hero-image-col">
-            <img src="<?php echo BASE_URL; ?>assets/images/privateoffice/<?php echo $office['img']; ?>" alt="<?php echo $office['name']; ?>" style="width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); aspect-ratio: 4/3; object-fit: cover; object-position: center; border: 1px solid hsl(var(--clr-border));">
+            <img src="<?php echo sanitize(encode_asset_url(BASE_URL . $po_hero_img_rel)); ?>" alt="<?php echo sanitize($office['name'] . ' di Urban Office ' . $po_seo_city); ?>" style="width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); aspect-ratio: 4/3; object-fit: cover; object-position: center; border: 1px solid hsl(var(--clr-border));">
             <span style="position: absolute; top: 20px; right: 20px; background-color: hsl(var(--clr-primary)); color: #FFFFFF; font-size: 0.85rem; font-weight: 800; padding: 6px 14px; border-radius: var(--radius-full); text-transform: uppercase; box-shadow: var(--shadow-md);">
                 <?php echo $office['pax']; ?>
             </span>
@@ -164,7 +191,7 @@ $office = $types_data[$type];
                 <table class="specs-table">
                     <tr>
                         <td class="spec-label">Alamat Lengkap</td>
-                        <td class="spec-value">Jl. Dr. Ir. H. Soekarno No.470, Kedung Baruk, Rungkut</td>
+                        <td class="spec-value"><?php echo sanitize($po_branch['address']); ?></td>
                     </tr>
                     <tr>
                         <td class="spec-label">Kapasitas Ruangan</td>
@@ -245,57 +272,16 @@ $office = $types_data[$type];
             <!-- Window/Viewport for Slider -->
             <div class="serviced-gallery-window" style="overflow: hidden; cursor: grab; user-select: none; width: 100%;">
                 <div id="serviced-gallery-slider" style="display: flex; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform;">
-                    
-                    <!-- Slide 1: Meeting Room -->
+                    <?php foreach (get_serviced_office_gallery($po_lokasi) as $srv_item): ?>
                     <div class="serviced-card-slide">
                         <div class="serviced-gallery-item">
                             <div class="image-wrapper">
-                                <img src="<?php echo BASE_URL; ?>assets/images/privateoffice/serviced-office-meeting.png" alt="Meeting Room" draggable="false">
+                                <img src="<?php echo sanitize(encode_asset_url(BASE_URL . $srv_item['img'])); ?>" alt="<?php echo sanitize($srv_item['alt']); ?>" loading="lazy" decoding="async" draggable="false">
                             </div>
-                            <h4>Meeting Room</h4>
+                            <h4><?php echo sanitize($srv_item['title']); ?></h4>
                         </div>
                     </div>
-
-                    <!-- Slide 2: Serviced Office -->
-                    <div class="serviced-card-slide">
-                        <div class="serviced-gallery-item">
-                            <div class="image-wrapper">
-                                <img src="<?php echo BASE_URL; ?>assets/images/privateoffice/serviced-office-desk.png" alt="Serviced Office" draggable="false">
-                            </div>
-                            <h4>Serviced Office</h4>
-                        </div>
-                    </div>
-
-                    <!-- Slide 3: Pantry -->
-                    <div class="serviced-card-slide">
-                        <div class="serviced-gallery-item">
-                            <div class="image-wrapper">
-                                <img src="<?php echo BASE_URL; ?>assets/images/privateoffice/serviced-office-pantry.png" alt="Pantry" draggable="false">
-                            </div>
-                            <h4>Pantry</h4>
-                        </div>
-                    </div>
-
-                    <!-- Slide 4: Resepsionis -->
-                    <div class="serviced-card-slide">
-                        <div class="serviced-gallery-item">
-                            <div class="image-wrapper">
-                                <img src="<?php echo BASE_URL; ?>assets/images/privateoffice/serviced-office-receptionist.png" alt="Resepsionis" draggable="false">
-                            </div>
-                            <h4>Resepsionis</h4>
-                        </div>
-                    </div>
-
-                    <!-- Slide 5: Outdoor Area -->
-                    <div class="serviced-card-slide">
-                        <div class="serviced-gallery-item">
-                            <div class="image-wrapper">
-                                <img src="<?php echo BASE_URL; ?>assets/images/privateoffice/serviced-office-outdoor.png" alt="Outdoor Area" draggable="false">
-                            </div>
-                            <h4>Outdoor Area</h4>
-                        </div>
-                    </div>
-
+                    <?php endforeach; ?>
                 </div>
             </div>
             
@@ -777,8 +763,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <i class="bi bi-check-lg" style="-webkit-text-stroke: 1px;"></i>
                 </div>
                 <div class="advantage-text-content">
-                    <h4 class="advantage-title">Sewa 1 Tahun Cukup Bayar 9 Bulan</h4>
-                    <p class="advantage-desc">Cocok untuk bisnis yang ingin rencana jangka panjang tanpa biaya besar di depan. Hemat 3 bulan sewa—lebih untung, lebih nyaman.</p>
+                    <h4 class="advantage-title">Kontrak Transparan &amp; Siap Pakai</h4>
+                    <p class="advantage-desc">Pilihan paket bulanan maupun tahunan dengan biaya tetap yang jelas tanpa biaya tersembunyi—memudahkan perencanaan anggaran bisnis Anda.</p>
                 </div>
             </div>
         </div>
@@ -930,7 +916,7 @@ document.addEventListener('DOMContentLoaded', function() {
 window.activateDetailOfferMode = function(packageName) {
     if (typeof activateOfferMode === 'function') {
         // Triggers the form Offer Mode dynamically for Private Office
-        activateOfferMode(packageName, 'Private Office', 'MERR');
+        activateOfferMode(packageName, 'Private Office', <?php echo json_encode($po_branch_label); ?>);
     }
 };
 </script>

@@ -34,6 +34,27 @@ Disallow: /admin/
 Disallow: /cache/
 Disallow: /inc/
 
+# OpenAI OAI-SearchBot — powers ChatGPT Search citability
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin/
+Disallow: /cache/
+Disallow: /inc/
+
+# Perplexity Search Bot — powers Perplexity citations
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin/
+Disallow: /cache/
+Disallow: /inc/
+
+# Anthropic Claude SearchBot — powers Claude search citability
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /admin/
+Disallow: /cache/
+Disallow: /inc/
+
 # Google Extended — powers Google AI Overviews & Gemini search
 User-agent: Google-Extended
 Allow: /

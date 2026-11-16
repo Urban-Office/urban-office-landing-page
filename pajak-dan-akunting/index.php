@@ -1380,32 +1380,7 @@ include DIR_ROOT . 'inc/components/locations_showcase.php';
 
 <!-- FAQ Section -->
 <?php
-$faqs = [
-    [
-        'question' => 'Dokumen apa saja yang diperlukan untuk pengurusan pelaporan pajak bulanan?',
-        'answer' => 'Untuk pelaporan rutin bulanan, Anda cukup menyiapkan mutasi rekening bank (rekening koran), rekap penjualan & pembelian (invoice/faktur), serta bukti pemotongan pajak dari pihak ketiga (bila ada).'
-    ],
-    [
-        'question' => 'Kapan batas waktu pelaporan dan pembayaran pajak badan usaha?',
-        'answer' => 'Pembayaran PPh bulanan paling lambat tanggal 10 atau 15 bulan berikutnya, sedangkan pelaporannya paling lambat tanggal 20. Untuk SPT Tahunan PPh Badan, batas waktu pelaporan dan pembayarannya adalah 30 April tahun berikutnya.'
-    ],
-    [
-        'question' => 'Apakah perusahaan Non-PKP tetap wajib melaporkan pajak?',
-        'answer' => 'Ya, perusahaan Non-PKP tetap berkewajiban melakukan pelaporan SPT Tahunan PPh Badan dan membayar pajak atas penghasilan bruto perusahaan sesuai ketentuan perpajakan (seperti PPh Final 0.5%). Mereka hanya tidak memungut/melaporkan PPN.'
-    ],
-    [
-        'question' => 'Apa itu SP2DK dan bagaimana tim Urban Office dapat membantu?',
-        'answer' => 'SP2DK adalah Surat Permintaan Penjelasan atas Data dan/atau Keterangan yang diterbitkan oleh KPP apabila ditemukan ketidaksesuaian laporan. Tim ahli perpajakan kami (berlisensi BKP) akan menganalisis data keuangan Anda dan menyusun surat tanggapan formal serta mendampingi pertemuan dengan pihak pajak.'
-    ],
-    [
-        'question' => 'Apakah layanan ini bisa sekaligus membantu pembukuan perusahaan?',
-        'answer' => 'Bisa. Tim kami dapat membantu merapikan pembukuan, merekap transaksi, menyusun laporan keuangan dasar, dan menyiapkan data yang dibutuhkan untuk pelaporan pajak bulanan maupun tahunan.'
-    ],
-    [
-        'question' => 'Apakah data keuangan perusahaan saya dijamin kerahasiaannya?',
-        'answer' => 'Tentu saja. Kami menjamin 100% kerahasiaan seluruh dokumen, data transaksi, dan laporan perpajakan Anda. Kerahasiaan ini dituangkan secara resmi dalam Non-Disclosure Agreement (NDA) yang ditandatangani bersama di awal kerjasama.'
-    ]
-];
+$faqs = get_pajak_akunting_faqs();
 include dirname(dirname(__FILE__)) . '/inc/components/faq.php';
 ?>
 

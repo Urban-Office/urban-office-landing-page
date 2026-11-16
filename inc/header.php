@@ -159,7 +159,9 @@ start_page_cache($page_slug);
                                             // Services with a clean_base use real per-city URLs (/sewa-kantor-jakarta/);
                                             // the rest still use the ?lokasi filter until they are converted too.
                                             $svc_city_href = isset($nav_svc['clean_base'])
-                                                ? BASE_URL . $nav_svc['clean_base'] . '-' . $svc_city_lower . '/'
+                                                ? (($svc_city_lower === 'surabaya' && in_array($nav_svc['cat'], ['coworking', 'event-space'], true))
+                                                    ? $svc_base
+                                                    : BASE_URL . $nav_svc['clean_base'] . '-' . $svc_city_lower . '/')
                                                 : $svc_base . '?lokasi=' . urlencode($svc_city_lower);
                                         ?>
                                             <a href="<?php echo $svc_city_href; ?>" class="dropdown-item"><?php echo sanitize($svc_city_label); ?></a>

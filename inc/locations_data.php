@@ -3,7 +3,7 @@
  * Urban Office - Centralized Locations Data Store
  * Provides rich metadata, gallery, pricing packages, FAQs, and testimonials for all branches.
  * Aligned with official pricing:
- * - VO Starter: 385.000 / bln, Luxury: 620.000 / bln, Priority: 770.000 / bln
+ * - VO Business / Starter / Luxury / Priority: per-hari (annual / 12 / 30 rounded down to thousands) + annual promo/normal pricing
  * - Coworking: Harian 45.000 / hari, Bulanan 750.000 / bln
  * - Sharing Room: 1.000.000 / bln
  * - Meeting Room: 125.000 / jam
@@ -36,7 +36,7 @@ $locations_db = [
         'kpp' => 'KPP Rungkut',
         'rating' => '4.9',
         'reviews_count' => '156',
-        'image' => BASE_URL . 'assets/images/branch/merr new.png',
+        'image' => BASE_URL . 'assets/images/branch/merr new.webp',
         'map_embed' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.348638974577!2d112.78023107476097!3d-7.318892692689255!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7fa535f29910d%3A0x8bbd360efbe36368!2sUrban%20Office%20Surabaya!5e0!3m2!1sid!2sid!4v1718000000000!5m2!1sid!2sid',
         'map_link' => 'https://maps.app.goo.gl/nACcB9LqEPn27REY9',
         'services' => 'VO, Serviced Office, Meeting Room, Coworking, Event Space, Sharing Room Office',
@@ -62,29 +62,48 @@ $locations_db = [
         'pricing' => [
             [
                 'category' => 'virtual-office',
-                'name' => 'Virtual Office Starter',
-                'price' => '385.000',
-                'period' => 'bulan',
-                'desc' => 'Paket hemat alamat kantor prestisius di gedung komersial.',
+                'name' => 'Virtual Office Business Merr',
+                'price' => '8.000',
+                'period' => 'hari',
+                'popular' => false,
+                'desc' => 'Paket hemat alamat bisnis resmi di MERR Surabaya (alamat saja).',
                 'features' => [
-                    'Alamat Bisnis Prestisius & Strategis',
-                    'Penanganan Surat & Paket Masuk',
-                    'Notifikasi Surat Masuk via Email/WA',
-                    'Hak Penggunaan Alamat Kantor',
-                    'Resepsionis Profesional',
-                    'Akses Meeting Room 2x 2 Jam / Bulan'
+                    'Alamat Bisnis Resmi & Prestisius di MERR Surabaya',
+                    'Penggunaan Alamat untuk Domisili & Legalitas Usaha',
+                    'Penanganan Surat & Paket Masuk oleh Resepsionis',
+                    'Notifikasi Surat Masuk Real-Time via WhatsApp / Email',
+                    'Layanan Resepsionis Profesional untuk Penerimaan Kurir'
                 ],
-                'cta_wa' => 'Halo Urban Office, saya ingin memesan Virtual Office Starter di Cabang MERR.'
+                'cta_wa' => 'Halo Urban Office, saya ingin memesan Virtual Office Business Merr di Cabang MERR Surabaya.'
+            ],
+            [
+                'category' => 'virtual-office',
+                'name' => 'Virtual Office Starter',
+                'price' => '12.000',
+                'period' => 'hari',
+                'popular' => true,
+                'desc' => 'Alamat bisnis prestisius lengkap dengan akses meeting room 4 jam dan gratis website.',
+                'features' => [
+                    'Alamat Bisnis Resmi & Prestisius di MERR Surabaya',
+                    'Penggunaan Alamat untuk Domisili & Legalitas Usaha',
+                    'Penanganan Surat & Paket Masuk oleh Resepsionis',
+                    'Notifikasi Surat Masuk Real-Time via WhatsApp / Email',
+                    'Gratis Akses Meeting Room 4 Jam / Bulan',
+                    'Gratis Pembuatan Website Bisnis',
+                    'Layanan Resepsionis Profesional'
+                ],
+                'cta_wa' => 'Halo Urban Office, saya ingin memesan Virtual Office Starter di Cabang MERR Surabaya.'
             ],
             [
                 'category' => 'virtual-office',
                 'name' => 'Virtual Office Luxury',
-                'price' => '620.000',
-                'period' => 'bulan',
+                'price' => '20.000',
+                'period' => 'hari',
+                'popular' => false,
                 'desc' => 'Sempurna untuk startup berkembang yang butuh fasilitas ruang rapat lebih banyak.',
                 'features' => [
                     'Semua Layanan Paket Starter',
-                    'Akses Meeting Room 2x 3 Jam / Bulan',
+                    'Akses Meeting Room 6 Jam / Bulan',
                     'Nomor Telepon Kantor Bersama (Shared Line)',
                     'Layanan Resepsionis untuk Penerimaan Tamu',
                     'Hak Penggunaan Alamat Kantor'
@@ -94,16 +113,19 @@ $locations_db = [
             [
                 'category' => 'virtual-office',
                 'name' => 'Virtual Office Priority',
-                'price' => '770.000',
-                'period' => 'bulan',
-                'desc' => 'Layanan premium lengkap dengan bonus layanan pendukung bisnis pilihan.',
+                'price' => '25.000',
+                'period' => 'hari',
+                'popular' => false,
+                'desc' => 'Layanan premium lengkap dengan meeting room 8 jam, coworking 1 orang, dan website.',
                 'features' => [
-                    'Semua Layanan Paket Luxury',
-                    'Akses Meeting Room 2x 4 Jam / Bulan',
-                    'Nomor Telepon Kantor Bersama',
-                    'Pilihan Layanan Pendukung Bisnis (Digital Marketing / Kirim Dokumen / Virtual Assistant)'
+                    'Semua Fasilitas Paket Luxury',
+                    'Gratis Akses Meeting Room 8 Jam / Bulan',
+                    'Akses Coworking Space untuk 1 Orang',
+                    'Gratis Pembuatan Website Bisnis',
+                    'Nomor Telepon Kantor Bersama (Shared Line)',
+                    'Layanan Resepsionis Penerimaan Tamu & Call Handling'
                 ],
-                'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Priority di Cabang MERR.'
+                'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Priority di Cabang MERR Surabaya.'
             ],
             [
                 'category' => 'coworking',
@@ -252,7 +274,7 @@ $locations_db = [
         'kpp' => 'KPP Gubeng',
         'rating' => '4.8',
         'reviews_count' => '112',
-        'image' => BASE_URL . 'assets/images/branch/klampis.png',
+        'image' => BASE_URL . 'assets/images/branch/klampis.webp',
         'map_embed' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.6974712411874!2d112.77494497476063!3d-7.2752175927318725!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7fa2032e5ab75%3A0x6bfe76e033e08f23!2sRuko%20Klampis%20Megah!5e0!3m2!1sid!2sid!4v1718000000001!5m2!1sid!2sid',
         'map_link' => 'https://maps.app.goo.gl/9R684o1w4Z4P79cW6',
         'services' => 'VO, Coworking Space, Meeting Room (Klaim Jatah VO)',
@@ -265,9 +287,9 @@ $locations_db = [
             'Dekat dengan kampus ternama (ITS, UNAIR Kampus C)'
         ],
         'gallery' => [
-            'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=800&q=80',
-            'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80',
-            'https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?auto=format&fit=crop&w=800&q=80'
+            BASE_URL . 'assets/images/coworkingspace/Foto Coworking Space Klampis(2).webp',
+            BASE_URL . 'assets/images/sharingroom/sharing-room-desk.webp',
+            BASE_URL . 'assets/images/meetingroom/meeting klampis.jpeg',
         ],
         'seo' => [
             'title' => 'Sewa Kantor & Virtual Office Klampis Surabaya - Urban Office',
@@ -277,33 +299,37 @@ $locations_db = [
         'pricing' => [
             [
                 'category' => 'virtual-office',
-                'name' => 'Virtual Office Starter',
-                'price' => '385.000',
-                'period' => 'bulan',
-                'desc' => 'Dapatkan alamat bisnis prestisius di area strategis Klampis Jaya.',
+                'name' => 'Virtual Office Business',
+                'price' => '6.000',
+                'period' => 'hari',
+                'popular' => false,
+                'desc' => 'Paket hemat alamat bisnis resmi di area strategis Klampis Jaya (alamat saja).',
                 'features' => [
-                    'Alamat Bisnis Prestisius di Gedung Komersial',
-                    'Layanan Penanganan Surat & Paket',
-                    'Notifikasi Chat WhatsApp Surat Masuk',
-                    'Notifikasi Surat Masuk via WhatsApp',
-                    'Diskon Ruang Meeting Khusus Member'
+                    'Alamat Bisnis Resmi di Area Strategis Klampis',
+                    'Penggunaan Alamat untuk Domisili & Legalitas Usaha',
+                    'Penanganan Surat & Paket Masuk oleh Resepsionis',
+                    'Notifikasi Surat Masuk Real-Time via WhatsApp / Email',
+                    'Layanan Resepsionis Profesional untuk Penerimaan Kurir'
                 ],
-                'cta_wa' => 'Halo Urban Office, saya ingin memesan Virtual Office Starter di Cabang Klampis.'
+                'cta_wa' => 'Halo Urban Office, saya ingin memesan Virtual Office Business di Cabang Klampis Surabaya Timur.'
             ],
             [
                 'category' => 'virtual-office',
-                'name' => 'Virtual Office Luxury',
-                'price' => '620.000',
-                'period' => 'bulan',
-                'desc' => 'Sempurna untuk bisnis yang sedang berkembang dengan akses ruang rapat.',
+                'name' => 'Virtual Office Starter',
+                'price' => '8.000',
+                'period' => 'hari',
+                'popular' => true,
+                'desc' => 'Alamat bisnis prestisius di Klampis lengkap dengan meeting room 4 jam dan gratis website.',
                 'features' => [
-                    'Alamat Bisnis Komersial Klampis Megah',
-                    'Penerimaan Surat Menyurat & Paket',
-                    'Pemberitahuan Instan via WhatsApp/Email',
-                    'Akses Rapat 2x 3 Jam/Bulan di Surabaya',
-                    'Nomor Telepon Kantor Bersama'
+                    'Alamat Bisnis Resmi & Prestisius Klampis Jaya',
+                    'Penggunaan Alamat untuk Domisili & Legalitas Usaha',
+                    'Penanganan Surat & Paket Masuk oleh Resepsionis',
+                    'Notifikasi Surat Masuk Real-Time via WhatsApp / Email',
+                    'Gratis Akses Meeting Room 4 Jam / Bulan',
+                    'Gratis Pembuatan Website Bisnis',
+                    'Layanan Resepsionis Profesional'
                 ],
-                'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Luxury di Cabang Klampis.'
+                'cta_wa' => 'Halo Urban Office, saya ingin memesan Virtual Office Starter di Cabang Klampis Surabaya Timur.'
             ],
             [
                 'category' => 'coworking',
@@ -379,7 +405,7 @@ $locations_db = [
         'kpp' => 'KPP Karang Pilang',
         'rating' => '4.9',
         'reviews_count' => '94',
-        'image' => BASE_URL . 'assets/images/branch/gsl new.png',
+        'image' => BASE_URL . 'assets/images/branch/gsl new.webp',
         'map_embed' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.51479860682!2d112.69532587476075!3d-7.295880492711311!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7fde2e8b0e12f%3A0xe54d89694ea519ee!2sGrand%20Sungkono%20Lagoon!5e0!3m2!1sid!2sid!4v1718000000002!5m2!1sid!2sid',
         'map_link' => 'https://maps.app.goo.gl/tJ9DksjK31GjLdC16',
         'services' => 'VO, Meeting Room (Klaim Jatah VO)',
@@ -392,9 +418,9 @@ $locations_db = [
             'Akses cepat menuju gerbang tol satelit (hanya 5 menit)'
         ],
         'gallery' => [
-            'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=800&q=80',
-            'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
-            'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=800&q=80'
+            BASE_URL . 'assets/images/privateoffice/resepsionis GSL.jpeg',
+            BASE_URL . 'assets/images/privateoffice/colab area GSL.jpeg',
+            BASE_URL . 'assets/images/meetingroom/Big Meeting.webp',
         ],
         'seo' => [
             'title' => 'Virtual Office & Kantor Sungkono Surabaya Barat - Urban Office',
@@ -405,14 +431,15 @@ $locations_db = [
             [
                 'category' => 'virtual-office',
                 'name' => 'Virtual Office Starter',
-                'price' => '385.000',
-                'period' => 'bulan',
+                'price' => '12.000',
+                'period' => 'hari',
+                'popular' => true,
                 'desc' => 'Alamat kantor virtual di kawasan mixed-use terpadu Sungkono Lagoon.',
                 'features' => [
                     'Alamat Bisnis Prestisius & Strategis',
                     'Penerimaan & Penyimpanan Surat Profesional',
                     'Pemberitahuan Instan Surat via WA/Email',
-                    'Akses Meeting Room 2x 2 Jam/Bulan',
+                    'Akses Meeting Room 4 Jam / Bulan',
                     'Resepsionis Bilingual (Indonesia - Inggris)'
                 ],
                 'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Starter di Grand Sungkono Lagoon.'
@@ -420,16 +447,34 @@ $locations_db = [
             [
                 'category' => 'virtual-office',
                 'name' => 'Virtual Office Luxury',
-                'price' => '620.000',
-                'period' => 'bulan',
+                'price' => '20.000',
+                'period' => 'hari',
+                'popular' => false,
                 'desc' => 'Sewa Virtual Office premium untuk kredibilitas tingkat tinggi.',
                 'features' => [
                     'Semua Fasilitas Paket Starter',
                     'Nomor Telepon Kantor Bersama (Shared Line)',
                     'Resepsionis Profesional Penerima Tamu',
-                    'Akses Meeting Room 2x 3 Jam/Bulan'
+                    'Akses Meeting Room 6 Jam / Bulan'
                 ],
                 'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Luxury di Grand Sungkono Lagoon.'
+            ],
+            [
+                'category' => 'virtual-office',
+                'name' => 'Virtual Office Priority',
+                'price' => '25.000',
+                'period' => 'hari',
+                'popular' => false,
+                'desc' => 'Layanan premium lengkap dengan meeting room 8 jam, coworking 1 orang, dan website.',
+                'features' => [
+                    'Semua Fasilitas Paket Luxury',
+                    'Gratis Akses Meeting Room 8 Jam / Bulan',
+                    'Akses Coworking Space untuk 1 Orang',
+                    'Gratis Pembuatan Website Bisnis',
+                    'Nomor Telepon Kantor Bersama (Shared Line)',
+                    'Layanan Resepsionis Penerima Tamu & Call Handling'
+                ],
+                'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Priority di Grand Sungkono Lagoon.'
             ],
             [
                 'category' => 'meeting-room',
@@ -513,14 +558,15 @@ $locations_db = [
             [
                 'category' => 'virtual-office',
                 'name' => 'Virtual Office Starter',
-                'price' => '385.000',
-                'period' => 'bulan',
+                'price' => '12.000',
+                'period' => 'hari',
+                'popular' => true,
                 'desc' => 'Dapatkan alamat kantor prestisius di Jakarta Selatan untuk bisnis Anda.',
                 'features' => [
                     'Alamat Bisnis Sah & Zoned Perkantoran Jaksel',
                     'Penerimaan Dokumen & Paket Surat Menyurat',
                     'Scan & Email Dokumen Instan',
-                    'Akses Meeting Room 2x 2 Jam/Bulan di Jakarta',
+                    'Akses Meeting Room 4 Jam / Bulan di Jakarta',
                     'Call Forwarding & Resepsionis Ramah'
                 ],
                 'cta_wa' => 'Halo Urban Office, saya tertarik Virtual Office Starter di Cabang Fatmawati Jakarta Selatan.'
@@ -528,16 +574,34 @@ $locations_db = [
             [
                 'category' => 'virtual-office',
                 'name' => 'Virtual Office Luxury',
-                'price' => '620.000',
-                'period' => 'bulan',
+                'price' => '20.000',
+                'period' => 'hari',
+                'popular' => false,
                 'desc' => 'Alamat bisnis prestisius di Jakarta Selatan lengkap dengan nomor telepon bersama.',
                 'features' => [
                     'Semua Fasilitas Paket Starter',
                     'Nomor Telepon Bersama Jakarta (021)',
                     'Penyambutan Tamu Profesional',
-                    'Akses Meeting Room 2x 3 Jam/Bulan'
+                    'Akses Meeting Room 6 Jam / Bulan'
                 ],
                 'cta_wa' => 'Halo Urban Office, saya tertarik Virtual Office Luxury di Cabang Fatmawati Jakarta Selatan.'
+            ],
+            [
+                'category' => 'virtual-office',
+                'name' => 'Virtual Office Priority',
+                'price' => '25.000',
+                'period' => 'hari',
+                'popular' => false,
+                'desc' => 'Layanan premium lengkap dengan meeting room 8 jam, coworking 1 orang, dan website.',
+                'features' => [
+                    'Semua Fasilitas Paket Luxury',
+                    'Gratis Akses Meeting Room 8 Jam / Bulan',
+                    'Akses Coworking Space untuk 1 Orang',
+                    'Gratis Pembuatan Website Bisnis',
+                    'Nomor Telepon Bersama Jakarta (021)',
+                    'Layanan Resepsionis Penerima Tamu & Call Handling'
+                ],
+                'cta_wa' => 'Halo Urban Office, saya tertarik Virtual Office Priority di Cabang Fatmawati Jakarta Selatan.'
             ],
             [
                 'category' => 'private-office',
@@ -670,7 +734,7 @@ $locations_db = [
         'kpp' => 'KPP Cakung Satu', // TODO: verifikasi nama KPP yang benar
         'rating' => '4.7',
         'reviews_count' => '78',
-        'image' => BASE_URL . 'assets/images/branch/gorebiz.png',
+        'image' => BASE_URL . 'assets/images/branch/gorebiz.webp',
         'map_embed' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.5298950868203!2d106.90227187475083!3d-6.1935933937941785!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69f0a6727d3b07%3A0xe6f600494ebcefb8!2sJl.%20Raya%20Bekasi%20KM.17%2C%20Jatinegara%2C%20Kec.%20Cakung%2C%20Kota%20Jakarta%20Timur!5e0!3m2!1sid!2sid!4v1718000000004!5m2!1sid!2sid',
         'map_link' => 'https://maps.app.goo.gl/9o1eGj7W4x62iV3d8',
         'services' => 'VO, Serviced Office, Meeting Room',
@@ -683,9 +747,10 @@ $locations_db = [
             'Dekat kawasan industri Pulogadung (lokasi strategis untuk distribusi)'
         ],
         'gallery' => [
-            'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80',
-            'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
-            'https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?auto=format&fit=crop&w=800&q=80'
+            BASE_URL . 'assets/images/privateoffice/ruang tamu & resepsionis.jpeg',
+            BASE_URL . 'assets/images/privateoffice/serviced-office-pantry.webp',
+            BASE_URL . 'assets/images/privateoffice/office 5 orang jaktim.jpeg',
+            BASE_URL . 'assets/images/meetingroom/Meeting 8 orang jaktim.jpeg',
         ],
         'seo' => [
             'title' => 'Virtual Office Jakarta Timur Murah PT/CV - Urban Office',
@@ -696,8 +761,9 @@ $locations_db = [
             [
                 'category' => 'virtual-office',
                 'name' => 'Virtual Office Starter',
-                'price' => '385.000',
-                'period' => 'bulan',
+                'price' => '12.000',
+                'period' => 'hari',
+                'popular' => true,
                 'desc' => 'Solusi alamat bisnis prestisius di wilayah strategis Jakarta Timur.',
                 'features' => [
                     'Alamat Bisnis Prestisius di Gedung Komersial',
@@ -710,16 +776,34 @@ $locations_db = [
             [
                 'category' => 'virtual-office',
                 'name' => 'Virtual Office Luxury',
-                'price' => '620.000',
-                'period' => 'bulan',
+                'price' => '20.000',
+                'period' => 'hari',
+                'popular' => false,
                 'desc' => 'Paket kantor virtual premium dengan fasilitas lengkap di Jakarta Timur.',
                 'features' => [
                     'Semua Fasilitas Paket Starter',
                     'Nomor Telepon Bersama Jakarta (021)',
                     'Resepsionis Standby & Penerima Surat',
-                    'Akses Meeting Room 2x 3 Jam/Bulan'
+                    'Akses Meeting Room 6 Jam / Bulan'
                 ],
                 'cta_wa' => 'Halo Urban Office, saya tertarik dengan paket Virtual Office Luxury di Gorebiz Jakarta Timur.'
+            ],
+            [
+                'category' => 'virtual-office',
+                'name' => 'Virtual Office Priority',
+                'price' => '25.000',
+                'period' => 'hari',
+                'popular' => false,
+                'desc' => 'Layanan premium lengkap dengan meeting room 8 jam, coworking 1 orang, dan website.',
+                'features' => [
+                    'Semua Fasilitas Paket Luxury',
+                    'Gratis Akses Meeting Room 8 Jam / Bulan',
+                    'Akses Coworking Space untuk 1 Orang',
+                    'Gratis Pembuatan Website Bisnis',
+                    'Nomor Telepon Bersama Jakarta (021)',
+                    'Layanan Resepsionis Penerima Tamu & Call Handling'
+                ],
+                'cta_wa' => 'Halo Urban Office, saya tertarik dengan paket Virtual Office Priority di Gorebiz Jakarta Timur.'
             ],
             [
                 'category' => 'private-office',
@@ -777,7 +861,7 @@ $locations_db = [
         'kpp' => 'KPP Gresik Utara', // TODO: verifikasi nama KPP yang benar
         'rating' => '4.8',
         'reviews_count' => '86',
-        'image' => BASE_URL . 'assets/images/branch/ptgm.png',
+        'image' => BASE_URL . 'assets/images/branch/ptgm.webp',
         'map_embed' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3958.8358487311145!2d112.61633517475829!3d-7.144961592859424!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e77ffd000000001%3A0xe5a363dbf15777bd!2sPTGM%20Tower!5e0!3m2!1sid!2sid!4v1718000000005!5m2!1sid!2sid',
         'map_link' => 'https://maps.app.goo.gl/wS78nch47T66bS148',
         'services' => 'VO, Serviced Office, Meeting Room',
@@ -790,9 +874,9 @@ $locations_db = [
             'Akses mudah menuju Tol Romokalisari dan Pelabuhan Gresik'
         ],
         'gallery' => [
-            'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
-            'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
-            'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=800&q=80'
+            BASE_URL . 'assets/images/privateoffice/serviced-office-receptionist.webp',
+            BASE_URL . 'assets/images/sharingroom/sharing-room-lounge.webp',
+            BASE_URL . 'assets/images/meetingroom/Big Meeting (2).jpeg',
         ],
         'seo' => [
             'title' => 'Virtual Office Gresik PTGM Tower Kebomas - Urban Office',
@@ -803,8 +887,9 @@ $locations_db = [
             [
                 'category' => 'virtual-office',
                 'name' => 'Virtual Office Starter',
-                'price' => '385.000',
-                'period' => 'bulan',
+                'price' => '12.000',
+                'period' => 'hari',
+                'popular' => true,
                 'desc' => 'Dapatkan alamat kantor representatif di gedung perkantoran utama di Gresik.',
                 'features' => [
                     'Alamat Bisnis Prestisius PTGM Tower',
@@ -818,16 +903,34 @@ $locations_db = [
             [
                 'category' => 'virtual-office',
                 'name' => 'Virtual Office Luxury',
-                'price' => '620.000',
-                'period' => 'bulan',
+                'price' => '20.000',
+                'period' => 'hari',
+                'popular' => false,
                 'desc' => 'Alamat kantor virtual premium di Gresik dengan fasilitas call forwarding.',
                 'features' => [
                     'Semua Fasilitas Paket Starter',
                     'Nomor Telepon Bersama Gresik',
-                    'Akses Meeting Room 2x 3 Jam/Bulan',
+                    'Akses Meeting Room 6 Jam / Bulan',
                     'Layanan Resepsionis Penerima Tamu'
                 ],
                 'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Luxury di PTGM Tower Gresik.'
+            ],
+            [
+                'category' => 'virtual-office',
+                'name' => 'Virtual Office Priority',
+                'price' => '25.000',
+                'period' => 'hari',
+                'popular' => false,
+                'desc' => 'Layanan premium lengkap dengan meeting room 8 jam, coworking 1 orang, dan website.',
+                'features' => [
+                    'Semua Fasilitas Paket Luxury',
+                    'Gratis Akses Meeting Room 8 Jam / Bulan',
+                    'Akses Coworking Space untuk 1 Orang',
+                    'Gratis Pembuatan Website Bisnis',
+                    'Nomor Telepon Bersama Gresik',
+                    'Layanan Resepsionis Penerima Tamu & Call Handling'
+                ],
+                'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Priority di PTGM Tower Gresik.'
             ],
             [
                 'category' => 'private-office',
@@ -885,7 +988,7 @@ $locations_db = [
         'kpp' => '',
         'rating' => '4.8',
         'reviews_count' => '64',
-        'image' => BASE_URL . 'assets/images/branch/medan.png',
+        'image' => BASE_URL . 'assets/images/branch/medan.webp',
         'map_embed' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3982.023805908381!2d98.69234857473523!3d3.582061096392305!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x303131bf4e8c148f%3A0xe54d89694ea519a7!2sJl.%20Sutrisno%20No.258%2C%20Kota%20Medan%2C%20Sumatera%20Utara!5e0!3m2!1sid!2sid!4v1718000000007!5m2!1sid!2sid',
         'map_link' => 'https://maps.app.goo.gl/Kk6PswQ17F7249Hw9',
         'services' => 'VO',
@@ -898,9 +1001,10 @@ $locations_db = [
             'Dekat stasiun kereta api bandara Kualanamu (20 menit)'
         ],
         'gallery' => [
-            'https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?auto=format&fit=crop&w=800&q=80',
-            'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
-            'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=800&q=80'
+            BASE_URL . 'assets/images/branch/urban office medan.webp',
+            BASE_URL . 'assets/images/sharingroom/sharing-room-lounge.webp',
+            BASE_URL . 'assets/images/privateoffice/private-office-corporate.webp',
+            BASE_URL . 'assets/images/meetingroom/Big Meeting.jpeg',
         ],
         'seo' => [
             'title' => 'Virtual Office Medan Sutrisno Murah - Urban Office',
@@ -911,8 +1015,9 @@ $locations_db = [
             [
                 'category' => 'virtual-office',
                 'name' => 'Virtual Office Starter',
-                'price' => '385.000',
-                'period' => 'bulan',
+                'price' => '12.000',
+                'period' => 'hari',
+                'popular' => true,
                 'desc' => 'Dapatkan alamat kantor prestisius di kota Medan untuk kebutuhan bisnis Anda.',
                 'features' => [
                     'Alamat Bisnis Komersial Sah di Jl. Sutrisno',
@@ -920,23 +1025,41 @@ $locations_db = [
                     'Notifikasi Chat WhatsApp Real-Time',
                     'Hak Penggunaan Alamat Kantor di Medan',
                     'Resepsionis Penerima Tamu',
-                    'Akses Meeting Room 2x 2 Jam/Bulan'
+                    'Akses Meeting Room 4 Jam / Bulan'
                 ],
                 'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Starter di Cabang Medan.'
             ],
             [
                 'category' => 'virtual-office',
                 'name' => 'Virtual Office Luxury',
-                'price' => '620.000',
-                'period' => 'bulan',
+                'price' => '20.000',
+                'period' => 'hari',
+                'popular' => false,
                 'desc' => 'Alamat kantor virtual premium di Medan dengan nomor telepon bersama.',
                 'features' => [
                     'Semua Fasilitas Paket Starter',
                     'Nomor Telepon Bersama Medan (061)',
                     'Penyambutan Tamu Profesional',
-                    'Akses Meeting Room 2x 3 Jam/Bulan'
+                    'Akses Meeting Room 6 Jam / Bulan'
                 ],
                 'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Luxury di Cabang Medan.'
+            ],
+            [
+                'category' => 'virtual-office',
+                'name' => 'Virtual Office Priority',
+                'price' => '25.000',
+                'period' => 'hari',
+                'popular' => false,
+                'desc' => 'Layanan premium lengkap dengan meeting room 8 jam, coworking 1 orang, dan website.',
+                'features' => [
+                    'Semua Fasilitas Paket Luxury',
+                    'Gratis Akses Meeting Room 8 Jam / Bulan',
+                    'Akses Coworking Space untuk 1 Orang',
+                    'Gratis Pembuatan Website Bisnis',
+                    'Nomor Telepon Bersama Medan (061)',
+                    'Layanan Resepsionis Penerima Tamu & Call Handling'
+                ],
+                'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Priority di Cabang Medan.'
             ]
         ],
         'faq' => [
@@ -963,7 +1086,7 @@ $locations_db = [
         'kpp' => '',
         'rating' => '4.8',
         'reviews_count' => '45',
-        'image' => BASE_URL . 'assets/images/branch/Malang.jpeg',
+        'image' => BASE_URL . 'assets/images/branch/Malang.webp',
         'map_embed' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3951.520421715494!2d112.645731!3d-7.945037!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zN8KwNTYnNDIuMSJTIDExMsKwMzgnNDQuNiJF!5e0!3m2!1sid!2sid!4v1680000000000!5m2!1sid!2sid',
         'map_link' => 'https://maps.google.com/',
         'services' => 'VO, Serviced Office, Meeting Room, Coworking, Event Space, Sharing Room Office',
@@ -975,8 +1098,10 @@ $locations_db = [
             'Free flow minuman teh/kopi'
         ],
         'gallery' => [
-            'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=800&q=80',
-            'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80'
+            BASE_URL . 'assets/images/privateoffice/resepsion malang.jpeg',
+            BASE_URL . 'assets/images/privateoffice/open space malang.jpeg',
+            BASE_URL . 'assets/images/privateoffice/office malang.jpeg',
+            BASE_URL . 'assets/images/privateoffice/office meeting 8 - 12 orang malang.jpeg',
         ],
         'seo' => [
             'title' => 'Virtual Office & Coworking Space Malang - Urban Office',
@@ -987,8 +1112,9 @@ $locations_db = [
             [
                 'category' => 'virtual-office',
                 'name' => 'Virtual Office Starter',
-                'price' => '385.000',
-                'period' => 'bulan',
+                'price' => '12.000',
+                'period' => 'hari',
+                'popular' => true,
                 'desc' => 'Dapatkan alamat bisnis sah di Kota Malang.',
                 'features' => [
                     'Alamat Bisnis Prestisius',
@@ -997,6 +1123,37 @@ $locations_db = [
                     'Gratis Hak Penggunaan Alamat Kantor'
                 ],
                 'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Starter di Cabang Malang.'
+            ],
+            [
+                'category' => 'virtual-office',
+                'name' => 'Virtual Office Luxury',
+                'price' => '20.000',
+                'period' => 'hari',
+                'popular' => false,
+                'desc' => 'Sempurna untuk bisnis berkembang yang membutuhkan fasilitas ruang rapat lebih banyak di Malang.',
+                'features' => [
+                    'Semua Fasilitas Paket Starter',
+                    'Nomor Telepon Kantor Bersama (Shared Line)',
+                    'Layanan Resepsionis Penerima Tamu',
+                    'Akses Meeting Room 6 Jam / Bulan'
+                ],
+                'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Luxury di Cabang Malang.'
+            ],
+            [
+                'category' => 'virtual-office',
+                'name' => 'Virtual Office Priority',
+                'price' => '25.000',
+                'period' => 'hari',
+                'popular' => false,
+                'desc' => 'Layanan premium lengkap dengan meeting room 8 jam, coworking 1 orang, dan website.',
+                'features' => [
+                    'Semua Fasilitas Paket Luxury',
+                    'Gratis Akses Meeting Room 8 Jam / Bulan',
+                    'Akses Coworking Space untuk 1 Orang',
+                    'Gratis Pembuatan Website Bisnis',
+                    'Layanan Resepsionis Profesional'
+                ],
+                'cta_wa' => 'Halo Urban Office, saya tertarik dengan Virtual Office Priority di Cabang Malang.'
             ],
             [
                 'category' => 'coworking',

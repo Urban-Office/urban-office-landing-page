@@ -1,5 +1,5 @@
 # Urban Office
-> Urban Office adalah penyedia layanan ruang kerja profesional di Indonesia yang menyediakan Virtual Office, Private Office, Coworking Space, Meeting Room, Event Space, serta layanan pendirian badan usaha (PT/CV/PMA) dan perpajakan. Didirikan pada tahun 2019 di bawah PT. Urban Kreasi Bersama.
+> Urban Office adalah penyedia layanan ruang kerja profesional di Indonesia yang menyediakan Virtual Office, Private Office, Coworking Space, Meeting Room, Event Space, Sharing Room, serta layanan pendirian badan usaha (PT/CV/PMA) dan perpajakan. Didirikan pada tahun 2019 di bawah PT. Urban Kreasi Bersama.
 
 ## Company Information
 - **Legal Name**: PT. Urban Kreasi Bersama
@@ -11,75 +11,80 @@
 - **Website**: https://urbanoffice.co.id
 - **Customer Portal**: https://my.urbanoffice.id
 - **Active Clients**: 5,000+
-- **Branch Locations**: 10+ across Indonesia
+- **Branch Coverage**: Surabaya (MERR, Klampis, Grand Sungkono Lagoon), Jakarta Timur (Cakung), Gresik (PTGM Tower Kebomas), Malang (Blimbing), dan Medan
 
 ## Services & Products
 
 ### Virtual Office
-Sewa alamat bisnis prestisius di zonasi perkantoran resmi (100% legal untuk NIB, NPWP, PKP). Mulai dari Rp 385.000/bulan. Tersedia 3 paket:
-- **Starter** (Rp 385.000/bln): Alamat domisili, penanganan surat, notifikasi WA, surat domisili gedung, perjanjian sewa, resepsionis, akses meeting room 2x2 jam/bulan.
-- **Luxury** (Rp 620.000/bln): Semua fitur Starter + akses meeting room 2x3 jam/bulan + nomor telepon kantor bersama.
-- **Priority** (Rp 770.000/bln): Semua fitur Luxury + bonus pilihan (Tax Starter Kit / Digital Marketing / Pendirian Perusahaan / Virtual Assistant).
+Sewa alamat bisnis prestisius di zonasi perkantoran resmi (legal untuk domisili PT/CV, NIB OSS RBA, & NPWP Non-PKP). Tersedia paket Business (MERR & Klampis Surabaya mulai Rp 6.000–8.000/hari), Starter (Rp 8.000–12.000/hari), Luxury (Rp 20.000/hari), dan Priority (Rp 25.000/hari).
+- **Business** (Rp 6.000–8.000/hari): Alamat bisnis resmi di MERR / Klampis Surabaya plus penanganan surat & paket masuk dengan notifikasi WhatsApp/Email real-time.
+- **Starter** (Rp 8.000–12.000/hari): Alamat domisili resmi, penanganan surat & resepsionis, plus gratis akses meeting room 4 jam/bulan.
+- **Luxury** (Rp 20.000/hari): Semua fitur Starter + akses meeting room 6 jam/bulan + nomor telepon kantor bersama.
+- **Priority** (Rp 25.000/hari): Semua fitur Luxury + akses meeting room 8 jam/bulan + akses coworking space 1 orang + gratis pembuatan website bisnis.
 
 ### Private Office (Sewa Kantor)
-Ruang kantor privat berperabot lengkap, AC, aman, dan eksklusif. Mulai dari Rp 4.000.000/bulan. Bisa trial dulu harian atau mingguan. Sangat terbuka untuk harga negosiasi
+Ruang kantor privat fully furnished ber-AC, WiFi fiber 100 Mbps, layanan resepsionis, bebas biaya listrik & IPL, dan kuota meeting room bulanan. Mulai dari Rp 4.000.000/bulan (atau Rp 48.000.000/tahun).
 
 ### Meeting Room
-Ruang rapat premium dengan proyektor, whiteboard, internet cepat, dan free drinks. Mulai dari Rp 125.000/jam.
+Ruang rapat siap pakai dengan Smart TV LED/proyektor, whiteboard, internet cepat hingga 100 Mbps, dan opsi coffee break. Small Meeting mulai Rp 125.000/jam (4 jam Rp 300.000, 8 jam Rp 550.000); Big Meeting mulai Rp 45.000/pax (4 jam) & Rp 90.000/pax (8 jam).
 
 ### Coworking Space
-Meja kerja komunal dengan suasana dinamis. Mulai dari Rp 45.000/hari atau Rp 750.000/bulan.
+Meja kerja komunal fleksibel di Surabaya (MERR & Klampis) dan Malang. Tarif Rp 10.000/jam (Hours), Rp 45.000/hari (Daily Pass), atau Rp 750.000/bulan (Monthly Pass).
 
-### Event Space
-Tempat seminar, workshop, dan pelatihan. Kapasitas 30-80 pax. Mulai dari Rp 55.000/pax.
+### Event Space & Aula Seminar
+Tempat seminar, workshop, dan gathering di Surabaya (MERR) dan Malang (Blimbing). Kapasitas 30–80 pax dengan layout fleksibel (Theater, Classroom, U-Shape, Boardroom). Mulai Rp 45.000/pax (Half-Day 4 jam) dan Rp 90.000/pax (Full-Day 8 jam).
 
 ### Sharing Room Office
-Meja kerja pribadi dalam ruangan kantor bersama. Mulai dari Rp 1.000.000/bulan.
+Meja kerja pribadi terdedikasi dalam ruangan kantor bersama di Surabaya. Mulai Rp 1.000.000/bulan (atau Rp 12.000.000/tahun).
 
 ### Business Services
-- **Pendirian PT Perorangan + Virtual Office**: Paket bundling termasuk SK Kemenkumham, NIB, NPWP, surat domisili.
-- **Pendirian PT Badan Usaha + Virtual Office**: Akta notaris, SK Kemenkumham, NIB, NPWP.
-- **Pendirian CV + Virtual Office**: Persekutuan Komanditer lengkap.
-- **Pendirian PT PMA + Virtual Office**: Foreign investment enterprise setup.
-- **Jasa Pajak & Akunting**: Pembukuan, laporan keuangan, SPT Badan/Pribadi.
+- **Pendirian PT Perorangan + Virtual Office**: SK Kemenkumham, NIB, NPWP, dan surat domisili resmi.
+- **Pendirian PT Badan Usaha + Virtual Office**: Akta notaris, SK Kemenkumham, NIB, dan NPWP.
+- **Pendirian CV + Virtual Office**: Pendirian Persekutuan Komanditer lengkap.
+- **Pendirian PT PMA + Virtual Office**: Pendirian perusahaan penanaman modal asing di Indonesia.
+- **Jasa Pajak & Akunting**: Pembukuan, laporan keuangan, pelaporan SPT Masa/Tahunan, dan pendampingan SP2DK bersama konsultan berlisensi BKP dan perlindungan NDA.
 
 ## Branch Locations
 
 ### Surabaya
-1. **Urban Office - MERR** (Surabaya Timur): Jl. Dr. Ir. H. Soekarno No.470, Kedung Baruk. Rating 4.9/5.
-2. **Urban Office - Klampis** (Surabaya Timur): Ruko Klampis Megah, Jl. Klampis Jaya blok B-20.
-3. **Urban Office - Grand Sungkono** (Surabaya Barat): Jl. KH Abdul Wahab Siamin, Dukuh Pakis.
+1. **Urban Office - MERR** (Surabaya Timur): Jl. Dr. Ir. H. Soekarno No.470, Kedung Baruk, Surabaya. Rating 4.9/5.
+2. **Urban Office - Klampis** (Surabaya Timur): Ruko Klampis Megah, Jl. Klampis Jaya blok B-20, Surabaya. Rating 4.8/5.
+3. **Urban Office - Grand Sungkono Lagoon** (Surabaya Barat): Jl. KH Abdul Wahab Siamin Kav.9-10, Dukuh Pakis, Surabaya.
 
-### Jakarta
-5. **Urban Office - Gorebiz** (Jakarta Timur): Jl. Raya Bekasi KM.17, Jatinegara.
+### Jakarta Timur
+4. **Urban Office - Jakarta Timur**: Jl. Raya Bekasi KM.17, Jatinegara, Kec. Cakung, Kota Jakarta Timur.
 
-### Other Cities
-6. **Urban Office - PTGM Tower** (Gresik): Jl. Dr. Wahidin Sudirohusodo.
-7. **Urban Office - Medan** (Sumatera Utara)
+### Jawa Timur & Sumatera Utara
+5. **Urban Office - PTGM Tower** (Gresik): Jl. Dr. Wahidin Sudirohusodo No.708, Kebomas, Gresik.
+6. **Urban Office - Malang**: Jl. Blimbing Indah Megah No.10A Blok B7, Polowijen, Blimbing, Kota Malang.
+7. **Urban Office - Medan**: Jl. Sutrisno No.158/278, Medan Area, Kota Medan.
 
 ## Key URLs
-- Homepage: https://urbanoffice.co.id
-- Virtual Office: https://urbanoffice.co.id/virtual-office-surabaya/
-- Private Office: https://urbanoffice.co.id/sewa-kantor-surabaya/
-- Meeting Room: https://urbanoffice.co.id/meeting-room-surabaya/
-- Coworking Space: https://urbanoffice.co.id/coworking-space-urban-office/
-- Event Space: https://urbanoffice.co.id/event-space-55k-perjam-urbanoffice/
+- Homepage: https://urbanoffice.co.id/
+- Virtual Office: https://urbanoffice.co.id/virtual-office-surabaya/, https://urbanoffice.co.id/virtual-office-surabaya-timur/, https://urbanoffice.co.id/virtual-office-surabaya-barat/, https://urbanoffice.co.id/virtual-office-jakarta-timur/, https://urbanoffice.co.id/virtual-office-gresik/, https://urbanoffice.co.id/virtual-office-medan/, https://urbanoffice.co.id/virtual-office-malang/
+- Private Office: https://urbanoffice.co.id/sewa-kantor-surabaya/, https://urbanoffice.co.id/sewa-kantor-jakarta/, https://urbanoffice.co.id/sewa-kantor-gresik/, https://urbanoffice.co.id/sewa-kantor-malang/
+- Meeting Room: https://urbanoffice.co.id/meeting-room-surabaya/, https://urbanoffice.co.id/meeting-room-surabaya-barat/, https://urbanoffice.co.id/meeting-room-jakarta/, https://urbanoffice.co.id/meeting-room-gresik/, https://urbanoffice.co.id/meeting-room-malang/
+- Coworking Space: https://urbanoffice.co.id/coworking-space-urban-office/, https://urbanoffice.co.id/coworking-space-malang/
+- Event Space: https://urbanoffice.co.id/event-space-55k-perjam-urbanoffice/, https://urbanoffice.co.id/event-space-malang/
+- Sharing Room Office: https://urbanoffice.co.id/sharing-room-office/
+- Pajak & Akunting: https://urbanoffice.co.id/pajak-dan-akunting/
+- Pendirian Usaha: https://urbanoffice.co.id/pendirian-pt-include-virtual-office/, https://urbanoffice.co.id/pendirian-cv-virtual-office/, https://urbanoffice.co.id/pendirian-perorangan-plus-virtual-office/, https://urbanoffice.co.id/pendirian-pma-plus-virtual-office/
 - Blog: https://urbanoffice.co.id/blog/
 - Location Details: https://urbanoffice.co.id/lokasi-urban-office/
 
 ## Frequently Asked Questions
 
 **Q: Berapa harga sewa Virtual Office di Urban Office?**
-A: Harga Virtual Office mulai dari Rp 385.000/bulan (paket Starter), Rp 620.000/bulan (paket Luxury), dan Rp 770.000/bulan (paket Priority). Semua paket sudah termasuk alamat bisnis prestisius, penanganan surat, dan resepsionis profesional.
+A: Mulai dari Rp 6.000/hari (Business Klampis) dan Rp 8.000/hari (MERR Surabaya), serta paket Starter (Rp 8.000–12.000/hari), Luxury (Rp 20.000/hari), dan Priority (Rp 25.000/hari). Semua paket mencakup alamat bisnis resmi, penanganan surat, dan notifikasi WA real-time.
 
 **Q: Apakah alamat Virtual Office bisa digunakan untuk PKP?**
-A: Virtual Office hanya diperuntukkan bagi badan usaha non-PKP. Untuk kebutuhan PKP, disarankan menggunakan layanan Private Office (sewa ruang kantor fisik).
+A: Virtual Office ditujukan untuk badan usaha Non-PKP (domisili PT/CV, NIB, & NPWP). Untuk kebutuhan pengukuhan PKP, tersedia layanan Private Office (sewa ruang kantor fisik).
 
 **Q: Di mana saja lokasi cabang Urban Office?**
-A: Urban Office memiliki cabang di Surabaya (MERR, Klampis, Grand Sungkono), Jakarta Timur (Gorebiz), Gresik (PTGM Tower), Yogyakarta, dan Medan.
+A: Urban Office memiliki cabang di Surabaya (MERR, Klampis, Grand Sungkono Lagoon), Jakarta Timur (Cakung), Gresik (PTGM Tower Kebomas), Malang (Blimbing), dan Medan.
 
 **Q: Bagaimana jam operasional Urban Office?**
-A: Senin-Sabtu pukul 08:00-15:00 WIB. Khusus cabang MERR dan Klampis beroperasi hingga pukul 17:00 WIB.
+A: Senin–Sabtu pukul 08:00–15:00 WIB. Khusus cabang MERR dan Klampis Surabaya beroperasi pukul 08:00–17:00 WIB.
 
 **Q: Metode pembayaran apa yang diterima?**
 A: Pembayaran melalui portal my.urbanoffice.id yang mendukung Virtual Account (Mandiri, BNI, BRI, Permata Bank, CIMB Niaga, BSI), QRIS, dan Gopay.

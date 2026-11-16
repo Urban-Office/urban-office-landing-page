@@ -39,7 +39,7 @@ try {
 
     // 1. Add static landing pages from DB
     $pages = Database::fetchAll("SELECT slug, updated_at FROM pages");
-    $hidden_page_slugs = ['virtual-office-jakarta'];
+    $hidden_page_slugs = ['virtual-office-jakarta', 'coworking-space-jakarta', 'event-space-jakarta'];
     foreach ($pages as $page) {
         $slug = $page['slug'];
         if (in_array($slug, $hidden_page_slugs, true)) {

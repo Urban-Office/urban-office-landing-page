@@ -11,22 +11,47 @@ $svc_category  = 'coworking';
 $svc_city_slug = isset($_GET['lokasi']) ? strtolower(trim($_GET['lokasi'])) : '';
 
 if (!empty($svc_city_slug) && $svc_city_slug !== 'urban-office') {
-    $page_slug = 'coworking-space-' . $svc_city_slug;
+    $svc_branches = service_city_branches($svc_category, $svc_city_slug);
+    if (empty($svc_branches)) {
+        header('Location: ' . BASE_URL . 'coworking-space-urban-office/', true, 301);
+        exit;
+    }
+    $cs_city_slug = $svc_city_slug;
+    $page_slug    = 'coworking-space-' . $cs_city_slug;
 } else {
-    $page_slug = 'coworking-space-urban-office';
+    $cs_city_slug = 'surabaya';
+    $svc_branches = service_city_branches($svc_category, $cs_city_slug);
+    $page_slug    = 'coworking-space-urban-office';
 }
+
+$cs_city_label = ($cs_city_slug === 'surabaya-timur')
+    ? 'Surabaya Timur'
+    : (!empty($svc_branches[0]['city']) ? $svc_branches[0]['city'] : 'Surabaya');
+$is_cs_city_landing = ($page_slug !== 'coworking-space-urban-office');
 
 require_once dirname(dirname(__FILE__)) . '/inc/header.php';
 ?>
+
+<!-- Expose current city so the "Cabang Kami" filter defaults to it -->
+<script>window.currentBranchCity = <?php echo json_encode($cs_city_slug); ?>;</script>
 
 <!-- Hero Section -->
 <?php
 $hero_tag = 'Premium Coworking Space';
 $hero_title = 'Sewa Coworking Space Mulai 10Rb/Jam';
-// Reflect the ?lokasi city (validated against locations_data) in the hero for relevance.
-$svc_city = service_city_from_query('coworking');
-if ($svc_city !== '') { $hero_tag .= ' ' . $svc_city; $hero_title = 'Sewa Coworking Space di ' . $svc_city . ' Mulai 10Rb/Jam'; }
-$hero_desc = 'Temukan meja kerja per jam, harian, atau bulanan yang fleksibel. Sangat cocok untuk freelancer, remote worker, mahasiswa, dan startup founder. Nikmati WiFi cepat dan free flow coffee & tea sepuasnya.';
+if ($is_cs_city_landing) {
+    $hero_tag   .= ' ' . $cs_city_label;
+    $hero_title  = 'Sewa Coworking Space di ' . $cs_city_label . ' Mulai 10Rb/Jam';
+    if (!empty($svc_branches[0]['image'])) {
+        $hero_img = encode_asset_url($svc_branches[0]['image']);
+    }
+    $card_title = 'Coworking Space ' . $cs_city_label;
+    $card_desc  = !empty($svc_branches[0]['address']) ? $svc_branches[0]['address'] : '';
+}
+$hero_desc = 'Temukan meja kerja per jam, harian, atau bulanan yang fleksibel di Surabaya & Malang. Sangat cocok untuk freelancer, remote worker, mahasiswa, dan startup founder. Nikmati WiFi cepat dan free flow coffee & tea sepuasnya.';
+if ($is_cs_city_landing) {
+    $hero_desc = 'Temukan meja kerja per jam, harian, atau bulanan yang fleksibel di ' . $cs_city_label . '. Sangat cocok untuk freelancer, remote worker, mahasiswa, dan startup founder. Nikmati WiFi cepat dan free flow coffee & tea sepuasnya.';
+}
 $hero_cta_text = 'Lihat Paket Desk';
 $hero_cta_url = '#pricing';
 include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
@@ -34,6 +59,13 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
 
 <!-- App Promo Section -->
 <?php include DIR_ROOT . 'inc/components/app_section.php'; ?>
+
+<?php
+$geo_service_cat = 'coworking';
+$geo_city_slug   = $cs_city_slug;
+$geo_branch      = $svc_branches[0];
+include DIR_ROOT . 'inc/components/geo_summary.php';
+?>
 
 
 <!-- Pricing Card Configuration -->
@@ -106,66 +138,115 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
 ?>
 
 <!-- Gallery Coworking Space Section -->
-<section class="section" style="background-color: hsl(var(--clr-bg-secondary)); border-top: 1px solid hsl(var(--clr-border)); overflow: hidden; padding: 60px 0;">
+<section class="section" id="gallery" style="background-color: hsl(var(--clr-bg-secondary)); border-top: 1px solid hsl(var(--clr-border)); overflow: hidden; padding: 60px 0; scroll-margin-top: 90px;">
     <div class="container">
-        <!-- Header row with title -->
-        <div style="margin-bottom: 30px;">
-            <h2 class="section-title" style="margin: 0;">Galeri Foto Coworking Space</h2>
-            <p style="margin: 5px 0 0 0; max-width: 600px; color: hsl(var(--clr-text-muted)); font-size: 0.95rem;">Jelajahi area kerja bersama (Shared Desk) yang dirancang untuk produktivitas maksimal, kenyamanan, dan kolaborasi.</p>
+        <?php
+        $cs_gallery_cities = get_coworking_cities();
+        $cs_branch_name    = !empty($svc_branches[0]) ? get_private_office_branch_label($cs_city_slug, $svc_branches[0]) : 'Surabaya';
+        $gallery_items     = !empty($svc_branches[0]) ? get_coworking_city_gallery($cs_city_slug, $svc_branches[0]) : [];
+        $cs_active_tab     = ($cs_city_slug === 'surabaya-timur') ? 'surabaya' : $cs_city_slug;
+        ?>
+        <!-- Header row with title + per-city SEO navigation tabs -->
+        <div class="gallery-section-header">
+            <div>
+                <h2 class="section-title" style="margin: 0;">Galeri Foto Coworking Space <?php echo sanitize($cs_city_label); ?></h2>
+                <p style="margin: 5px 0 0 0; max-width: 620px; color: hsl(var(--clr-text-muted)); font-size: 0.95rem;">Jelajahi area kerja bersama (Shared Desk) di Cabang <?php echo sanitize($cs_branch_name); ?> (<?php echo sanitize($cs_city_label); ?>) untuk produktivitas dan kolaborasi maksimal.</p>
+            </div>
+            <?php if (count($cs_gallery_cities) > 1): ?>
+            <nav class="gallery-city-tabs" aria-label="Pilih galeri wilayah Coworking Space">
+                <?php foreach ($cs_gallery_cities as $cs_c_slug => $cs_c_name):
+                    $cs_c_url = ($cs_c_slug === 'surabaya')
+                        ? BASE_URL . 'coworking-space-urban-office/#gallery'
+                        : BASE_URL . 'coworking-space-' . $cs_c_slug . '/#gallery';
+                    $cs_c_active = ($cs_c_slug === $cs_active_tab);
+                ?>
+                <a href="<?php echo sanitize($cs_c_url); ?>" class="gallery-city-tab<?php echo $cs_c_active ? ' active' : ''; ?>"<?php echo $cs_c_active ? ' aria-current="page"' : ''; ?>>
+                    <i class="bi bi-geo-alt-fill"></i> <?php echo sanitize($cs_c_name); ?>
+                </a>
+                <?php endforeach; ?>
+            </nav>
+            <?php endif; ?>
         </div>
         
         <!-- Slider Window (draggable/swipeable) -->
         <div class="office-gallery-window" style="overflow: hidden; margin: 0 -10px; padding: 10px 0; cursor: grab; user-select: none;">
-            <div class="office-gallery-wrapper" id="office-gallery-slider" style="display: flex; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform;">
-                
-                <!-- Gallery Item 1 -->
+            <div class="office-gallery-wrapper" id="office-gallery-slider" data-gallery-slider data-slide-selector=".gallery-card-slide" data-visible-desktop="4" data-visible-laptop="3" data-visible-tablet="2" data-visible-mobile="1.3" style="display: flex; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform;">
+                <?php foreach ($gallery_items as $item):
+                    $detail_href = BASE_URL . 'coworking-space-urban-office/detail.php?type=' . (int)$item['type_id']
+                        . '&lokasi=' . urlencode($cs_city_slug)
+                        . '&img=' . urlencode($item['img']);
+                ?>
                 <div class="gallery-card-slide">
                     <div class="gallery-item-card">
                         <!-- Image Container with Badge -->
                         <div class="gallery-img-container">
-                            <img src="<?php echo BASE_URL; ?>assets/images/coworkingspace/Foto Coworking Space.webp" alt="Coworking Shared Area" draggable="false">
-                            <span class="gallery-pax-badge">Hot Desk</span>
+                            <img src="<?php echo sanitize(encode_asset_url(BASE_URL . $item['img'])); ?>" alt="<?php echo sanitize($item['alt']); ?>" loading="lazy" decoding="async" draggable="false">
+                            <?php if (!empty($item['badge'])): ?>
+                            <span class="gallery-pax-badge"><?php echo sanitize($item['badge']); ?></span>
+                            <?php endif; ?>
                         </div>
                         <!-- Body Content -->
                         <div class="gallery-body-content">
                             <div class="gallery-text-wrap">
-                                <h4 class="gallery-card-title">Coworking Shared Area</h4>
-                                <p class="gallery-card-desc">Area komunal terbuka untuk kerja per jam yang nyaman dan dinamis.</p>
+                                <h4 class="gallery-card-title"><?php echo sanitize($item['title']); ?></h4>
+                                <p class="gallery-card-desc"><?php echo sanitize($item['desc']); ?></p>
                             </div>
-                            <a href="<?php echo BASE_URL; ?>coworking-space-urban-office/detail.php?type=1" class="btn btn-primary gallery-cta-btn" draggable="false">
+                            <a href="<?php echo sanitize($detail_href); ?>" class="btn btn-primary gallery-cta-btn" draggable="false">
                                 Detail <i class="bi bi-arrow-right"></i>
                             </a>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Gallery Item 2 -->
-                <div class="gallery-card-slide">
-                    <div class="gallery-item-card">
-                        <!-- Image Container with Badge -->
-                        <div class="gallery-img-container">
-                            <img src="<?php echo BASE_URL; ?>assets/images/coworkingspace/Foto Coworking Space Klampis(2).webp" alt="Coworking Space Klampis" draggable="false">
-                            <span class="gallery-pax-badge">Klampis Area</span>
-                        </div>
-                        <!-- Body Content -->
-                        <div class="gallery-body-content">
-                            <div class="gallery-text-wrap">
-                                <h4 class="gallery-card-title">Coworking Space Klampis</h4>
-                                <p class="gallery-card-desc">Workspace harian komunal dengan pencahayaan alami dan tenang.</p>
-                            </div>
-                            <a href="<?php echo BASE_URL; ?>coworking-space-urban-office/detail.php?type=2" class="btn btn-primary gallery-cta-btn" draggable="false">
-                                Detail <i class="bi bi-arrow-right"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                
+                <?php endforeach; ?>
             </div>
         </div>
     </div>
 </section>
 
 <style>
+.gallery-section-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.gallery-city-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.gallery-city-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    background-color: #FFFFFF;
+    border: 1px solid hsl(var(--clr-border));
+    color: #333333;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.gallery-city-tab:hover {
+    border-color: hsl(var(--clr-primary));
+    color: hsl(var(--clr-primary));
+    transform: translateY(-1px);
+}
+
+.gallery-city-tab.active {
+    background-color: hsl(var(--clr-primary));
+    border-color: hsl(var(--clr-primary));
+    color: #FFFFFF;
+}
+
 /* Base Styles for Slider Cards */
 .gallery-card-slide {
     padding: 0 8px;
@@ -305,161 +386,11 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
 }
 </style>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const slider = document.getElementById('office-gallery-slider');
-    const container = document.querySelector('.office-gallery-window');
-    const slides = slider.querySelectorAll('.gallery-card-slide');
-    
-    let currentIdx = 0;
-    let autoPlayInterval = null;
-    
-    function getVisibleCount() {
-        const width = window.innerWidth;
-        if (width > 1200) return 3;  // Since we have only 3 cards, display all 3
-        if (width > 991) return 3;   // Display 3
-        if (width > 768) return 3;   // Display 3
-        return 1.3;                  // 1.3 cards on mobile to make it larger and peek next slide (was 2)
-    }
-    
-    function getSlideWidth() {
-        return container.clientWidth / getVisibleCount();
-    }
-    
-    function updateSlideStyles() {
-        const visibleCount = getVisibleCount();
-        slides.forEach(slide => {
-            slide.style.flex = `0 0 ${100 / visibleCount}%`;
-            slide.style.width = `${100 / visibleCount}%`;
-        });
-    }
-    
-    function showSlide(idx) {
-        const visibleCount = getVisibleCount();
-        const maxIndex = Math.max(0, slides.length - visibleCount);
-        
-        if (idx > maxIndex) {
-            idx = 0; // Wrap around to first
-        } else if (idx < 0) {
-            idx = maxIndex; // Wrap around to last
-        }
-        
-        currentIdx = idx;
-        const slideWidth = getSlideWidth();
-        slider.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-        slider.style.transform = `translateX(-${currentIdx * slideWidth}px)`;
-    }
-    
-    function nextSlide() {
-        showSlide(currentIdx + 1);
-    }
-    
-    function prevSlide() {
-        showSlide(currentIdx - 1);
-    }
-    
-    function startAutoPlay() {
-        stopAutoPlay();
-        if (slides.length > getVisibleCount()) {
-            autoPlayInterval = setInterval(nextSlide, 4500); // Auto slide every 4.5 seconds
-        }
-    }
-    
-    function stopAutoPlay() {
-        if (autoPlayInterval) {
-            clearInterval(autoPlayInterval);
-        }
-    }
-    
-    // Drag and swipe logic
-    let isDragging = false;
-    let startX = 0;
-    let currentX = 0;
-    let dragThreshold = 50; // pixels to trigger slide change
-    
-    function handleDragStart(e) {
-        if (slides.length <= getVisibleCount()) return;
-        isDragging = true;
-        stopAutoPlay();
-        startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-        slider.style.transition = 'none'; // disable transitions while dragging
-    }
-    
-    function handleDragMove(e) {
-        if (!isDragging) return;
-        currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-        const diffX = currentX - startX;
-        
-        const slideWidth = getSlideWidth();
-        const currentTranslation = -currentIdx * slideWidth;
-        slider.style.transform = `translateX(${currentTranslation + diffX}px)`;
-    }
-    
-    function handleDragEnd() {
-        if (!isDragging) return;
-        isDragging = false;
-        slider.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)'; // restore transition
-        
-        const diffX = currentX - startX;
-        if (Math.abs(diffX) > dragThreshold) {
-            if (diffX < 0) {
-                nextSlide();
-            } else {
-                prevSlide();
-            }
-        } else {
-            showSlide(currentIdx);
-        }
-        startAutoPlay();
-    }
-    
-    // Mouse dragging
-    container.addEventListener('mousedown', handleDragStart);
-    window.addEventListener('mousemove', handleDragMove);
-    window.addEventListener('mouseup', handleDragEnd);
-    
-    // Touch swiping
-    container.addEventListener('touchstart', handleDragStart, { passive: true });
-    container.addEventListener('touchmove', handleDragMove, { passive: true });
-    container.addEventListener('touchend', handleDragEnd);
-    
-    // Resize responsiveness
-    window.addEventListener('resize', () => {
-        updateSlideStyles();
-        showSlide(currentIdx);
-    });
-    
-    // Initial calls
-    updateSlideStyles();
-    showSlide(currentIdx);
-    startAutoPlay();
-    
-    // Pause on hover
-    container.addEventListener('mouseenter', stopAutoPlay);
-    container.addEventListener('mouseleave', startAutoPlay);
-});
-</script>
+<!-- Gallery slider initialized via assets/js/main.js (initOfficeGallerySliders) -->
 
 <!-- FAQs Section -->
 <?php
-$faqs = [
-    [
-        'question' => 'Apa saja fasilitas yang tersedia di coworking space?',
-        'answer' => 'Fasilitas utama yang disediakan meliputi akses area kerja nyaman, free flow air mineral, koneksi WiFi berkecepatan tinggi, serta colokan listrik (electrical socket) di setiap meja.'
-    ],
-    [
-        'question' => 'Apakah tersedia fasilitas WiFi? Berapa kecepatannya?',
-        'answer' => 'Ya, kami menyediakan koneksi WiFi super cepat up to 100 Mbps untuk mendukung semua aktivitas WFA Anda.'
-    ],
-    [
-        'question' => 'Apakah tersedia café atau tempat makan di dalam gedung?',
-        'answer' => 'Ya, tersedia café dan tempat makan di Lantai 1 gedung yang menyatu dengan akses coworking space.'
-    ],
-    [
-        'question' => 'Apakah bisa melakukan trial atau coba dulu sebelum berlangganan bulanan?',
-        'answer' => 'Tentu saja bisa. Anda bisa mencoba menggunakan area kerja coworking space kami dengan pilihan Daily Pass sebelum memutuskan untuk berlangganan bulanan.'
-    ]
-];
+$faqs = !empty($svc_branches[0]) ? get_coworking_city_faqs($cs_city_slug, $svc_branches[0]) : [];
 include dirname(dirname(__FILE__)) . '/inc/components/faq.php';
 ?>
 

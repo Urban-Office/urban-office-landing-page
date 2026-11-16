@@ -22,7 +22,7 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'footer.php') {
                 <!-- Col 1: About & Socials -->
                 <div class="footer-col footer-about">
                     <a href="<?php echo BASE_URL; ?>" class="footer-logo" aria-label="Urban Office Homepage" style="margin-bottom: 20px; display: block;">
-                        <img src="<?php echo BASE_URL; ?>assets/images/imgcomponent/urban%20office%20new%20logo.png" alt="Urban Office Logo" style="max-height: 50px; width: auto;">
+                        <img src="<?php echo BASE_URL; ?>assets/images/imgcomponent/urban%20office%20new%20logo.png" alt="Urban Office Logo" width="180" height="50" style="max-height: 50px; width: auto;">
                     </a>
                     <p>Urban Office menyediakan ruang kerja, alamat bisnis, serta dukungan pendirian usaha, akuntansi, dan perpajakan sesuai tahap dan kebutuhan bisnis Anda.</p>
                     <div class="footer-socials">
@@ -88,8 +88,8 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'footer.php') {
                     <div class="footer-office-info">
                         <strong>Gedung Urban Office</strong>
                         <p>Jl. Dr. Ir. H. Soekarno No.470, Kedung Baruk, Surabaya, Jawa Timur 60298, Indonesia</p>
-                        <p>Phone : 62-31-87855578</p>
-                        <p>WA : 0851-0762-0100</p>
+                        <p>Phone : <a href="tel:+623187855578" style="color: inherit; text-decoration: none;">+62-31-87855578</a></p>
+                        <p>WA : <a href="https://api.whatsapp.com/send?phone=6285107620100" target="_blank" rel="noopener" style="color: inherit; text-decoration: none;">0851-0762-0100</a></p>
                     </div>
                     <div class="footer-map-wrapper" style="position: relative; margin-top: 12px;">
                         <iframe title="Peta Lokasi Urban Office Surabaya" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.348638974577!2d112.78023107476097!3d-7.318892692689255!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7fa535f29910d%3A0x8bbd360efbe36368!2sUrban%20Office%20Surabaya!5e0!3m2!1sid!2sid!4v1718000000000!5m2!1sid!2sid" width="100%" height="110" style="border:0; border-radius: var(--radius-sm); display: block;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
@@ -130,20 +130,6 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'footer.php') {
     require_once __DIR__ . '/locations_data.php';
     if (isset($locations_db) && is_array($locations_db)):
         $branch_pricing_js = [];
-        // All branches share the same 3 VO tier prices (Starter/Luxury/Priority); only address
-        // & KPP vary per branch. Take the canonical prices from the 'surabaya' reference so the
-        // switcher always shows 3 tiers for every branch.
-        $bp_canon = [];
-        if (!empty($locations_db['surabaya']['pricing'])) {
-            $bp_keys = ['starter', 'luxury', 'priority'];
-            $bp_ci = 0;
-            foreach ($locations_db['surabaya']['pricing'] as $bp_cp) {
-                if (($bp_cp['category'] ?? '') === 'virtual-office' && isset($bp_keys[$bp_ci])) {
-                    $bp_canon[$bp_keys[$bp_ci]] = $bp_cp['price'];
-                    $bp_ci++;
-                }
-            }
-        }
         foreach ($locations_db as $bp_slug => $bp_b) {
             if (!is_public_location($bp_b)) {
                 continue;
@@ -151,21 +137,31 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'footer.php') {
             if (empty($bp_b['pricing'])) {
                 continue;
             }
-            $bp_has_vo = false;
+            $bp_tiers = [];
             foreach ($bp_b['pricing'] as $bp_p) {
                 if (($bp_p['category'] ?? '') === 'virtual-office') {
-                    $bp_has_vo = true;
-                    break;
+                    $bp_tiers[] = [
+                        'name'       => $bp_p['name'],
+                        'desc'       => $bp_p['desc'] ?? '',
+                        'price'      => $bp_p['price'],
+                        'period'     => $bp_p['period'] ?? 'hari',
+                        'popular'    => !empty($bp_p['popular']),
+                        'highlights' => function_exists('get_vo_package_highlights') ? get_vo_package_highlights($bp_p) : array_slice($bp_p['features'] ?? [], 0, 3),
+                        'features'   => $bp_p['features'] ?? [],
+                        'cta_wa'     => $bp_p['cta_wa'] ?? '',
+                    ];
                 }
             }
-            if (!$bp_has_vo) {
+            if (empty($bp_tiers)) {
                 continue;
             }
             $branch_pricing_js[$bp_slug] = [
-                'name'    => $bp_b['short_title'] . ' (' . $bp_b['location'] . ')',
-                'address' => $bp_b['address'],
-                'kpp'     => isset($bp_b['kpp']) ? $bp_b['kpp'] : '',
-                'prices'  => $bp_canon,
+                'name'       => $bp_b['short_title'] . ' (' . $bp_b['location'] . ')',
+                'shortTitle' => $bp_b['short_title'],
+                'location'   => $bp_b['location'],
+                'address'    => $bp_b['address'],
+                'kpp'        => isset($bp_b['kpp']) ? $bp_b['kpp'] : '',
+                'tiers'      => $bp_tiers,
             ];
         }
     ?>

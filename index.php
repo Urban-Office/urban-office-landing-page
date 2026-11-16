@@ -25,13 +25,28 @@ if (!empty($request_path)) {
     
     $parts = explode('/', $request_path);
 
-    // Virtual Office branch landing pages: /virtual-office-{slug}/
-    // (virtual-office-surabaya/ itself is a real folder and never reaches this
-    // fallback, since Nginx finds it directly before falling back to index.php)
-    if ($parts[0] !== 'virtual-office-surabaya' && strpos($parts[0], 'virtual-office-') === 0) {
-        $_GET['branch'] = substr($parts[0], strlen('virtual-office-'));
-        require_once __DIR__ . '/virtual-office-surabaya/index.php';
-        exit;
+    // Dynamic service landing pages: /{prefix}{city-or-branch}/
+    // Real folders (e.g. virtual-office-surabaya/, sewa-kantor-surabaya/) are excluded
+    // because the web server serves them directly before falling back to index.php.
+    $service_clean_routes = [
+        ['prefix' => 'virtual-office-',  'exclude' => 'virtual-office-surabaya',            'param' => 'branch', 'target' => '/virtual-office-surabaya/index.php'],
+        ['prefix' => 'sewa-kantor-',     'exclude' => 'sewa-kantor-surabaya',               'param' => 'lokasi', 'target' => '/sewa-kantor-surabaya/index.php'],
+        ['prefix' => 'meeting-room-',    'exclude' => 'meeting-room-surabaya',              'param' => 'lokasi', 'target' => '/meeting-room-surabaya/index.php'],
+        ['prefix' => 'coworking-space-', 'exclude' => 'coworking-space-urban-office',       'param' => 'lokasi', 'target' => '/coworking-space-urban-office/index.php'],
+        ['prefix' => 'event-space-',     'exclude' => 'event-space-55k-perjam-urbanoffice', 'param' => 'lokasi', 'target' => '/event-space-55k-perjam-urbanoffice/index.php'],
+    ];
+
+    if (count($parts) === 1) {
+        foreach ($service_clean_routes as $route) {
+            if ($parts[0] !== $route['exclude'] && strpos($parts[0], $route['prefix']) === 0) {
+                $route_value = substr($parts[0], strlen($route['prefix']));
+                if ($route_value !== '' && preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-]*$/', $route_value)) {
+                    $_GET[$route['param']] = $route_value;
+                    require_once __DIR__ . $route['target'];
+                    exit;
+                }
+            }
+        }
     }
 
     if (count($parts) >= 2) {
@@ -74,7 +89,7 @@ require_once __DIR__ . '/inc/header.php';
                 <div class="slide-inner">
                     <div class="slide-content">
                         <span class="badge">Pilihan Terbaik Surabaya</span>
-                        <h1>Bangun Bisnis Impian Anda Bersama Urban Office</h1>
+                        <h1>Bangun Bisnis Impian Bersama Urban Office</h1>
                         <p>Ruang kerja fleksibel yang dirancang untuk mendukung produktivitas dan kreativitas bagi para profesional, pekerja lepas, serta tim kerja dari berbagai ukuran.</p>
                         <div class="hero-btns">
                             <a href="#services-grid" class="btn btn-primary">Mulai Sewa</a>
@@ -91,7 +106,7 @@ require_once __DIR__ . '/inc/header.php';
                     <div class="slide-content">
                         <span class="badge">Virtual Office</span>
                         <h2>Virtual Office Di Lokasi Prestisius</h2>
-                        <p>Dapatkan alamat bisnis legal dan prestisius mulai dari Rp 290.000/bulan. Sudah termasuk penanganan surat menyurat dan akses ruang rapat.</p>
+                        <p>Dapatkan alamat bisnis legal dan prestisius mulai dari Rp 6.000-an/hari. Sudah termasuk penanganan surat menyurat dan akses ruang rapat.</p>
                         <div class="hero-btns">
                             <a href="<?php echo BASE_URL; ?>virtual-office-surabaya/" class="btn btn-primary">Lihat Paket</a>
                             <a href="#contact" class="btn btn-hero-outline">Konsultasi Gratis</a>
@@ -229,7 +244,7 @@ require_once __DIR__ . '/inc/header.php';
                 <!-- Card 1 -->
                 <div class="service-card">
                     <div class="service-card-img">
-                        <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80" alt="Virtual Office">
+                        <img src="<?php echo BASE_URL; ?>assets/images/branch/merr%20new.webp" alt="Virtual Office Surabaya, Jakarta Timur & Malang - Urban Office" width="600" height="400" loading="lazy" decoding="async">
                     </div>
                     <div class="service-card-body">
                         <div>
@@ -237,7 +252,7 @@ require_once __DIR__ . '/inc/header.php';
                             <p>Dapatkan alamat bisnis prestisius, penanganan surat masuk, dan kuota pemakaian meeting room.</p>
                         </div>
                         <div>
-                            <div class="service-price">Mulai dari<span>Rp 290.000 / bln</span></div>
+                            <div class="service-price">Mulai dari<span>Rp 6.000-an / hari</span></div>
                             <a href="<?php echo BASE_URL; ?>virtual-office-surabaya/" class="service-link">Selengkapnya &rarr;</a>
                         </div>
                     </div>
@@ -246,7 +261,7 @@ require_once __DIR__ . '/inc/header.php';
                 <!-- Card 2 -->
                 <div class="service-card">
                     <div class="service-card-img">
-                        <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80" alt="Private Office">
+                        <img src="<?php echo BASE_URL; ?>assets/images/privateoffice/offie%20301%20people.webp" alt="Private Office Siap Pakai Fully Furnished - Urban Office" width="600" height="400" loading="lazy" decoding="async">
                     </div>
                     <div class="service-card-body">
                         <div>
@@ -263,7 +278,7 @@ require_once __DIR__ . '/inc/header.php';
                 <!-- Card 3 -->
                 <div class="service-card">
                     <div class="service-card-img">
-                        <img src="https://images.unsplash.com/photo-1431540015161-0bf868a2d407?auto=format&fit=crop&w=600&q=80" alt="Meeting Room">
+                        <img src="<?php echo BASE_URL; ?>assets/images/meetingroom/Meeting%2018%20pax.webp" alt="Sewa Ruang Meeting Lengkap Proyektor & WiFi - Urban Office" width="600" height="400" loading="lazy" decoding="async">
                     </div>
                     <div class="service-card-body">
                         <div>
@@ -280,7 +295,7 @@ require_once __DIR__ . '/inc/header.php';
                 <!-- Card 4 -->
                 <div class="service-card">
                     <div class="service-card-img">
-                        <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&q=80" alt="Event Space">
+                        <img src="<?php echo BASE_URL; ?>assets/images/eventspace/Grand%20Event%20Space.webp" alt="Sewa Event Space & Aula Seminar 30-80 Pax - Urban Office" width="600" height="400" loading="lazy" decoding="async">
                     </div>
                     <div class="service-card-body">
                         <div>
@@ -288,7 +303,7 @@ require_once __DIR__ . '/inc/header.php';
                             <p>Tempat yang lapang dan representatif untuk mengadakan seminar, workshop, atau pelatihan bisnis.</p>
                         </div>
                         <div>
-                            <div class="service-price">Mulai dari<span>Rp 55.000 / pax</span></div>
+                            <div class="service-price">Mulai dari<span>Rp 45.000 / pax</span></div>
                             <a href="<?php echo BASE_URL; ?>event-space-55k-perjam-urbanoffice/" class="service-link">Selengkapnya &rarr;</a>
                         </div>
                     </div>
@@ -297,7 +312,7 @@ require_once __DIR__ . '/inc/header.php';
                 <!-- Card 5 -->
                 <div class="service-card">
                     <div class="service-card-img">
-                        <img src="https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?auto=format&fit=crop&w=600&q=80" alt="Coworking Space">
+                        <img src="<?php echo BASE_URL; ?>assets/images/coworkingspace/Foto%20Coworking%20Space.webp" alt="Coworking Space Harian & Bulanan WFA - Urban Office" width="600" height="400" loading="lazy" decoding="async">
                     </div>
                     <div class="service-card-body">
                         <div>
@@ -305,7 +320,7 @@ require_once __DIR__ . '/inc/header.php';
                             <p>Meja kerja komunal yang dinamis dengan suasana nyaman untuk meningkatkan fokus kerja harian.</p>
                         </div>
                         <div>
-                            <div class="service-price">Mulai dari<span>Rp 45.000 / hari</span></div>
+                            <div class="service-price">Mulai dari<span>Rp 10.000 / jam</span></div>
                             <a href="<?php echo BASE_URL; ?>coworking-space-urban-office/" class="service-link">Selengkapnya &rarr;</a>
                         </div>
                     </div>
@@ -314,7 +329,7 @@ require_once __DIR__ . '/inc/header.php';
                 <!-- Card 6 -->
                 <div class="service-card">
                     <div class="service-card-img">
-                        <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=600&q=80" alt="Sharing Room">
+                        <img src="<?php echo BASE_URL; ?>assets/images/sharingroom/Sharing%20Room%20Office.webp" alt="Sharing Room Office Dedicated Desk Hemat - Urban Office" width="600" height="400" loading="lazy" decoding="async">
                     </div>
                     <div class="service-card-body">
                         <div>
@@ -360,7 +375,7 @@ require_once __DIR__ . '/inc/header.php';
                 ?>
                             <div class="blog-card">
                                 <div class="blog-img">
-                                    <img src="<?php echo $post_image; ?>" alt="<?php echo sanitize($post['title']); ?>">
+                                    <img src="<?php echo $post_image; ?>" alt="<?php echo sanitize($post['title']); ?>" width="400" height="250" loading="lazy" decoding="async">
                                 </div>
                                 <div class="blog-body">
                                     <div>
@@ -386,7 +401,7 @@ require_once __DIR__ . '/inc/header.php';
                         <!-- Fallback Card 1 -->
                         <div class="blog-card">
                             <div class="blog-img">
-                                <img src="<?php echo BASE_URL; ?>assets/images/og-default.png" alt="Tempat WFA Surabaya">
+                                <img src="<?php echo BASE_URL; ?>assets/images/coworkingspace/Foto%20Coworking%20Space.webp" alt="Tempat WFA Surabaya" width="400" height="250" loading="lazy" decoding="async">
                             </div>
                             <div class="blog-body">
                                 <div>
@@ -404,7 +419,7 @@ require_once __DIR__ . '/inc/header.php';
                         <!-- Fallback Card 2 -->
                         <div class="blog-card">
                             <div class="blog-img">
-                                <img src="<?php echo BASE_URL; ?>assets/images/og-default.png" alt="Private Office Surabaya">
+                                <img src="<?php echo BASE_URL; ?>assets/images/privateoffice/offie%20301%20people.webp" alt="Private Office Surabaya" width="400" height="250" loading="lazy" decoding="async">
                             </div>
                             <div class="blog-body">
                                 <div>
@@ -422,7 +437,7 @@ require_once __DIR__ . '/inc/header.php';
                         <!-- Fallback Card 3 -->
                         <div class="blog-card">
                             <div class="blog-img">
-                                <img src="<?php echo BASE_URL; ?>assets/images/og-default.png" alt="Virtual Office Terbaik">
+                                <img src="<?php echo BASE_URL; ?>assets/images/branch/merr%20new.webp" alt="Virtual Office Terbaik" width="400" height="250" loading="lazy" decoding="async">
                             </div>
                             <div class="blog-body">
                                 <div>
@@ -460,44 +475,7 @@ require_once __DIR__ . '/inc/header.php';
 
     <!-- FAQ SECTION -->
     <?php
-    $faqs = [
-        [
-            'question' => 'Di mana saja lokasi Urban Office?',
-            'answer' => 'Urban Office saat ini tersedia di Fatmawati Jakarta, Merr Surabaya, Klampis Surabaya, Grand Sungkono Lagoon Surabaya, Gresik, dan Medan.'
-        ],
-        [
-            'question' => 'Bagaimana jam operasional Urban Office?',
-            'answer' => 'Jam operasional seluruh cabang adalah Senin - Sabtu pukul 08:00 - 15:00 WIB, khusus untuk cabang Urban Office - MERR dan Urban Office - Klampis beroperasi pukul 08:00 - 17:00 WIB.'
-        ],
-        [
-            'question' => 'Apakah tersedia parkir?',
-            'answer' => 'Ya, tempat parkir tersedia dan gratis (free).'
-        ],
-        [
-            'question' => 'Apakah lokasi strategis / mudah dijangkau?',
-            'answer' => 'Ya, seluruh lokasi Urban Office berada di titik strategis dan sangat mudah dijangkau.'
-        ],
-        [
-            'question' => 'Metode pembayaran apa saja yang diterima?',
-            'answer' => 'Pembayaran bisa langsung melalui portal my.urbanoffice.id yang mendukung Virtual Account berbagai bank (Mandiri, BNI, BRI, Permata Bank, CIMB Niaga, BSI), QRIS, serta Gopay.'
-        ],
-        [
-            'question' => 'Bagaimana cara mendapatkan invoice / kwitansi?',
-            'answer' => 'Anda dapat langsung mengakses dan mengunduh invoice serta kwitansi pembayaran di portal pelanggan my.urbanoffice.id.'
-        ],
-        [
-            'question' => 'Apakah ada promo atau diskon yang sedang berjalan?',
-            'answer' => 'Setiap informasi promo atau diskon terbaru akan kami sampaikan secara berkala, atau Anda bisa langsung memantaunya melalui portal resmi my.urbanoffice.id.'
-        ],
-        [
-            'question' => 'Bagaimana cara komplain jika ada masalah dengan layanan?',
-            'answer' => 'Anda bisa langsung datang ke cabang Urban Office tempat Anda melakukan transaksi atau menghubungi kami melalui nomor WhatsApp resmi.'
-        ],
-        [
-            'question' => 'Apakah ada customer service yang bisa dihubungi di luar jam kerja?',
-            'answer' => 'Ya, Anda dapat menghubungi tim customer service kami di luar jam kerja melalui WhatsApp di nomor 0851-0762-0100.'
-        ]
-    ];
+    $faqs = get_homepage_faqs();
     include __DIR__ . '/inc/components/faq.php';
     ?>
 

@@ -35,9 +35,9 @@ $hero_cta_text = 'Dapatkan Price List';
 $hero_cta_url = '#pricing';
 // Hero image + floating card follow the city's branch so they change per location.
 if (!empty($svc_branches[0]['image'])) {
-    $hero_img = $svc_branches[0]['image'];
+    $hero_img = encode_asset_url($svc_branches[0]['image']);
 }
-$card_title = 'Private Office ' . $po_city_label;
+$card_title = 'Private Office ' . ($svc_city_slug === 'jakarta' ? 'Jakarta Timur' : $po_city_label);
 $card_desc = !empty($svc_branches[0]['address']) ? $svc_branches[0]['address'] : '';
 include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
 ?>
@@ -45,19 +45,26 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
 <!-- App Promo Section -->
 <?php include DIR_ROOT . 'inc/components/app_section.php'; ?>
 
+<?php
+$geo_service_cat = 'private-office';
+$geo_city_slug   = $svc_city_slug;
+$geo_branch      = $svc_branches[0];
+include DIR_ROOT . 'inc/components/geo_summary.php';
+?>
+
 
 <!-- Pricing Card Configuration -->
 <div id="pricing">
     <?php
-    $pricing_title = 'Pilihan Ruang Private Office';
+    $po_branch_name = get_private_office_branch_label($svc_city_slug, $svc_branches[0]);
+    $pricing_title = 'Pilihan Ruang Private Office ' . $po_city_label;
     $has_billing_toggle = true;
     $packages = [
         [
             'name' => 'Private Office Small',
             'price_monthly' => '4.000.000',
-            'price_yearly' => '36.000.000',
-            'price_yearly_monthly' => '3.000.000',
-            'branch' => 'MERR',
+            'price_yearly' => '48.000.000',
+            'branch' => $po_branch_name,
             'period' => 'Bulan',
             'description' => 'Ideal untuk startup kecil atau cabang perwakilan dengan kapasitas 2 orang.',
             'features' => [
@@ -70,9 +77,8 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
         [
             'name' => 'Private Office Medium',
             'price_monthly' => '5.500.000',
-            'price_yearly' => '49.500.000',
-            'price_yearly_monthly' => '4.125.000',
-            'branch' => 'MERR',
+            'price_yearly' => '66.000.000',
+            'branch' => $po_branch_name,
             'period' => 'Bulan',
             'popular' => true,
             'description' => 'Sempurna untuk tim berkembang dengan kapasitas 4-5 orang.',
@@ -86,9 +92,8 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
         [
             'name' => 'Private Office Corporate',
             'price_monthly' => '6.000.000',
-            'price_yearly' => '54.000.000',
-            'price_yearly_monthly' => '4.500.000',
-            'branch' => 'MERR',
+            'price_yearly' => '72.000.000',
+            'branch' => $po_branch_name,
             'period' => 'Bulan',
             'description' => 'Ruang lega berkelas korporat untuk tim 5-6 orang di ruangan terluas.',
             'features' => [
@@ -112,9 +117,16 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
             <p class="section-subtitle">Kantor privat Urban Office di <?php echo sanitize($po_city_label); ?> berada di lokasi strategis dengan alamat bisnis prestisius. Berikut cabang yang melayani sewa kantor di <?php echo sanitize($po_city_label); ?>.</p>
         </div>
         <div class="local-branch-grid<?php echo count($svc_branches) === 1 ? ' local-branch-grid--single' : ''; ?>">
-            <?php foreach ($svc_branches as $svc_b): ?>
+            <?php foreach ($svc_branches as $svc_b):
+                $svc_b_heading = ($svc_city_slug === 'jakarta')
+                    ? ('Urban Office ' . get_private_office_branch_label($svc_city_slug, $svc_b))
+                    : ($svc_b['title'] ?? ('Urban Office ' . $svc_b['short_title']));
+                $svc_b_map_title = ($svc_city_slug === 'jakarta')
+                    ? get_private_office_branch_label($svc_city_slug, $svc_b)
+                    : $svc_b['short_title'];
+            ?>
             <div class="premium-card" style="text-align: left; display: flex; flex-direction: column;">
-                <h3 style="font-size: 1.2rem; margin-bottom: 8px;"><?php echo sanitize($svc_b['title'] ?? ('Urban Office ' . $svc_b['short_title'])); ?></h3>
+                <h3 style="font-size: 1.2rem; margin-bottom: 8px;"><?php echo sanitize($svc_b_heading); ?></h3>
                 <p style="color: hsl(var(--clr-text-muted)); font-size: 0.9rem; margin-bottom: 10px;"><i class="bi bi-geo-alt-fill"></i> <?php echo sanitize($svc_b['address']); ?></p>
                 <?php if (!empty($svc_b['rating'])): ?>
                 <p style="font-size: 0.9rem; margin-bottom: 12px;">⭐ <?php echo sanitize($svc_b['rating']); ?> · <?php echo sanitize($svc_b['reviews_count'] ?? '0'); ?> ulasan Google</p>
@@ -128,7 +140,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
                 <?php endif; ?>
                 <?php if (!empty($svc_b['map_embed'])): ?>
                 <div style="margin-top: auto; padding-top: 16px; border-radius: var(--radius-sm); overflow: hidden;">
-                    <iframe src="<?php echo sanitize($svc_b['map_embed']); ?>" width="100%" height="180" style="border:0; display:block; border-radius: var(--radius-sm);" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Peta <?php echo sanitize($svc_b['short_title']); ?>"></iframe>
+                    <iframe src="<?php echo sanitize($svc_b['map_embed']); ?>" width="100%" height="180" style="border:0; display:block; border-radius: var(--radius-sm);" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Peta <?php echo sanitize($svc_b_map_title); ?>"></iframe>
                 </div>
                 <?php endif; ?>
             </div>
@@ -186,50 +198,59 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
 ?>
 
 <!-- Private Office Gallery Slider Section -->
-<section class="section" style="background-color: hsl(var(--clr-bg-surface)); border-top: 1px solid hsl(var(--clr-border)); overflow: hidden; padding: 60px 0;">
+<section class="section" id="gallery" style="background-color: hsl(var(--clr-bg-surface)); border-top: 1px solid hsl(var(--clr-border)); overflow: hidden; padding: 60px 0; scroll-margin-top: 90px;">
     <div class="container">
-        <!-- Header row with title -->
-        <div style="margin-bottom: 30px;">
-            <h2 class="section-title" style="margin: 0;">Galeri Foto Private Office</h2>
-            <p style="margin: 5px 0 0 0; max-width: 600px; color: hsl(var(--clr-text-muted)); font-size: 0.95rem;">Jelajahi suasana ruang kantor privat modern siap pakai kami.</p>
+        <?php
+        $po_gallery_cities = get_private_office_cities();
+        $gallery_items = get_private_office_city_gallery($svc_city_slug, $svc_branches[0]);
+        ?>
+        <!-- Header row with title + per-city SEO navigation tabs -->
+        <div class="gallery-section-header">
+            <div>
+                <h2 class="section-title" style="margin: 0;">Galeri Foto Private Office di <?php echo sanitize($po_city_label); ?></h2>
+                <p style="margin: 5px 0 0 0; max-width: 620px; color: hsl(var(--clr-text-muted)); font-size: 0.95rem;">Jelajahi suasana ruang kantor privat siap pakai kami di Cabang <?php echo sanitize($po_branch_name); ?> (<?php echo sanitize($po_city_label); ?>).</p>
+            </div>
+            <?php if (count($po_gallery_cities) > 1): ?>
+            <nav class="gallery-city-tabs" aria-label="Pilih galeri wilayah Private Office">
+                <?php foreach ($po_gallery_cities as $po_c_slug => $po_c_name):
+                    $po_c_url = BASE_URL . 'sewa-kantor-' . $po_c_slug . '/#gallery';
+                    $po_c_active = ($po_c_slug === $svc_city_slug);
+                ?>
+                <a href="<?php echo sanitize($po_c_url); ?>" class="gallery-city-tab<?php echo $po_c_active ? ' active' : ''; ?>"<?php echo $po_c_active ? ' aria-current="page"' : ''; ?>>
+                    <i class="bi bi-geo-alt-fill"></i> <?php echo sanitize($po_c_name); ?>
+                </a>
+                <?php endforeach; ?>
+            </nav>
+            <?php endif; ?>
         </div>
         
         <!-- Slider Window (draggable/swipeable) -->
         <div class="office-gallery-window" style="overflow: hidden; margin: 0 -10px; padding: 10px 0; cursor: grab; user-select: none;">
-            <div class="office-gallery-wrapper" id="office-gallery-slider" style="display: flex; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform;">
-                <?php
-                $gallery_items = [
-                    ['img' => 'private-office-small.webp', 'title' => 'Private Office Small', 'desc' => 'Kapasitas 2 Orang · 6m²', 'pax' => '2 Pax', 'type_id' => 1],
-                    ['img' => 'private-office-medium.webp', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas 5 Orang · 14m²', 'pax' => '5 Pax', 'type_id' => 2],
-                    ['img' => 'private-office-corporate.webp', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas 5 Orang · 14m²', 'pax' => '5 Pax', 'type_id' => 3],
-                    ['img' => 'private-office-4.webp', 'title' => 'Private Office Medium', 'desc' => 'Kapasitas 4 Orang · 12m²', 'pax' => '4 Pax', 'type_id' => 4],
-                    ['img' => 'private-office-5.webp', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas 6 Orang · 16m²', 'pax' => '6 Pax', 'type_id' => 5],
-                    ['img' => 'private-office-6.webp', 'title' => 'Private Office Small', 'desc' => 'Kapasitas 2 Orang · 6m²', 'pax' => '2 Pax', 'type_id' => 6],
-                    ['img' => 'private-office-7.webp', 'title' => 'Private Office Small', 'desc' => 'Kapasitas 2 Orang · 6m²', 'pax' => '2 Pax', 'type_id' => 7],
-                    ['img' => 'private-office-8.webp', 'title' => 'Private Office Medium', 'desc' => 'Kapasitas 5 Orang · 10m²', 'pax' => '5 Pax', 'type_id' => 8],
-                ];
-                
-                foreach ($gallery_items as $item):
+            <div class="office-gallery-wrapper" id="office-gallery-slider" data-gallery-slider data-slide-selector=".gallery-card-slide" data-visible-desktop="5" data-visible-laptop="4" data-visible-tablet="3" data-visible-mobile="1.3" style="display: flex; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform;">
+                <?php foreach ($gallery_items as $item):
+                    $detail_href = BASE_URL . 'sewa-kantor-surabaya/detail.php?type=' . (int)$item['type_id']
+                        . '&lokasi=' . urlencode($svc_city_slug)
+                        . '&img=' . urlencode($item['img']);
                 ?>
                 <div class="gallery-card-slide">
                     <div class="gallery-item-card">
                         <!-- Image Container with Pax Badge -->
                         <div class="gallery-img-container">
-                            <img src="<?php echo BASE_URL; ?>assets/images/privateoffice/<?php echo $item['img']; ?>" alt="<?php echo $item['title']; ?>" draggable="false">
+                            <img src="<?php echo sanitize(encode_asset_url(BASE_URL . $item['img'])); ?>" alt="<?php echo sanitize($item['alt']); ?>" loading="lazy" decoding="async" draggable="false">
                             <span class="gallery-pax-badge">
-                                <?php echo $item['pax']; ?>
+                                <?php echo sanitize($item['pax']); ?>
                             </span>
                         </div>
                         
                         <!-- Body Content -->
                         <div class="gallery-body-content">
                             <div class="gallery-text-wrap">
-                                <h4 class="gallery-card-title"><?php echo $item['title']; ?></h4>
-                                <p class="gallery-card-desc"><?php echo $item['desc']; ?></p>
+                                <h4 class="gallery-card-title"><?php echo sanitize($item['title']); ?></h4>
+                                <p class="gallery-card-desc"><?php echo sanitize($item['desc']); ?></p>
                             </div>
                             
                             <!-- Action button connecting to detail page -->
-                            <a href="<?php echo BASE_URL; ?>sewa-kantor-surabaya/detail.php?type=<?php echo $item['type_id']; ?>" class="btn btn-primary gallery-cta-btn" draggable="false">
+                            <a href="<?php echo sanitize($detail_href); ?>" class="btn btn-primary gallery-cta-btn" draggable="false">
                                 Detail <i class="bi bi-arrow-right"></i>
                             </a>
                         </div>
@@ -242,6 +263,42 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
 </section>
 
 <style>
+.gallery-section-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 18px;
+    margin-bottom: 28px;
+}
+.gallery-city-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.gallery-city-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    border: 1px solid hsl(var(--clr-border));
+    background-color: #FFFFFF;
+    color: hsl(var(--clr-text-main));
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.gallery-city-tab:hover {
+    border-color: hsl(var(--clr-primary));
+    color: hsl(var(--clr-primary));
+}
+.gallery-city-tab.active {
+    background-color: hsl(var(--clr-primary));
+    border-color: hsl(var(--clr-primary));
+    color: #FFFFFF;
+}
 /* Base Styles for Slider Cards */
 .gallery-card-slide {
     padding: 0 8px;
@@ -375,158 +432,11 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
 }
 </style>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const slider = document.getElementById('office-gallery-slider');
-    const container = document.querySelector('.office-gallery-window');
-    const slides = slider.querySelectorAll('.gallery-card-slide');
-    
-    let currentIdx = 0;
-    let autoPlayInterval = null;
-    
-    function getVisibleCount() {
-        const width = window.innerWidth;
-        if (width > 1200) return 5;  // 5 cards on desktop (was 4)
-        if (width > 991) return 4;   // 4 cards on small desktop / tablet landscape
-        if (width > 768) return 3;   // 3 cards on tablet (was 2)
-        return 1.3;                  // 1.3 cards on mobile to make it larger and peek next slide (was 2)
-    }
-    
-    function getSlideWidth() {
-        return container.clientWidth / getVisibleCount();
-    }
-    
-    function updateSlideStyles() {
-        const visibleCount = getVisibleCount();
-        slides.forEach(slide => {
-            slide.style.flex = `0 0 ${100 / visibleCount}%`;
-            slide.style.width = `${100 / visibleCount}%`;
-        });
-    }
-    
-    function showSlide(idx) {
-        const visibleCount = getVisibleCount();
-        const maxIndex = Math.max(0, slides.length - visibleCount);
-        
-        if (idx > maxIndex) {
-            idx = 0; // Wrap around to first
-        } else if (idx < 0) {
-            idx = maxIndex; // Wrap around to last
-        }
-        
-        currentIdx = idx;
-        const slideWidth = getSlideWidth();
-        slider.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-        slider.style.transform = `translateX(-${currentIdx * slideWidth}px)`;
-    }
-    
-    function nextSlide() {
-        showSlide(currentIdx + 1);
-    }
-    
-    function prevSlide() {
-        showSlide(currentIdx - 1);
-    }
-    
-    function startAutoPlay() {
-        stopAutoPlay();
-        autoPlayInterval = setInterval(nextSlide, 4500); // Auto slide every 4.5 seconds
-    }
-    
-    function stopAutoPlay() {
-        if (autoPlayInterval) {
-            clearInterval(autoPlayInterval);
-        }
-    }
-    
-    // Drag and swipe logic
-    let isDragging = false;
-    let startX = 0;
-    let currentX = 0;
-    let dragThreshold = 50; // pixels to trigger slide change
-    
-    function handleDragStart(e) {
-        isDragging = true;
-        stopAutoPlay();
-        startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-        slider.style.transition = 'none'; // disable transitions while dragging
-    }
-    
-    function handleDragMove(e) {
-        if (!isDragging) return;
-        currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-        const diffX = currentX - startX;
-        
-        const slideWidth = getSlideWidth();
-        const currentTranslation = -currentIdx * slideWidth;
-        slider.style.transform = `translateX(${currentTranslation + diffX}px)`;
-    }
-    
-    function handleDragEnd() {
-        if (!isDragging) return;
-        isDragging = false;
-        slider.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)'; // restore transition
-        
-        const diffX = currentX - startX;
-        if (Math.abs(diffX) > dragThreshold) {
-            if (diffX < 0) {
-                nextSlide();
-            } else {
-                prevSlide();
-            }
-        } else {
-            showSlide(currentIdx);
-        }
-        startAutoPlay();
-    }
-    
-    // Mouse dragging
-    container.addEventListener('mousedown', handleDragStart);
-    window.addEventListener('mousemove', handleDragMove);
-    window.addEventListener('mouseup', handleDragEnd);
-    
-    // Touch swiping
-    container.addEventListener('touchstart', handleDragStart, { passive: true });
-    container.addEventListener('touchmove', handleDragMove, { passive: true });
-    container.addEventListener('touchend', handleDragEnd);
-    
-    // Resize responsiveness
-    window.addEventListener('resize', () => {
-        updateSlideStyles();
-        showSlide(currentIdx);
-    });
-    
-    // Initial calls
-    updateSlideStyles();
-    showSlide(currentIdx);
-    startAutoPlay();
-    
-    // Pause on hover
-    container.addEventListener('mouseenter', stopAutoPlay);
-    container.addEventListener('mouseleave', startAutoPlay);
-});
-</script>
+<!-- Gallery slider initialized via assets/js/main.js (initOfficeGallerySliders) -->
 
 <!-- FAQs Section -->
 <?php
-$faqs = [
-    [
-        'question' => 'Bagaimana jika ingin melakukan perpanjangan sewa?',
-        'answer' => 'Untuk perpanjangan sewa saat ini dapat dilakukan langsung melalui tim admin kami dengan memberikan konfirmasi "Perpanjangan Sewa".'
-    ],
-    [
-        'question' => 'Apakah ada koneksi WiFi? Kecepatannya berapa?',
-        'answer' => 'Ya, tersedia koneksi WiFi berkecepatan tinggi hingga 100 Mbps di seluruh area kerja.'
-    ],
-    [
-        'question' => 'Apakah tersedia café atau tempat makan di dalam gedung?',
-        'answer' => 'Ya, tersedia café dan tempat makan yang terletak di Lantai 1 gedung untuk kenyamanan Anda.'
-    ],
-    [
-        'question' => 'Apakah tersedia area parkir untuk kendaraan?',
-        'answer' => 'Ya, area parkir tersedia luas dan dapat digunakan secara gratis (free) bagi para penyewa.'
-    ]
-];
+$faqs = get_private_office_city_faqs($svc_city_slug, $svc_branches[0]);
 include dirname(dirname(__FILE__)) . '/inc/components/faq.php';
 ?>
 

@@ -3,8 +3,22 @@
  * Urban Office - Meeting Room Detail Page
  */
 
-$page_slug = 'meeting-room-surabaya';
-require_once dirname(dirname(__FILE__)) . '/inc/header.php';
+require_once dirname(dirname(__FILE__)) . '/inc/config.php';
+require_once dirname(dirname(__FILE__)) . '/inc/functions.php';
+require_once dirname(dirname(__FILE__)) . '/inc/locations_data.php';
+
+$mr_lokasi = isset($_GET['lokasi']) ? strtolower(trim($_GET['lokasi'])) : 'surabaya';
+$mr_branches = service_city_branches('meeting-room', $mr_lokasi);
+if (empty($mr_branches)) {
+    $mr_lokasi = 'surabaya';
+    $mr_branches = service_city_branches('meeting-room', $mr_lokasi);
+}
+$mr_branch = $mr_branches[0];
+$mr_city_label = ($mr_lokasi === 'surabaya-barat')
+    ? 'Surabaya Barat'
+    : (($mr_lokasi === 'jakarta') ? 'Jakarta Timur' : ($mr_branch['city'] ?? 'Surabaya'));
+$mr_branch_label = get_private_office_branch_label($mr_lokasi, $mr_branch);
+$page_slug = 'meeting-room-' . $mr_lokasi;
 
 $type = isset($_GET['type']) ? (int)$_GET['type'] : 1;
 if ($type < 1 || $type > 6) {
@@ -76,6 +90,22 @@ $types_data = [
 
 $office = $types_data[$type];
 
+$GLOBALS['seo_title_override'] = $office['name'] . ' (' . $office['pax'] . ') - Sewa Ruang Meeting ' . $mr_city_label . ' | Urban Office';
+$GLOBALS['seo_desc_override'] = $office['name'] . ' kapasitas ' . $office['capacity'] . ' (' . $office['size'] . ') di Urban Office ' . $mr_city_label . '. Mulai Rp ' . $office['price'] . '/' . strtolower($office['period']) . ', lengkap TV LED/proyektor & WiFi cepat.';
+require_once dirname(dirname(__FILE__)) . '/inc/header.php';
+
+$mr_hero_img_rel = 'assets/images/meetingroom/' . $office['img'];
+$requested_mr_img = isset($_GET['img']) ? trim($_GET['img']) : '';
+if ($requested_mr_img !== '') {
+    foreach (get_meeting_room_city_gallery($mr_lokasi, $mr_branch) as $mr_gal_item) {
+        if ($mr_gal_item['img'] === $requested_mr_img) {
+            $mr_hero_img_rel = $mr_gal_item['img'];
+            break;
+        }
+    }
+}
+$mr_back_url = BASE_URL . 'meeting-room-' . $mr_lokasi . '/#gallery';
+
 // Full price breakdown (durasi x coffee break) rendered as crawlable HTML on the detail page.
 $is_big = strpos($office['name'], 'Big') !== false;
 $price_rows = $is_big ? [
@@ -96,17 +126,17 @@ $price_rows = $is_big ? [
 <!-- Detail Banner Hero -->
 <div class="container" style="margin-top: 120px; margin-bottom: 60px;">
     <!-- Breadcrumb back link -->
-    <a href="<?php echo BASE_URL; ?>meeting-room-surabaya/" class="back-breadcrumb">
-        <i class="bi bi-arrow-left"></i> Kembali ke Halaman Utama
+    <a href="<?php echo sanitize($mr_back_url); ?>" class="back-breadcrumb">
+        <i class="bi bi-arrow-left"></i> Kembali ke Galeri <?php echo sanitize($mr_city_label); ?>
     </a>
     
     <div class="hero-detail-grid">
         <!-- Left details column -->
         <div class="hero-details-col">
-            <span class="badge" style="background-color: hsl(var(--clr-primary)); color: white; border-radius: var(--radius-sm); margin-bottom: 12px;">Meeting Room</span>
+            <span class="badge" style="background-color: hsl(var(--clr-primary)); color: white; border-radius: var(--radius-sm); margin-bottom: 12px;">Meeting Room <?php echo sanitize($mr_city_label); ?></span>
             <h1 style="font-size: 2.2rem; line-height: 1.25; margin: 0 0 10px 0; font-weight: 800; color: #111111;"><?php echo sanitize($office['name']); ?></h1>
             <p style="font-size: 1.05rem; color: #555555; margin-bottom: 24px;">
-                <i class="bi bi-geo-alt-fill" style="color: hsl(var(--clr-primary));"></i> Jawa Timur, Indonesia
+                <i class="bi bi-geo-alt-fill" style="color: hsl(var(--clr-primary));"></i> <?php echo sanitize($mr_branch_label . ', ' . ($mr_branch['location'] ?? $mr_city_label)); ?>
             </p>
             
             <!-- Price box -->
@@ -121,7 +151,7 @@ $price_rows = $is_big ? [
             <!-- Call to Actions -->
             <div class="hero-cta-container">
                 <a href="#contact" class="btn btn-primary" onclick="window.activateDetailOfferMode('<?php echo sanitize($office['name'] === 'Small Meeting Room' ? 'Small Meeting Room' : 'Big Meeting Room'); ?>')">Ajukan Penawaran</a>
-                <a href="https://api.whatsapp.com/send?phone=6285107620100&text=Halo%20Urban%20Office%2C%20saya%20tertarik%20dengan%20layanan%20<?php echo urlencode($office['name']); ?>.%20Mohon%20info%20selengkapnya." class="btn btn-outline" target="_blank">
+                <a href="https://api.whatsapp.com/send?phone=6285107620100&text=<?php echo urlencode('Halo Urban Office, saya tertarik dengan layanan ' . $office['name'] . ' di Cabang ' . $mr_branch_label . ' (' . $mr_city_label . '). Mohon info selengkapnya.'); ?>" class="btn btn-outline" target="_blank" rel="noopener">
                     <i class="bi bi-whatsapp"></i> WhatsApp
                 </a>
             </div>
@@ -129,7 +159,7 @@ $price_rows = $is_big ? [
         
         <!-- Right Image Column -->
         <div class="hero-image-col">
-            <img src="<?php echo BASE_URL; ?>assets/images/meetingroom/<?php echo $office['img']; ?>" alt="<?php echo $office['name']; ?>" style="width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); aspect-ratio: 4/3; object-fit: cover; object-position: center; border: 1px solid hsl(var(--clr-border));">
+            <img src="<?php echo sanitize(encode_asset_url(BASE_URL . $mr_hero_img_rel)); ?>" alt="<?php echo sanitize($office['name'] . ' di Urban Office ' . $mr_city_label); ?>" style="width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); aspect-ratio: 4/3; object-fit: cover; object-position: center; border: 1px solid hsl(var(--clr-border));">
         </div>
     </div>
 </div>
@@ -150,7 +180,7 @@ $price_rows = $is_big ? [
                 <table class="specs-table">
                     <tr>
                         <td class="spec-label">Alamat Lengkap</td>
-                        <td class="spec-value">Jl. Dr. Ir. H. Soekarno No.470, Kedung Baruk, Rungkut</td>
+                        <td class="spec-value"><?php echo sanitize($mr_branch['address']); ?></td>
                     </tr>
                     <tr>
                         <td class="spec-label">Ukuran Fisik</td>
@@ -169,19 +199,6 @@ $price_rows = $is_big ? [
                         <td class="spec-value">Sesuai Jam Operasional / Jadwal Booking</td>
                     </tr>
                 </table>
-
-                <h3 class="specs-subtitle">Daftar Harga Lengkap</h3>
-                <table class="specs-table">
-                    <?php foreach ($price_rows as $pr): ?>
-                    <tr>
-                        <td class="spec-label"><?php echo sanitize($pr[0]); ?></td>
-                        <td class="spec-value"><?php echo sanitize($pr[1]); ?></td>
-                    </tr>
-                    <?php endforeach; ?>
-                </table>
-                <p style="font-size: 0.78rem; color: hsl(var(--clr-text-muted)); margin-top: 10px;">
-                    <?php echo $is_big ? '+ Over time Rp 21.000 / orang / jam' : '+ Extra lunch Rp 30.000 / pax (opsional)'; ?>
-                </p>
             </div>
             
             <!-- Right Info Block -->
@@ -218,6 +235,24 @@ $price_rows = $is_big ? [
                 </div>
             </div>
         </div>
+
+        <!-- Full-Width Pricing Breakdown Card -->
+        <div class="price-breakdown-card">
+            <div class="price-breakdown-header">
+                <h3 class="specs-subtitle" style="margin-bottom: 0;">Daftar Harga Lengkap</h3>
+                <span class="price-breakdown-note">
+                    <?php echo $is_big ? '+ Over time Rp 21.000 / orang / jam' : '+ Extra lunch Rp 30.000 / pax (opsional)'; ?>
+                </span>
+            </div>
+            <div class="price-breakdown-grid">
+                <?php foreach ($price_rows as $pr): ?>
+                <div class="price-breakdown-item">
+                    <div class="price-breakdown-label"><?php echo sanitize($pr[0]); ?></div>
+                    <div class="price-breakdown-val"><?php echo sanitize($pr[1]); ?></div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -244,12 +279,12 @@ $price_rows = $is_big ? [
                         if ($id === $type) continue;
                     ?>
                     <div class="serviced-card-slide">
-                        <a href="?type=<?php echo $id; ?>" style="text-decoration: none; display: block; color: inherit;">
+                        <a href="?type=<?php echo $id; ?>&lokasi=<?php echo urlencode($mr_lokasi); ?>" style="text-decoration: none; display: block; color: inherit;">
                             <div class="serviced-gallery-item">
                                 <div class="image-wrapper">
-                                    <img src="<?php echo BASE_URL; ?>assets/images/meetingroom/<?php echo $item['img']; ?>" alt="<?php echo $item['name']; ?>" draggable="false">
+                                    <img src="<?php echo sanitize(encode_asset_url(BASE_URL . 'assets/images/meetingroom/' . $item['img'])); ?>" alt="<?php echo sanitize($item['name'] . ' di Urban Office ' . $mr_city_label); ?>" loading="lazy" decoding="async" draggable="false">
                                 </div>
-                                <h4><?php echo $item['name']; ?> (<?php echo $item['pax']; ?>)</h4>
+                                <h4><?php echo sanitize($item['name']); ?> (<?php echo sanitize($item['pax']); ?>)</h4>
                             </div>
                         </a>
                     </div>
@@ -320,7 +355,7 @@ $price_rows = $is_big ? [
 .specs-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 30px;
+    margin-bottom: 0;
     font-size: 0.95rem;
 }
 .specs-table tr {
@@ -375,6 +410,62 @@ $price_rows = $is_big ? [
     font-size: 0.95rem;
     color: #444444;
     line-height: 1.4;
+}
+.price-breakdown-card {
+    background-color: #FFFFFF;
+    border-radius: var(--radius-md);
+    border: 1px solid hsl(var(--clr-border));
+    box-shadow: var(--shadow-sm);
+    padding: 28px 30px;
+    margin-top: 40px;
+}
+.price-breakdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.price-breakdown-note {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: hsl(var(--clr-primary));
+    background-color: hsl(var(--clr-bg-secondary));
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    border: 1px solid hsl(var(--clr-border));
+}
+.price-breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+}
+.price-breakdown-item {
+    background-color: hsl(var(--clr-bg-secondary));
+    border: 1px solid hsl(var(--clr-border));
+    border-radius: var(--radius-sm);
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+}
+.price-breakdown-label {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #444444;
+    line-height: 1.4;
+}
+.price-breakdown-val {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #111111;
+}
+@media (max-width: 1024px) {
+    .price-breakdown-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 /* Hero Detail Banner Grid & CTA Styles */
@@ -466,6 +557,30 @@ $price_rows = $is_big ? [
     .facility-card-list li span {
         font-size: 0.72rem !important;
         line-height: 1.3 !important;
+    }
+    .price-breakdown-card {
+        padding: 20px 16px !important;
+        margin-top: 24px !important;
+    }
+    .price-breakdown-note {
+        font-size: 0.75rem !important;
+        padding: 4px 10px !important;
+    }
+    .price-breakdown-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+    .price-breakdown-item {
+        flex-direction: row !important;
+        align-items: center !important;
+        padding: 12px 14px !important;
+    }
+    .price-breakdown-label {
+        font-size: 0.8rem !important;
+    }
+    .price-breakdown-val {
+        font-size: 0.92rem !important;
+        white-space: nowrap !important;
     }
 }
 
@@ -889,7 +1004,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 window.activateDetailOfferMode = function(packageName) {
     if (typeof activateOfferMode === 'function') {
-        activateOfferMode(packageName, 'Meeting Room', 'MERR');
+        activateOfferMode(packageName, 'Meeting Room', <?php echo json_encode($mr_branch_label); ?>);
     }
 };
 </script>

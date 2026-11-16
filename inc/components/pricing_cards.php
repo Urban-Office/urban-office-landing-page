@@ -38,9 +38,11 @@ $title = $pricing_title ?? 'Pilih Paket Ruang Kerja Anda';
                     
                     <span class="billing-toggle-slider"></span>
                 </div>
+                <?php if (!empty($billing_badge_text)): ?>
                 <div class="billing-save-badge">
-                    <i class="bi bi-lightning-charge-fill"></i> Sewa 1 Tahun Bayar 9 Bulan!
+                    <i class="bi bi-lightning-charge-fill"></i> <?php echo sanitize($billing_badge_text); ?>
                 </div>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
 

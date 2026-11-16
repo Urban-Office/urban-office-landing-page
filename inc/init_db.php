@@ -404,6 +404,60 @@ try {
         }
     }
 
+    // One-time idempotent SEO & GEO page meta migration (GSC query optimization + Jakarta Timur / Malang sync)
+    $migrationKey = 'seo_geo_migration_2026_11_v1';
+    $hasMigrated = Database::fetch("SELECT value FROM settings WHERE name = ?", [$migrationKey]);
+    if (!$hasMigrated) {
+        $seo_updates = [
+            ''                                         => ['Home', 'Virtual Office & Sewa Kantor Surabaya, Jakarta, Malang | Urban Office', 'Sewa Virtual Office mulai 6Rb/hari, Private Office siap pakai mulai 4 Jt/bln, Meeting Room & Coworking di Surabaya, Jakarta Timur, Malang, Gresik & Medan.'],
+            'virtual-office-surabaya'                  => ['Virtual Office Surabaya', 'Virtual Office Surabaya Mulai 6Rb/Hari - Resmi PT/CV | Urban Office', 'Sewa Virtual Office Surabaya murah resmi untuk NIB & NPWP PT/CV di MERR, Klampis & Grand Sungkono. Mulai 6Rb–8Rb/hari, gratis Meeting Room & website.'],
+            'sewa-kantor-surabaya'                     => ['Sewa Kantor Surabaya', 'Sewa Kantor & Private Office Surabaya Mulai 4 Jt/Bln | Urban Office', 'Sewa Private Office & Serviced Office fully furnished di MERR Surabaya mulai 4 Jt/bln (2–6 pax). WiFi fiber 100 Mbps, resepsionis, gratis listrik & IPL!'],
+            'meeting-room-surabaya'                    => ['Sewa Ruang Meeting', 'Sewa Meeting Room Surabaya Mulai 125Rb/Jam & Coffee | Urban Office', 'Sewa ruang meeting Surabaya murah kapasitas 6–18 pax di MERR (Café Lt.1), Klampis & Sungkono. Mulai 125Rb/jam atau 45Rb/pax, proyektor & WiFi 100 Mbps.'],
+            'coworking-space-urban-office'             => ['Coworking Space Surabaya', 'Coworking Space Surabaya Mulai 10Rb/Jam, Harian 45Rb | Urban Office', 'Cari coworking space Surabaya terdekat untuk WFA & tim? Tersedia di MERR & Klampis mulai 10Rb/jam, 45Rb/hari, atau 750Rb/bln. WiFi 100 Mbps & free kopi!'],
+            'event-space-55k-perjam-urbanoffice'       => ['Sewa Event Space', 'Sewa Event Space & Aula Surabaya Mulai 45Rb/Pax | Urban Office', 'Sewa aula & event space murah di Surabaya dan Malang kapasitas 30–80 orang untuk seminar & workshop. Mulai 45Rb/pax (4 jam), lengkap proyektor HD & sound!'],
+            'sharing-room-office'                      => ['Sewa Sharing Room Office', 'Sewa Sharing Office Surabaya Mulai 1 Jt/Bln Siap Kerja | Urban Office', 'Dedicated desk di ruang kantor bersama ber-AC di MERR Surabaya mulai 1 Jt/bln. Termasuk WiFi fiber 100 Mbps, resepsionis, free kopi/teh & bebas biaya IPL.'],
+            'pajak-dan-akunting'                       => ['Jasa Pajak & Akunting', 'Jasa Konsultan Pajak, Pembukuan & SP2DK Resmi (NDA) | Urban Office', 'Jasa laporan pajak bulanan/tahunan SPT Badan, pembukuan, & pendampingan SP2DK ditangani tim ahli berlisensi BKP dengan jaminan kerahasiaan NDA.'],
+            'pendirian-perorangan-plus-virtual-office' => ['PT Perorangan + Virtual Office', 'Pendirian PT Perorangan + Virtual Office Resmi NIB/NPWP | Urban Office', 'Paket bundling pendirian PT Perorangan cepat (±1 minggu) plus Virtual Office alamat resmi usaha. Termasuk SK Kemenkumham, NIB OSS, NPWP & domisili.'],
+            'pendirian-pt-include-virtual-office'      => ['Pendirian PT + Virtual Office', 'Jasa Pendirian PT + Virtual Office Resmi NIB & NPWP | Urban Office', 'Paket lengkap pendirian PT Badan Usaha + Virtual Office resmi ±1 minggu selesai. Termasuk akta notaris, SK Kemenkumham, NIB OSS, NPWP & kuota meeting room.'],
+            'pendirian-cv-virtual-office'              => ['Pendirian CV + Virtual Office', 'Jasa Pendirian CV + Virtual Office Murah & Cepat | Urban Office', 'Paket bundling pendirian CV + Virtual Office resmi untuk domisili usaha & perizinan NIB. Proses cepat ±1 minggu, lengkap akta notaris & SK Kemenkumham.'],
+            'pendirian-pma-plus-virtual-office'        => ['Pendirian PMA + Virtual Office', 'Jasa Pendirian PT PMA + Virtual Office Indonesia | Urban Office', 'Solusi lengkap pendirian PT PMA (investor asing) plus alamat Virtual Office komersial resmi di Indonesia. Termasuk akta, SK Kemenkumham, NIB & NPWP.'],
+            'virtual-office-surabaya-timur'            => ['Virtual Office Surabaya Timur', 'Virtual Office Klampis Surabaya Timur Mulai 6Rb/Hari | Urban Office', 'Virtual Office termurah di Ruko Klampis Megah Surabaya Timur dekat ITS & UNAIR mulai 6Rb/hari. Alamat bisnis resmi PT/CV, NIB & NPWP plus notifikasi WA.'],
+            'virtual-office-surabaya-barat'            => ['Virtual Office Surabaya Barat', 'Virtual Office Surabaya Barat Grand Sungkono 12Rb/Hari | Urban Office', 'Sewa Virtual Office prestisius di Grand Sungkono Lagoon Surabaya Barat dekat Tol Satelit mulai 12Rb/hari. Lengkap resepsionis, domisili resmi & meeting room.'],
+            'virtual-office-jakarta-timur'             => ['Virtual Office Jakarta Timur', 'Sewa Virtual Office Jakarta Timur Cakung Mulai 12Rb/Hari | Urban Office', 'Sewa Virtual Office resmi Jakarta Timur (Jl. Raya Bekasi KM 17 Cakung dekat Pulogadung) mulai 12Rb/hari. Alamat legal PT/CV, nomor 021 & gratis meeting room.'],
+            'virtual-office-gresik'                    => ['Virtual Office Gresik', 'Sewa Virtual Office Gresik PTGM Tower Mulai 12Rb/Hari | Urban Office', 'Sewa Virtual Office di PTGM Tower Kebomas Gresik mulai 12Rb/hari. Alamat bisnis komersial resmi untuk PT/CV, dekat Pemkab Gresik & akses Tol Romokalisari.'],
+            'virtual-office-medan'                     => ['Virtual Office Medan', 'Sewa Virtual Office Medan Jl. Sutrisno Mulai 12Rb/Hari | Urban Office', 'Sewa Virtual Office strategis di Medan Area (Jl. Sutrisno) mulai 12Rb/hari. Lengkap domisili usaha resmi PT/CV, resepsionis, notifikasi surat & meeting room.'],
+            'virtual-office-malang'                    => ['Virtual Office Malang', 'Sewa Virtual Office Malang Blimbing Mulai 12Rb/Hari | Urban Office', 'Sewa Virtual Office resmi di Blimbing Kota Malang mulai 12Rb/hari. Alamat bisnis legal untuk PT/CV & NIB, penanganan surat WA real-time & kuota meeting room.'],
+            'sewa-kantor-jakarta'                      => ['Sewa Kantor Jakarta Timur', 'Sewa Kantor & Private Office Jakarta Timur Siap Pakai | Urban Office', 'Sewa Private Office & Serviced Office fully furnished di Cakung, Pulogadung, Jakarta Timur mulai 4 Jt/bln. WiFi fiber, resepsionis, bebas biaya listrik & IPL.'],
+            'sewa-kantor-gresik'                       => ['Sewa Kantor Gresik', 'Sewa Kantor & Private Office Gresik PTGM Tower | Urban Office', 'Sewa ruang kantor privat fully furnished di PTGM Tower Kebomas Gresik mulai 4 Jt/bln. Lengkap WiFi cepat, AC, resepsionis & bebas biaya utilitas kantor.'],
+            'sewa-kantor-malang'                       => ['Sewa Kantor Malang', 'Sewa Kantor & Private Office Malang Blimbing Siap Pakai | Urban Office', 'Sewa Private Office fully furnished di Blimbing Indah Megah Kota Malang mulai 4 Jt/bln (2–6 pax). WiFi fiber 100 Mbps, resepsionis & gratis ruang meeting!'],
+            'meeting-room-surabaya-barat'              => ['Meeting Room Surabaya Barat', 'Sewa Meeting Room Surabaya Barat Mulai 125Rb/Jam | Urban Office', 'Sewa ruang rapat di Grand Sungkono Lagoon Surabaya Barat mulai 125Rb/jam (6–15 pax). Dekat Tol Satelit, lengkap proyektor/TV LED, whiteboard & coffee break.'],
+            'meeting-room-jakarta'                     => ['Meeting Room Jakarta Timur', 'Sewa Meeting Room Jakarta Timur Mulai 125Rb/Jam - Cakung | Urban Office', 'Sewa ruang meeting siap pakai di Cakung, Pulogadung, Jakarta Timur mulai 125Rb/jam atau 45Rb/pax. Lengkap Smart TV LED, WiFi cepat, whiteboard & snack.'],
+            'meeting-room-gresik'                      => ['Meeting Room Gresik', 'Sewa Meeting Room Gresik PTGM Tower Mulai 125Rb/Jam | Urban Office', 'Sewa ruang rapat & seminar di PTGM Tower Kebomas Gresik mulai 125Rb/jam atau 45Rb/pax. Lengkap proyektor HD, Smart TV, WiFi cepat & opsi coffee break.'],
+            'meeting-room-malang'                      => ['Meeting Room Malang', 'Sewa Meeting Room Malang Blimbing Mulai 125Rb/Jam | Urban Office', 'Sewa ruang meeting di Blimbing Kota Malang per jam (125Rb/jam) atau paket 4–8 jam. Lengkap proyektor/TV LED, WiFi cepat, whiteboard & opsi coffee break.'],
+            'coworking-space-surabaya-timur'           => ['Coworking Space Surabaya Timur', 'Coworking Space Klampis Surabaya Timur Mulai 45Rb/Hari | Urban Office', 'Kerja fokus di coworking space Klampis Surabaya Timur dekat ITS & UNAIR mulai 45Rb/hari atau 750Rb/bln. Meja ergonomis, WiFi 100 Mbps & free flow kopi/teh.'],
+            'coworking-space-malang'                   => ['Coworking Space Malang', 'Coworking Space Malang Mulai 10Rb/Jam & 45Rb/Hari | Urban Office', 'Cari tempat WFA di Blimbing Kota Malang? Sewa Coworking Space mulai 10Rb/jam, 45Rb/hari, atau 750Rb/bln. WiFi fiber 100 Mbps & free kopi/teh sepuasnya!'],
+            'event-space-malang'                       => ['Event Space Malang', 'Sewa Event Space & Aula Malang Mulai 45Rb/Pax (30–80 Org) | Urban Office', 'Sewa aula & event space di Blimbing Kota Malang kapasitas 30–80 orang mulai 45Rb/pax (Half-Day). Lengkap proyektor HD, sound system, wireless mic & layout bebas.'],
+        ];
+
+        foreach ($seo_updates as $up_slug => [$up_title, $up_mt, $up_md]) {
+            $exists = Database::fetch("SELECT id FROM pages WHERE slug = ?", [$up_slug]);
+            if ($exists) {
+                Database::query(
+                    "UPDATE pages SET meta_title = ?, meta_description = ?, og_title = ?, og_description = ? WHERE slug = ?",
+                    [$up_mt, $up_md, $up_mt, $up_md, $up_slug]
+                );
+            } else {
+                Database::insert(
+                    "INSERT INTO pages (title, slug, meta_title, meta_description, og_title, og_description) VALUES (?, ?, ?, ?, ?, ?)",
+                    [$up_title, $up_slug, $up_mt, $up_md, $up_mt, $up_md]
+                );
+            }
+        }
+        Database::query("DELETE FROM pages WHERE slug IN ('coworking-space-jakarta', 'event-space-jakarta')");
+        Database::query("INSERT INTO settings (name, value) VALUES (?, ?)", [$migrationKey, date('Y-m-d H:i:s')]);
+        echo "Applied SEO/GEO meta migration ($migrationKey) for " . count($seo_updates) . " pages.\n";
+    }
+
     echo "Database initialization completed successfully.\n";
 
 } catch (Exception $e) {

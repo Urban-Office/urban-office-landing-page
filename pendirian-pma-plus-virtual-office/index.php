@@ -955,20 +955,7 @@ include DIR_ROOT . 'inc/components/locations_showcase.php';
 
 <!-- FAQ Section -->
 <?php
-$faqs = [
-    [
-        'question' => 'Berapa lama proses pendirian PT / CV selesai?',
-        'answer' => 'Proses pendirian PT / CV kurang lebih membutuhkan waktu 1 minggu setelah semua persyaratan dokumen dinyatakan lengkap.'
-    ],
-    [
-        'question' => 'Dokumen apa saja yang dibutuhkan untuk mendirikan PT PMA?',
-        'answer' => 'Dokumen dan data yang diperlukan untuk pendirian PT PMA meliputi: nama PT, modal dasar minimal 10 Miliar, modal disetor minimal 10 Miliar, bidang usaha (KBLI), KTP & NPWP pengurus PT, KTP/Paspor & NPWP pemegang saham (minimal 1 orang Warga Negara Asing), komposisi pemegang saham, alamat lengkap PT, nomor telepon PT, serta alamat email dan password.'
-    ],
-    [
-        'question' => 'Apakah bisa konsultasi terlebih dahulu sebelum memutuskan jenis badan usaha?',
-        'answer' => 'Tentu saja bisa. Anda dapat melakukan konsultasi gratis terlebih dahulu dengan tim legal kami untuk menentukan jenis badan usaha yang paling tepat untuk model bisnis Anda.'
-    ]
-];
+$faqs = get_pendirian_faqs('pendirian-pma-plus-virtual-office');
 include dirname(dirname(__FILE__)) . '/inc/components/faq.php';
 ?>
 

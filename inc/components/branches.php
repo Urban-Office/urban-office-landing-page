@@ -10,56 +10,49 @@ $branches = [
         'city' => 'Surabaya',
         'location' => 'Surabaya Timur',
         'slug' => 'surabaya',
-        'image' => BASE_URL . 'assets/images/branch/merr new.png'
+        'image' => BASE_URL . 'assets/images/branch/merr new.webp'
     ],
     [
         'name' => 'Urban Office - Klampis',
         'city' => 'Surabaya',
         'location' => 'Surabaya Timur',
         'slug' => 'surabaya-timur',
-        'image' => BASE_URL . 'assets/images/branch/klampis.png'
+        'image' => BASE_URL . 'assets/images/branch/klampis.webp'
     ],
     [
         'name' => 'Urban Office - Grand Sungkono Lagoon',
         'city' => 'Surabaya',
         'location' => 'Surabaya Barat',
         'slug' => 'surabaya-barat',
-        'image' => BASE_URL . 'assets/images/branch/gsl new.png'
+        'image' => BASE_URL . 'assets/images/branch/gsl new.webp'
     ],
     [
-        'name' => 'Urban Office - Fatmawati',
-        'city' => 'Jakarta',
-        'location' => 'Jakarta Selatan',
-        'slug' => 'jakarta',
-        'image' => BASE_URL . 'assets/images/branch/urban office fatmawati.webp'
-    ],
-    [
-        'name' => 'Urban Office - Gorebiz',
+        'name' => 'Urban Office - Jakarta Timur',
         'city' => 'Jakarta',
         'location' => 'Jakarta Timur',
         'slug' => 'jakarta-timur',
-        'image' => BASE_URL . 'assets/images/branch/gorebiz.png'
+        'image' => BASE_URL . 'assets/images/branch/gorebiz.webp'
     ],
     [
         'name' => 'Urban Office - PTGM Tower',
         'city' => 'Gresik',
         'location' => 'Gresik',
         'slug' => 'gresik',
-        'image' => BASE_URL . 'assets/images/branch/ptgm.png'
+        'image' => BASE_URL . 'assets/images/branch/ptgm.webp'
     ],
     [
         'name' => 'Urban Office - Medan',
         'city' => 'Medan',
         'location' => 'Sumatera Utara',
         'slug' => 'medan',
-        'image' => BASE_URL . 'assets/images/branch/medan.png'
+        'image' => BASE_URL . 'assets/images/branch/medan.webp'
     ],
     [
         'name' => 'Urban Office - Malang',
         'city' => 'Malang',
         'location' => 'Jawa Timur',
         'slug' => 'malang',
-        'image' => BASE_URL . 'assets/images/branch/Malang.jpeg'
+        'image' => BASE_URL . 'assets/images/branch/Malang.webp'
     ]
 ];
 
@@ -116,7 +109,7 @@ $default_city_slug = strtolower($default_city);
                     <div style="display: flex; flex-direction: column; height: 100%;">
                     <div style="display: flex; flex-direction: column; flex-grow: 1;">
                         <div class="branch-img-wrap">
-                            <img src="<?php echo $branch['image']; ?>" alt="<?php echo sanitize($branch['name'] . ' (' . $branch['location'] . ')'); ?>" loading="lazy">
+                            <img src="<?php echo sanitize(function_exists('encode_asset_url') ? encode_asset_url($branch['image']) : $branch['image']); ?>" alt="<?php echo sanitize($branch['name'] . ' (' . $branch['location'] . ')'); ?>" width="400" height="300" loading="lazy" decoding="async">
                         </div>
                         <div class="branch-body" style="flex-grow: 1;">
                             <h3><?php echo sanitize($branch['name']); ?></h3>

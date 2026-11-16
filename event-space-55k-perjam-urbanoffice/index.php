@@ -11,22 +11,43 @@ $svc_category  = 'event-space';
 $svc_city_slug = isset($_GET['lokasi']) ? strtolower(trim($_GET['lokasi'])) : '';
 
 if (!empty($svc_city_slug) && $svc_city_slug !== '55k-perjam-urbanoffice') {
-    $page_slug = 'event-space-' . $svc_city_slug;
+    $svc_branches = service_city_branches($svc_category, $svc_city_slug);
+    if (empty($svc_branches)) {
+        header('Location: ' . BASE_URL . 'event-space-55k-perjam-urbanoffice/', true, 301);
+        exit;
+    }
+    $es_city_slug = $svc_city_slug;
+    $page_slug    = 'event-space-' . $es_city_slug;
 } else {
-    $page_slug = 'event-space-55k-perjam-urbanoffice';
+    $es_city_slug = 'surabaya';
+    $svc_branches = service_city_branches($svc_category, $es_city_slug);
+    $page_slug    = 'event-space-55k-perjam-urbanoffice';
 }
+
+$es_city_label = !empty($svc_branches[0]['city']) ? $svc_branches[0]['city'] : 'Surabaya';
+$is_es_city_landing = ($page_slug !== 'event-space-55k-perjam-urbanoffice');
 
 require_once dirname(dirname(__FILE__)) . '/inc/header.php';
 ?>
+
+<!-- Expose current city so the "Cabang Kami" filter defaults to it -->
+<script>window.currentBranchCity = <?php echo json_encode($es_city_slug); ?>;</script>
 
 <!-- Hero Section -->
 <?php
 $hero_tag = 'Premium Event Space';
 $hero_title = 'Sewa Event Space Mulai 45Rb/Pax';
-// Reflect the ?lokasi city (validated against locations_data) in the hero for relevance.
-$svc_city = service_city_from_query('event-space');
-if ($svc_city !== '') { $hero_tag .= ' ' . $svc_city; $hero_title = 'Sewa Event Space di ' . $svc_city . ' Mulai 45Rb/Pax'; }
-$hero_desc = 'Miliki ruang seminar, workshop, launching produk, atau rapat pemegang saham berkapasitas 30-80 orang dengan fasilitas lengkap. Berada di lokasi strategis dan mudah diakses.';
+$hero_desc = 'Miliki ruang seminar, workshop, launching produk, atau rapat pemegang saham berkapasitas 30-80 orang dengan fasilitas lengkap di Surabaya & Malang. Berada di lokasi strategis dan mudah diakses.';
+if ($is_es_city_landing) {
+    $hero_tag   .= ' ' . $es_city_label;
+    $hero_title  = 'Sewa Event Space di ' . $es_city_label . ' Mulai 45Rb/Pax';
+    $hero_desc   = 'Miliki ruang seminar, workshop, launching produk, atau rapat pemegang saham di ' . $es_city_label . ' berkapasitas 30-80 orang dengan fasilitas lengkap. Berada di lokasi strategis dan mudah diakses.';
+    if (!empty($svc_branches[0]['image'])) {
+        $hero_img = encode_asset_url($svc_branches[0]['image']);
+    }
+    $card_title = 'Event Space ' . $es_city_label;
+    $card_desc  = !empty($svc_branches[0]['address']) ? $svc_branches[0]['address'] : '';
+}
 $hero_cta_text = 'Dapatkan Quote Harga';
 $hero_cta_url = '#pricing';
 include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
@@ -34,6 +55,13 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
 
 <!-- App Promo Section -->
 <?php include DIR_ROOT . 'inc/components/app_section.php'; ?>
+
+<?php
+$geo_service_cat = 'event-space';
+$geo_city_slug   = $es_city_slug;
+$geo_branch      = $svc_branches[0];
+include DIR_ROOT . 'inc/components/geo_summary.php';
+?>
 
 
 <!-- Pricing Configuration -->
@@ -116,42 +144,56 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
 ?>
 
 <!-- Event Space Gallery Slider Section -->
-<section class="section" style="background-color: hsl(var(--clr-bg-secondary)); border-top: 1px solid hsl(var(--clr-border)); overflow: hidden; padding: 60px 0;">
+<section class="section" id="gallery" style="background-color: hsl(var(--clr-bg-secondary)); border-top: 1px solid hsl(var(--clr-border)); overflow: hidden; padding: 60px 0; scroll-margin-top: 90px;">
     <div class="container">
-        <!-- Header row with title -->
-        <div style="margin-bottom: 30px;">
-            <h2 class="section-title" style="margin: 0;">Galeri Foto Event Space</h2>
-            <p style="margin: 5px 0 0 0; max-width: 600px; color: hsl(var(--clr-text-muted)); font-size: 0.95rem;">Jelajahi berbagai pilihan tata letak dan dokumentasi area event space kami.</p>
+        <?php
+        $es_gallery_cities = get_event_space_cities();
+        $es_branch_name    = !empty($svc_branches[0]) ? get_private_office_branch_label($es_city_slug, $svc_branches[0]) : 'Surabaya';
+        $gallery_items     = !empty($svc_branches[0]) ? get_event_space_city_gallery($es_city_slug, $svc_branches[0]) : [];
+        ?>
+        <!-- Header row with title + per-city SEO navigation tabs -->
+        <div class="gallery-section-header">
+            <div>
+                <h2 class="section-title" style="margin: 0;">Galeri Foto Event Space <?php echo sanitize($es_city_label); ?></h2>
+                <p style="margin: 5px 0 0 0; max-width: 620px; color: hsl(var(--clr-text-muted)); font-size: 0.95rem;">Jelajahi berbagai pilihan tata letak dan dokumentasi area event space kami di Cabang <?php echo sanitize($es_branch_name); ?> (<?php echo sanitize($es_city_label); ?>).</p>
+            </div>
+            <?php if (count($es_gallery_cities) > 1): ?>
+            <nav class="gallery-city-tabs" aria-label="Pilih galeri wilayah Event Space">
+                <?php foreach ($es_gallery_cities as $es_c_slug => $es_c_name):
+                    $es_c_url = ($es_c_slug === 'surabaya')
+                        ? BASE_URL . 'event-space-55k-perjam-urbanoffice/#gallery'
+                        : BASE_URL . 'event-space-' . $es_c_slug . '/#gallery';
+                    $es_c_active = ($es_c_slug === $es_city_slug);
+                ?>
+                <a href="<?php echo sanitize($es_c_url); ?>" class="gallery-city-tab<?php echo $es_c_active ? ' active' : ''; ?>"<?php echo $es_c_active ? ' aria-current="page"' : ''; ?>>
+                    <i class="bi bi-geo-alt-fill"></i> <?php echo sanitize($es_c_name); ?>
+                </a>
+                <?php endforeach; ?>
+            </nav>
+            <?php endif; ?>
         </div>
         
         <!-- Slider Window (draggable/swipeable) -->
         <div class="office-gallery-window" style="overflow: hidden; margin: 0 -10px; padding: 10px 0; cursor: grab; user-select: none;">
-            <div class="office-gallery-wrapper" id="office-gallery-slider" style="display: flex; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform;">
-                <?php
-                $gallery_items = [
-                    ['img' => 'Foto Event Space (2).jpeg', 'title' => 'Event Space Classroom', 'desc' => 'Tata letak meja-kursi untuk kelas/workshop.', 'pax' => '30-80 Pax'],
-                    ['img' => 'Foto Event Space (4).jpeg', 'title' => 'Grand Event Space', 'desc' => 'Area luas dengan kelengkapan panggung & audio visual.', 'pax' => '30-80 Pax'],
-                    ['img' => 'WhatsApp Image 2026-06-08 at 11.44.08.jpeg', 'title' => 'Event Space Boardroom', 'desc' => 'Layout U-shape/boardroom untuk rapat besar.', 'pax' => '30-80 Pax'],
-                    ['img' => 'WhatsApp Image 2026-06-08 at 11.44.58.jpeg', 'title' => 'Theater Event Layout', 'desc' => 'Tata ruang Theater untuk konferensi & press release.', 'pax' => '30-80 Pax'],
-                ];
-                
-                foreach ($gallery_items as $item):
-                ?>
+            <div class="office-gallery-wrapper" id="office-gallery-slider" data-gallery-slider data-slide-selector=".gallery-card-slide" data-visible-desktop="4" data-visible-laptop="4" data-visible-tablet="3" data-visible-mobile="1.3" style="display: flex; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform;">
+                <?php foreach ($gallery_items as $item): ?>
                 <div class="gallery-card-slide">
                     <div class="gallery-item-card">
                         <!-- Image Container with Pax Badge -->
                         <div class="gallery-img-container">
-                            <img src="<?php echo BASE_URL; ?>assets/images/eventspace/<?php echo $item['img']; ?>" alt="<?php echo $item['title']; ?>" draggable="false">
+                            <img src="<?php echo sanitize(encode_asset_url(BASE_URL . $item['img'])); ?>" alt="<?php echo sanitize($item['alt']); ?>" loading="lazy" decoding="async" draggable="false">
+                            <?php if (!empty($item['pax'])): ?>
                             <span class="gallery-pax-badge">
-                                <?php echo $item['pax']; ?>
+                                <?php echo sanitize($item['pax']); ?>
                             </span>
+                            <?php endif; ?>
                         </div>
                         
                         <!-- Body Content -->
                         <div class="gallery-body-content">
                             <div class="gallery-text-wrap">
-                                <h4 class="gallery-card-title"><?php echo $item['title']; ?></h4>
-                                <p class="gallery-card-desc"><?php echo $item['desc']; ?></p>
+                                <h4 class="gallery-card-title"><?php echo sanitize($item['title']); ?></h4>
+                                <p class="gallery-card-desc"><?php echo sanitize($item['desc']); ?></p>
                             </div>
                             
                             <!-- Action button connecting to contact -->
@@ -168,6 +210,49 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
 </section>
 
 <style>
+.gallery-section-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.gallery-city-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.gallery-city-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    background-color: #FFFFFF;
+    border: 1px solid hsl(var(--clr-border));
+    color: #333333;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.gallery-city-tab:hover {
+    border-color: hsl(var(--clr-primary));
+    color: hsl(var(--clr-primary));
+    transform: translateY(-1px);
+}
+
+.gallery-city-tab.active {
+    background-color: hsl(var(--clr-primary));
+    border-color: hsl(var(--clr-primary));
+    color: #FFFFFF;
+}
+
 /* Base Styles for Slider Cards */
 .gallery-card-slide {
     padding: 0 8px;
@@ -307,140 +392,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
 }
 </style>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const slider = document.getElementById('office-gallery-slider');
-    const container = document.querySelector('.office-gallery-window');
-    const slides = slider.querySelectorAll('.gallery-card-slide');
-    
-    let currentIdx = 0;
-    let autoPlayInterval = null;
-    
-    function getVisibleCount() {
-        const width = window.innerWidth;
-        if (width > 1200) return 5;  // 5 cards on desktop
-        if (width > 991) return 4;   // 4 cards on small desktop / tablet landscape
-        if (width > 768) return 3;   // 3 cards on tablet
-        return 1.3;                  // 1.3 cards on mobile to make it larger and peek next slide (was 2)
-    }
-    
-    function getSlideWidth() {
-        return container.clientWidth / getVisibleCount();
-    }
-    
-    function updateSlideStyles() {
-        const visibleCount = getVisibleCount();
-        slides.forEach(slide => {
-            slide.style.flex = `0 0 ${100 / visibleCount}%`;
-            slide.style.width = `${100 / visibleCount}%`;
-        });
-    }
-    
-    function showSlide(idx) {
-        const visibleCount = getVisibleCount();
-        const maxIndex = Math.max(0, slides.length - visibleCount);
-        
-        if (idx > maxIndex) {
-            idx = 0; // Wrap around to first
-        } else if (idx < 0) {
-            idx = maxIndex; // Wrap around to last
-        }
-        
-        currentIdx = idx;
-        const slideWidth = getSlideWidth();
-        slider.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-        slider.style.transform = `translateX(-${currentIdx * slideWidth}px)`;
-    }
-    
-    function nextSlide() {
-        showSlide(currentIdx + 1);
-    }
-    
-    function prevSlide() {
-        showSlide(currentIdx - 1);
-    }
-    
-    function startAutoPlay() {
-        stopAutoPlay();
-        if (slides.length > getVisibleCount()) {
-            autoPlayInterval = setInterval(nextSlide, 4500); // Auto slide every 4.5 seconds
-        }
-    }
-    
-    function stopAutoPlay() {
-        if (autoPlayInterval) {
-            clearInterval(autoPlayInterval);
-        }
-    }
-    
-    // Drag and swipe logic
-    let isDragging = false;
-    let startX = 0;
-    let currentX = 0;
-    let dragThreshold = 50; // pixels to trigger slide change
-    
-    function handleDragStart(e) {
-        if (slides.length <= getVisibleCount()) return;
-        isDragging = true;
-        stopAutoPlay();
-        startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-        slider.style.transition = 'none'; // disable transitions while dragging
-    }
-    
-    function handleDragMove(e) {
-        if (!isDragging) return;
-        currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-        const diffX = currentX - startX;
-        
-        const slideWidth = getSlideWidth();
-        const currentTranslation = -currentIdx * slideWidth;
-        slider.style.transform = `translateX(${currentTranslation + diffX}px)`;
-    }
-    
-    function handleDragEnd() {
-        if (!isDragging) return;
-        isDragging = false;
-        slider.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)'; // restore transition
-        
-        const diffX = currentX - startX;
-        if (Math.abs(diffX) > dragThreshold) {
-            if (diffX < 0) {
-                nextSlide();
-            } else {
-                prevSlide();
-            }
-        } else {
-            showSlide(currentIdx);
-        }
-        startAutoPlay();
-    }
-    
-    // Mouse dragging
-    container.addEventListener('mousedown', handleDragStart);
-    window.addEventListener('mousemove', handleDragMove);
-    window.addEventListener('mouseup', handleDragEnd);
-    
-    // Touch swiping
-    container.addEventListener('touchstart', handleDragStart, { passive: true });
-    container.addEventListener('touchmove', handleDragMove, { passive: true });
-    container.addEventListener('touchend', handleDragEnd);
-    
-    // Resize responsiveness
-    window.addEventListener('resize', () => {
-        updateSlideStyles();
-        showSlide(currentIdx);
-    });
-    
-    // Initial calls
-    updateSlideStyles();
-    showSlide(currentIdx);
-    startAutoPlay();
-    
-    // Pause on hover
-    container.addEventListener('mouseenter', stopAutoPlay);
-    container.addEventListener('mouseleave', startAutoPlay);
-});
-</script>
+<!-- Gallery slider initialized via assets/js/main.js (initOfficeGallerySliders) -->
 <!-- Advantages / Keuntungan Section -->
 <section class="section" style="background-color: hsl(var(--clr-bg-surface)); border-bottom: 1px solid hsl(var(--clr-border)); padding: 60px 0;">
     <div class="container" style="position: relative;">
@@ -448,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         <!-- Slider Window (draggable/swipeable) -->
         <div class="advantages-gallery-window" style="overflow: hidden; margin: 0 -12px; padding: 10px 0; cursor: grab; user-select: none; width: 100%;">
-            <div id="advantages-gallery-slider" style="display: flex; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform;">
+            <div id="advantages-gallery-slider" data-gallery-slider data-slide-selector=".advantages-card-slide" data-visible-desktop="3" data-visible-laptop="3" data-visible-tablet="2" data-visible-mobile="1.4" data-autoplay="false" style="display: flex; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform;">
                 
                 <!-- Advantage 1 -->
                 <div class="advantages-card-slide" style="flex: 0 0 33.333%; width: 33.333%; padding: 0 12px; box-sizing: border-box;">
@@ -528,125 +480,11 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 </style>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const slider = document.getElementById('advantages-gallery-slider');
-    const container = document.querySelector('.advantages-gallery-window');
-    const slides = slider.querySelectorAll('.advantages-card-slide');
-    
-    if (!slider || !container || slides.length === 0) return;
-
-    let currentIdx = 0;
-    
-    function getVisibleCount() {
-        const width = window.innerWidth;
-        if (width > 991) return 3;   // 3 cards visible on desktop (matching Coworking size!)
-        if (width > 768) return 2;   // 2 cards on tablet
-        return 1.4;                  // 1.4 cards on mobile to reduce width slightly (was 1.3)
-    }
-    
-    function getSlideWidth() {
-        return container.clientWidth / getVisibleCount();
-    }
-    
-    function updateSlideStyles() {
-        const visibleCount = getVisibleCount();
-        slides.forEach(slide => {
-            slide.style.flex = `0 0 ${100 / visibleCount}%`;
-            slide.style.width = `${100 / visibleCount}%`;
-        });
-    }
-    
-    function showSlide(idx) {
-        const visibleCount = getVisibleCount();
-        const maxIndex = Math.max(0, slides.length - visibleCount);
-        
-        if (idx > maxIndex) {
-            idx = maxIndex; 
-        } else if (idx < 0) {
-            idx = 0; 
-        }
-        
-        currentIdx = idx;
-        const slideWidth = getSlideWidth();
-        slider.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-        slider.style.transform = `translateX(-${currentIdx * slideWidth}px)`;
-    }
-    
-    // Drag and swipe logic
-    let isDragging = false;
-    let startX = 0;
-    let currentX = 0;
-    let dragThreshold = 50;
-    
-    function handleDragStart(e) {
-        if (slides.length <= getVisibleCount()) return;
-        isDragging = true;
-        startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-        slider.style.transition = 'none';
-    }
-    
-    function handleDragMove(e) {
-        if (!isDragging) return;
-        currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-        const diffX = currentX - startX;
-        
-        const slideWidth = getSlideWidth();
-        const currentTranslation = -currentIdx * slideWidth;
-        slider.style.transform = `translateX(${currentTranslation + diffX}px)`;
-    }
-    
-    function handleDragEnd() {
-        if (!isDragging) return;
-        isDragging = false;
-        slider.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-        
-        const diffX = currentX - startX;
-        if (Math.abs(diffX) > dragThreshold) {
-            if (diffX < 0) {
-                showSlide(currentIdx + 1);
-            } else {
-                showSlide(currentIdx - 1);
-            }
-        } else {
-            showSlide(currentIdx);
-        }
-    }
-    
-    container.addEventListener('mousedown', handleDragStart);
-    window.addEventListener('mousemove', handleDragMove);
-    window.addEventListener('mouseup', handleDragEnd);
-    
-    container.addEventListener('touchstart', handleDragStart, { passive: true });
-    container.addEventListener('touchmove', handleDragMove, { passive: true });
-    container.addEventListener('touchend', handleDragEnd);
-    
-    window.addEventListener('resize', () => {
-        updateSlideStyles();
-        showSlide(currentIdx);
-    });
-    
-    updateSlideStyles();
-    showSlide(currentIdx);
-});
-</script>
+<!-- Advantages slider initialized via assets/js/main.js (initOfficeGallerySliders) -->
 
 <!-- FAQs Section -->
 <?php
-$faqs = [
-    [
-        'question' => 'Apakah tersedia koneksi WiFi di area Event Space? Kecepatannya berapa?',
-        'answer' => 'Ya, kami menyediakan fasilitas WiFi berkecepatan tinggi up to 100 Mbps yang mampu menampung kapasitas akses banyak pengguna sekaligus.'
-    ],
-    [
-        'question' => 'Apakah tersedia café atau tempat makan di dalam gedung?',
-        'answer' => 'Ya, tersedia café dan tempat makan di Lantai 1 gedung yang dapat digunakan oleh panitia maupun peserta acara.'
-    ],
-    [
-        'question' => 'Apakah tersedia area parkir untuk peserta event?',
-        'answer' => 'Ya, kami menyediakan tempat parkir yang memadai di lokasi gedung dan fasilitas parkir ini gratis (free) bagi semua tamu.'
-    ]
-];
+$faqs = !empty($svc_branches[0]) ? get_event_space_city_faqs($es_city_slug, $svc_branches[0]) : [];
 include dirname(dirname(__FILE__)) . '/inc/components/faq.php';
 ?>
 

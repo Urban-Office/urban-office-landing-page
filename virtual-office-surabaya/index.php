@@ -20,7 +20,10 @@ $vo_branch_slugs = array_values(array_filter($vo_branch_slugs, static function (
 
 $requested_branch = isset($_GET['branch']) ? trim($_GET['branch']) : 'surabaya';
 if (isset($locations_db[$requested_branch]) && !is_public_location($locations_db[$requested_branch])) {
-    header('Location: ' . BASE_URL . 'virtual-office-surabaya/', true, 302);
+    $vo_redirect_target = ($requested_branch === 'jakarta')
+        ? BASE_URL . 'virtual-office-jakarta-timur/'
+        : BASE_URL . 'virtual-office-surabaya/';
+    header('Location: ' . $vo_redirect_target, true, 301);
     exit;
 }
 if (!in_array($requested_branch, $vo_branch_slugs, true) || !isset($locations_db[$requested_branch])) {
@@ -53,22 +56,25 @@ require_once dirname(dirname(__FILE__)) . '/inc/header.php';
 // SEO/SEM: the branch label follows the city in the URL slug (e.g. "surabaya-timur" ->
 // "Surabaya Timur") instead of the building name, so the H1/hero matches the targeted keyword.
 $vo_city_name = ucwords(str_replace('-', ' ', $requested_branch));
+$vo_branch_public = get_private_office_branch_label($requested_branch, $vo_branch);
 $hero_tag = 'Virtual Office ' . $vo_city_name;
 $hero_title = 'Virtual Office ' . $vo_city_name;
 $hero_desc = 'Perluas cabang bisnis Anda menggunakan alamat virtual kantor prestisius di ' . $vo_city_name . '. Alamat kantor bergengsi untuk mendukung ekspansi &amp; citra profesional bisnis Anda. <br><span style="font-size: 0.85em; font-weight: 600;">*Minimum sewa 1 tahun</span>';
 $hero_cta_text = 'Lihat Pilihan Paket';
 $hero_cta_url = '#pricing';
 $hero_cta2_text = 'Hubungi Kami';
-$hero_cta2_url = 'https://api.whatsapp.com/send?phone=6285107620100&text=' . urlencode('Halo Urban Office, saya tertarik dengan layanan Virtual Office di Cabang ' . $vo_branch['short_title'] . '. Mohon info selengkapnya.');
+$hero_cta2_url = 'https://api.whatsapp.com/send?phone=6285107620100&text=' . urlencode('Halo Urban Office, saya tertarik dengan layanan Virtual Office di Cabang ' . $vo_branch_public . '. Mohon info selengkapnya.');
 $hero_cta2_class = 'btn btn-whatsapp-solid';
 $hero_cta2_icon = 'bi bi-whatsapp';
-$hero_img = $vo_branch['image'];
+$hero_img = encode_asset_url($vo_branch['image']);
 $card_title = $vo_city_name;
 $card_desc = $vo_branch['address'];
 // Branch-specific subheading under the generic H1 so what the visitor sees on arrival matches
-// the meta title/description (exact building + area). Built from verified branch data; the
+// the meta title/description (exact area). Built from verified branch data; the
 // optional 'nearby' landmark is only appended where locations_data actually provides one.
-$hero_subheading = $vo_branch['short_title'] . ', ' . $vo_branch['location'];
+$hero_subheading = ($requested_branch === 'jakarta-timur')
+    ? ('Cakung, ' . $vo_branch['location'])
+    : ($vo_branch_public . ', ' . $vo_branch['location']);
 if (!empty($vo_branch['nearby'])) {
     $hero_subheading .= ' — ' . $vo_branch['nearby'];
 }
@@ -77,6 +83,13 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
 
 <!-- App Promo Section -->
 <?php include DIR_ROOT . 'inc/components/app_section.php'; ?>
+
+<?php
+$geo_service_cat = 'virtual-office';
+$geo_city_slug   = $requested_branch;
+$geo_branch      = $vo_branch;
+include DIR_ROOT . 'inc/components/geo_summary.php';
+?>
 
 
 <!-- Why VO Slider Section -->
@@ -192,50 +205,69 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
         // Branch-aware WhatsApp CTA (server-rendered so crawlers & no-JS visitors get the
         // correct branch; main.js refines these per package on load). Keeps the Jakarta page
         // from advertising the Surabaya/MERR branch.
-        $vo_wa_text = 'Halo Urban Office, saya tertarik dengan layanan Virtual Office di Cabang ' . $vo_branch['short_title'] . ' (' . $vo_branch['location'] . '). Mohon info penawaran selengkapnya.';
+        $vo_wa_text = 'Halo Urban Office, saya tertarik dengan layanan Virtual Office di Cabang ' . $vo_branch_public . ' (' . $vo_branch['location'] . '). Mohon info penawaran selengkapnya.';
         $vo_wa_url = 'https://api.whatsapp.com/send?phone=6285107620100&text=' . urlencode($vo_wa_text);
         ?>
+        <?php
+        $vo_tiers = array_values(array_filter($vo_branch['pricing'], function ($p) {
+            return isset($p['category']) && $p['category'] === 'virtual-office';
+        }));
+        $vo_grid_class = 'card-grid stretch-items';
+        if (count($vo_tiers) >= 4) {
+            $vo_grid_class .= ' card-grid--four';
+        } elseif (count($vo_tiers) === 2) {
+            $vo_grid_class .= ' card-grid--two';
+        } elseif (count($vo_tiers) === 1) {
+            $vo_grid_class .= ' card-grid--one';
+        }
+        ?>
         <!-- Pricing Cards Grid -->
-        <div class="card-grid" id="pricing-grid" style="margin-top: 40px;">
+        <div class="<?php echo $vo_grid_class; ?>" id="pricing-grid" data-branch-id="<?php echo sanitize($requested_branch); ?>" style="margin-top: 40px;">
             <?php
-            // Every VO branch offers the SAME 3 tiers (Starter / Luxury / Priority); only the
-            // address, KPP and WhatsApp CTA vary per branch. The tier structure is sourced from
-            // the 'surabaya' reference so all branches render 3 identical cards.
-            // main.js targets the price-/features-/cta- IDs for the branch switcher.
-            $vo_tier_source = isset($locations_db['surabaya']['pricing']) ? $locations_db['surabaya']['pricing'] : $vo_branch['pricing'];
-            $vo_tiers = array_values(array_filter($vo_tier_source, function ($p) {
-                return isset($p['category']) && $p['category'] === 'virtual-office';
-            }));
-            $vo_tier_ids = ['starter', 'luxury', 'priority'];
             foreach ($vo_tiers as $vo_i => $vo_tier):
-                $vo_tid        = isset($vo_tier_ids[$vo_i]) ? $vo_tier_ids[$vo_i] : 'tier' . $vo_i;
-                $vo_is_popular = ($vo_i === 0);
-                $vo_btn_class  = ($vo_i === 1) ? 'btn-primary' : 'btn-outline';
-                $vo_cta_label  = ($vo_i === 0) ? 'Dapatkan Promo' : 'Beli Sekarang';
-                $vo_tier_wa    = 'https://api.whatsapp.com/send?phone=6285107620100&text=' . urlencode('Halo Urban Office, saya tertarik dengan ' . $vo_tier['name'] . ' di Cabang ' . $vo_branch['short_title'] . ' (' . $vo_branch['location'] . '). Mohon info penawaran selengkapnya.');
-                $vo_border     = $vo_is_popular ? 'hsl(var(--clr-primary))' : 'hsl(var(--clr-border))';
+                $vo_is_popular  = !empty($vo_tier['popular']);
+                $vo_btn_class   = $vo_is_popular ? 'btn-primary' : 'btn-outline';
+                $vo_cta_label   = $vo_is_popular ? 'Pilih Paket Populer' : 'Beli Sekarang';
+                $vo_highlights  = get_vo_package_highlights($vo_tier);
+                $vo_tier_wa_txt = !empty($vo_tier['cta_wa'])
+                    ? $vo_tier['cta_wa']
+                    : ('Halo Urban Office, saya tertarik dengan ' . $vo_tier['name'] . ' di Cabang ' . $vo_branch['short_title'] . ' (' . $vo_branch['location'] . '). Mohon info penawaran selengkapnya.');
+                $vo_tier_wa     = 'https://api.whatsapp.com/send?phone=6285107620100&text=' . urlencode($vo_tier_wa_txt);
+                $vo_border      = $vo_is_popular ? 'hsl(var(--clr-primary))' : 'hsl(var(--clr-border))';
+                $vo_period      = !empty($vo_tier['period']) ? $vo_tier['period'] : 'hari';
             ?>
             <div class="premium-card <?php echo $vo_is_popular ? 'popular-card' : ''; ?>" style="display: flex; flex-direction: column; justify-content: space-between; position: relative; border-color: <?php echo $vo_border; ?>;">
                 <?php if ($vo_is_popular): ?>
                 <div class="pricing-badge-popular">Populer</div>
                 <?php endif; ?>
-                <div>
-                    <h3 style="font-size: 1.5rem; margin-bottom: 8px;"><?php echo sanitize($vo_tier['name']); ?></h3>
-                    <p style="font-size: 0.9rem; margin-bottom: 20px;"><?php echo sanitize($vo_tier['desc']); ?></p>
+                <div class="vo-card-body">
+                    <h3 class="vo-card-title"><?php echo sanitize($vo_tier['name']); ?></h3>
+                    <p class="vo-card-desc"><?php echo sanitize($vo_tier['desc']); ?></p>
 
-                    <div class="price-tag" id="price-<?php echo $vo_tid; ?>">
-                        Rp <?php echo sanitize($vo_tier['price']); ?>
-                        <span>/ Bulan*</span>
+                    <div class="vo-price-block">
+                        <span class="vo-price-label">Hanya</span>
+                        <div class="price-tag vo-price-highlight">
+                            Rp <?php echo sanitize($vo_tier['price']); ?>-an
+                            <span>/ <?php echo sanitize($vo_period); ?></span>
+                        </div>
+                        <p class="price-minimum-info">*Minimum sewa 1 tahun</p>
                     </div>
-                    <p class="price-minimum-info">*Minimum sewa 1 tahun</p>
                     <p class="kpp-info" style="font-weight: bold; color: #FF6B00; margin-top: 5px; font-size: 0.9rem; display: none;"><?php echo sanitize(isset($vo_branch['kpp']) ? $vo_branch['kpp'] : ''); ?></p>
 
-                    <button class="btn-toggle-features" onclick="togglePricingFeatures(this)">
+                    <?php if (!empty($vo_highlights)): ?>
+                    <ul class="vo-highlights-list">
+                        <?php foreach ($vo_highlights as $vo_hl): ?>
+                        <li><i class="bi bi-check-circle-fill"></i><span><?php echo sanitize($vo_hl); ?></span></li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <?php endif; ?>
+
+                    <button type="button" class="btn-toggle-features" onclick="togglePricingFeatures(this)">
                         <span>Lihat Detail</span> <i class="bi bi-chevron-down"></i>
                     </button>
 
                     <div class="pricing-features-collapse">
-                        <ul class="card-features-list" id="features-<?php echo $vo_tid; ?>">
+                        <ul class="card-features-list">
                             <li class="address-feature">Alamat Bisnis: <?php echo sanitize($vo_branch['address']); ?></li>
                             <?php foreach ($vo_tier['features'] as $vo_feat): ?>
                             <li><?php echo sanitize($vo_feat); ?></li>
@@ -245,10 +277,10 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
                 </div>
 
                 <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 10px;">
-                    <a href="<?php echo $vo_tier_wa; ?>" class="btn <?php echo $vo_btn_class; ?> cta-btn" style="width: 100%;" target="_blank" id="cta-<?php echo $vo_tid; ?>">
+                    <a href="<?php echo $vo_tier_wa; ?>" class="btn <?php echo $vo_btn_class; ?> cta-btn" style="width: 100%;" target="_blank" rel="noopener">
                         <?php echo $vo_cta_label; ?>
                     </a>
-                    <button type="button" class="btn btn-secondary offer-btn" style="width: 100%; font-size: 13px;" onclick="activateOfferMode('<?php echo sanitize(ucfirst($vo_tid)); ?>')">
+                    <button type="button" class="btn btn-secondary offer-btn" style="width: 100%; font-size: 13px;" onclick="activateOfferMode(<?php echo sanitize(json_encode($vo_tier['name'])); ?>)">
                         Ajukan Penawaran
                     </button>
                 </div>
@@ -299,7 +331,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
             <!-- RIGHT: single combined list — per-branch advantages + generic VO benefits
                  (moved out of the default slider's image captions into real crawlable text) -->
             <div class="vo-branch-advantages">
-                <h3>Keunggulan Cabang <?php echo sanitize($vo_branch['short_title']); ?> (<?php echo sanitize($vo_branch['location']); ?>)</h3>
+                <h3>Keunggulan Cabang <?php echo sanitize($vo_branch_public); ?> (<?php echo sanitize($vo_branch['location']); ?>)</h3>
                 <ul class="card-features-list">
                     <?php if (!empty($vo_branch['advantages'])): foreach ($vo_branch['advantages'] as $vo_adv): ?>
                     <li><?php echo sanitize($vo_adv); ?></li>
@@ -353,24 +385,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
 
 <!-- FAQs Component -->
 <?php
-$faqs = [
-    [
-        'question' => 'Apa bedanya Virtual Office Starter, Luxury, dan Priority?',
-        'answer' => 'Paket Starter, Luxury, dan Priority semuanya telah mencakup alamat bisnis prestisius, penanganan & pemberitahuan surat/paket masuk beserta kunjungan klien, perjanjian sewa alamat, resepsionis profesional, nomor telepon kantor bersama, serta akses komunitas. Kelebihannya, paket Luxury menyertakan tambahan Akses Meeting Room sebanyak 2 kali (durasi 2 jam/bulan selama setahun). Sementara paket Priority memiliki semua kelebihan tersebut plus tambahan satu bonus khusus yang bisa dipilih: Konsultasi Bisnis, Digital Marketing, Kirim Dokumen, Virtual Assistant, dan lainnya.'
-    ],
-    [
-        'question' => 'Apa saja yang termasuk dalam layanan Virtual Office?',
-        'answer' => 'Virtual Office mencakup penggunaan alamat kantor prestisius, penanganan surat & paket masuk dengan notifikasi WhatsApp, resepsionis profesional, serta akses ruang meeting sesuai paket. Untuk kebutuhan ruang kerja fisik, tersedia layanan Private Office.'
-    ],
-    [
-        'question' => 'Berapa lama proses aktivasi Virtual Office setelah pembayaran?',
-        'answer' => 'Layanan Virtual Office Anda bisa langsung aktif segera setelah pembayaran dinyatakan sukses/settlement di portal resmi my.urbanoffice.id dan masuk ke rekening resmi PT URBAN KREASI BERSAMA.'
-    ],
-    [
-        'question' => 'Bagaimana jika ingin melakukan perpanjangan sewa?',
-        'answer' => 'Untuk saat ini, perpanjangan sewa Virtual Office dapat dilakukan dengan mudah menghubungi tim admin kami dengan konfirmasi "Perpanjangan Sewa".'
-    ]
-];
+$faqs = get_virtual_office_branch_faqs($requested_branch, $vo_branch);
 include dirname(dirname(__FILE__)) . '/inc/components/faq.php';
 ?>
 

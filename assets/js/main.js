@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initBranchesFilter();
     initMobileLogosMarquee();
     initWhatsAppModal();
+    initOfficeGallerySliders();
     if (typeof resetOfferMode === 'function') {
         resetOfferMode();
     }
@@ -1099,60 +1100,109 @@ function renderBranchButtons(city, preferredBranchId = null) {
     }
 }
 
+function escapeVoHtml(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function buildVoPricingCardHtml(tier, branchData, showKpp) {
+    const isPopular = Boolean(tier.popular);
+    const btnClass = isPopular ? 'btn-primary' : 'btn-outline';
+    const ctaLabel = isPopular ? 'Pilih Paket Populer' : 'Beli Sekarang';
+    const borderColor = isPopular ? 'hsl(var(--clr-primary))' : 'hsl(var(--clr-border))';
+    const period = tier.period || 'hari';
+
+    const waMsg = tier.cta_wa
+        ? tier.cta_wa
+        : `Halo Urban Office, saya tertarik dengan ${tier.name} di Cabang ${branchData.shortTitle || branchData.name} (${branchData.location || ''}). Mohon info penawaran selengkapnya.`;
+    const waUrl = `https://api.whatsapp.com/send?phone=6285107620100&text=${encodeURIComponent(waMsg)}`;
+
+    const kppText = branchData.kpp || '';
+    const kppStyle = `font-weight: bold; color: #FF6B00; margin-top: 5px; font-size: 0.9rem; display: ${(showKpp && kppText) ? 'block' : 'none'};`;
+
+    const highlights = Array.isArray(tier.highlights) && tier.highlights.length > 0
+        ? tier.highlights
+        : (tier.features || []).slice(0, 3);
+    const highlightsHtml = highlights.length > 0
+        ? `<ul class="vo-highlights-list">${highlights.map(h => `<li><i class="bi bi-check-circle-fill"></i><span>${escapeVoHtml(h)}</span></li>`).join('')}</ul>`
+        : '';
+
+    const featuresItems = [
+        `<li class="address-feature">Alamat Bisnis: ${escapeVoHtml(branchData.address)}</li>`,
+        ...((tier.features || []).map(f => `<li>${escapeVoHtml(f)}</li>`))
+    ].join('');
+
+    return `
+        <div class="premium-card ${isPopular ? 'popular-card' : ''}" style="display: flex; flex-direction: column; justify-content: space-between; position: relative; border-color: ${borderColor};">
+            ${isPopular ? '<div class="pricing-badge-popular">Populer</div>' : ''}
+            <div class="vo-card-body">
+                <h3 class="vo-card-title">${escapeVoHtml(tier.name)}</h3>
+                <p class="vo-card-desc">${escapeVoHtml(tier.desc)}</p>
+
+                <div class="vo-price-block">
+                    <span class="vo-price-label">Hanya</span>
+                    <div class="price-tag vo-price-highlight">
+                        Rp ${escapeVoHtml(tier.price)}-an
+                        <span>/ ${escapeVoHtml(period)}</span>
+                    </div>
+                    <p class="price-minimum-info">*Minimum sewa 1 tahun</p>
+                </div>
+                <p class="kpp-info" style="${kppStyle}">${escapeVoHtml(kppText)}</p>
+                ${highlightsHtml}
+
+                <button type="button" class="btn-toggle-features" onclick="togglePricingFeatures(this)">
+                    <span>Lihat Detail</span> <i class="bi bi-chevron-down"></i>
+                </button>
+
+                <div class="pricing-features-collapse">
+                    <ul class="card-features-list">${featuresItems}</ul>
+                </div>
+            </div>
+
+            <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 10px;">
+                <a href="${escapeVoHtml(waUrl)}" class="btn ${btnClass} cta-btn" style="width: 100%;" target="_blank" rel="noopener">
+                    ${escapeVoHtml(ctaLabel)}
+                </a>
+                <button type="button" class="btn btn-secondary offer-btn" style="width: 100%; font-size: 13px;" data-package="${escapeVoHtml(tier.name)}" onclick="activateOfferMode(this.dataset.package)">
+                    Ajukan Penawaran
+                </button>
+            </div>
+        </div>
+    `;
+}
+
 function updatePricingCards(branchId, showKpp = true) {
     window.activeBranchId = branchId;
     const data = branchPricingData[branchId];
-    if (!data) return;
+    if (!data || !Array.isArray(data.tiers)) return;
 
-    const priceStarterEl = document.getElementById('price-starter');
-    const priceLuxuryEl = document.getElementById('price-luxury');
-    const pricePriorityEl = document.getElementById('price-priority');
+    const gridEl = document.getElementById('pricing-grid');
+    if (!gridEl) return;
 
-    if (priceStarterEl && data.prices.starter) priceStarterEl.innerHTML = `Rp ${data.prices.starter} <span>/ Bulan*</span>`;
-    if (priceLuxuryEl && data.prices.luxury) priceLuxuryEl.innerHTML = `Rp ${data.prices.luxury} <span>/ Bulan*</span>`;
-    if (pricePriorityEl && data.prices.priority) pricePriorityEl.innerHTML = `Rp ${data.prices.priority} <span>/ Bulan*</span>`;
+    if (gridEl.dataset.branchId === branchId) {
+        gridEl.querySelectorAll('.kpp-info').forEach(el => {
+            el.textContent = data.kpp || '';
+            el.style.display = (showKpp && data.kpp) ? 'block' : 'none';
+        });
+        return;
+    }
 
-    // Hide tiers a branch doesn't offer (e.g. Jakarta has no Priority, Malang only Starter).
-    // Only relevant when switching branches on a page that rendered 3 cards — a branch's own
-    // page already renders just its real tiers server-side.
-    [[priceLuxuryEl, data.prices.luxury], [pricePriorityEl, data.prices.priority]].forEach(([el, price]) => {
-        const card = el ? el.closest('.premium-card') : null;
-        if (card) card.style.display = price ? '' : 'none';
-    });
+    gridEl.dataset.branchId = branchId;
+    gridEl.classList.remove('has-expanded', 'card-grid--four', 'card-grid--two', 'card-grid--one');
+    if (data.tiers.length >= 4) {
+        gridEl.classList.add('card-grid--four');
+    } else if (data.tiers.length === 2) {
+        gridEl.classList.add('card-grid--two');
+    } else if (data.tiers.length === 1) {
+        gridEl.classList.add('card-grid--one');
+    }
 
-    // Update Address features
-    const addressStarter = document.querySelector('#features-starter .address-feature');
-    const addressLuxury = document.querySelector('#features-luxury .address-feature');
-    const addressPriority = document.querySelector('#features-priority .address-feature');
-    if (addressStarter) addressStarter.innerText = `Alamat Bisnis: ${data.address}`;
-    if (addressLuxury) addressLuxury.innerText = `Alamat Bisnis: ${data.address}`;
-    if (addressPriority) addressPriority.innerText = `Alamat Bisnis: ${data.address}`;
-
-    // Update KPP info
-    const kppEls = document.querySelectorAll('.kpp-info');
-    kppEls.forEach(el => {
-        if (showKpp && data.kpp) {
-            el.innerText = data.kpp;
-            el.style.display = 'block';
-        } else {
-            el.style.display = 'none';
-        }
-    });
-
-    // Update CTA WhatsApp Links
-    const whatsappBase = "https://api.whatsapp.com/send?phone=6285107620100&text=";
-    
-    const textStarter = encodeURIComponent(`Halo Urban Office, saya tertarik dengan layanan Virtual Office di cabang ${data.name} (Paket Starter). Mohon info penawaran selengkapnya.`);
-    const textLuxury = encodeURIComponent(`Halo Urban Office, saya tertarik dengan layanan Virtual Office di cabang ${data.name} (Paket Luxury). Mohon info penawaran selengkapnya.`);
-    const textPriority = encodeURIComponent(`Halo Urban Office, saya tertarik dengan layanan Virtual Office di cabang ${data.name} (Paket Priority). Mohon info penawaran selengkapnya.`);
-
-    const ctaStarter = document.getElementById('cta-starter');
-    const ctaLuxury = document.getElementById('cta-luxury');
-    const ctaPriority = document.getElementById('cta-priority');
-
-    if (ctaStarter) ctaStarter.setAttribute('href', whatsappBase + textStarter);
-    if (ctaLuxury) ctaLuxury.setAttribute('href', whatsappBase + textLuxury);
-    if (ctaPriority) ctaPriority.setAttribute('href', whatsappBase + textPriority);
+    gridEl.innerHTML = data.tiers.map(tier => buildVoPricingCardHtml(tier, data, showKpp)).join('');
+    gridEl.scrollLeft = 0;
 }
 
 /**
@@ -1783,5 +1833,263 @@ function initWhatsAppModal() {
         openModal(extractedMsg, detectedMode, trigger);
     }, true);
 }
+
+/**
+ * Unified Gallery & Advantages Horizontal Card Sliders
+ * Fixes mobile swipe axis-locking, fractional maxIndex premature resets,
+ * edge rubber-banding, and centers galleries with < 3 items (or <= visible slots).
+ */
+function initOfficeGallerySliders() {
+    const sliders = document.querySelectorAll('[data-gallery-slider]');
+    if (!sliders.length) return;
+
+    sliders.forEach((slider) => {
+        const container = slider.parentElement;
+        const slideSelector = slider.getAttribute('data-slide-selector') || '.gallery-card-slide';
+        const slides = slider.querySelectorAll(slideSelector);
+        if (!container || !slides.length) return;
+
+        const visibleCfg = {
+            desktop: parseFloat(slider.getAttribute('data-visible-desktop')) || 4,
+            laptop:  parseFloat(slider.getAttribute('data-visible-laptop'))  || 3,
+            tablet:  parseFloat(slider.getAttribute('data-visible-tablet'))  || 2,
+            mobile:  parseFloat(slider.getAttribute('data-visible-mobile'))  || 1.3,
+        };
+        const enableAutoPlay = slider.getAttribute('data-autoplay') !== 'false';
+        const transitionCss = 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
+
+        container.style.touchAction = 'pan-y';
+
+        let currentIdx = 0;
+        let autoPlayInterval = null;
+        let isDragging = false;
+        let axisLocked = null;
+        let startX = 0;
+        let startY = 0;
+        let currentX = 0;
+        let wasDragged = false;
+        let lastTouchTime = 0;
+
+        function getVisibleCount() {
+            const width = window.innerWidth;
+            if (width > 1200) return visibleCfg.desktop;
+            if (width > 991)  return visibleCfg.laptop;
+            if (width > 768)  return visibleCfg.tablet;
+            return visibleCfg.mobile;
+        }
+
+        function getSlideWidth() {
+            return container.clientWidth / getVisibleCount();
+        }
+
+        function isScrollable() {
+            return slides.length > getVisibleCount();
+        }
+
+        function getMaxIndex() {
+            return Math.max(0, Math.ceil(slides.length - getVisibleCount()));
+        }
+
+        function getTranslationForIndex(idx) {
+            if (!isScrollable()) {
+                return 0;
+            }
+            const containerWidth = container.clientWidth;
+            const slideWidth = getSlideWidth();
+
+            // When a gallery has fewer than 3 items (e.g. 2 cards on mobile), keep the active card centered
+            if (slides.length < 3 && window.innerWidth <= 768) {
+                const leftOffset = (containerWidth - slideWidth) / 2;
+                return -idx * slideWidth + leftOffset;
+            }
+
+            const maxScrollPx = Math.max(0, slides.length * slideWidth - containerWidth);
+            return Math.max(-maxScrollPx, Math.min(0, -idx * slideWidth));
+        }
+
+        function updateSlideStyles() {
+            const visibleCount = getVisibleCount();
+            const basisPct = 100 / visibleCount;
+            slides.forEach((slide) => {
+                slide.style.flex = `0 0 ${basisPct}%`;
+                slide.style.width = `${basisPct}%`;
+            });
+
+            if (!isScrollable()) {
+                slider.style.justifyContent = 'center';
+                container.style.cursor = 'default';
+            } else {
+                slider.style.justifyContent = 'flex-start';
+                container.style.cursor = 'grab';
+            }
+        }
+
+        function showSlide(idx, wrap = false) {
+            const maxIndex = getMaxIndex();
+            if (!isScrollable()) {
+                currentIdx = 0;
+                slider.style.transition = transitionCss;
+                slider.style.transform = 'translateX(0px)';
+                return;
+            }
+
+            if (wrap) {
+                if (idx > maxIndex) idx = 0;
+                else if (idx < 0) idx = maxIndex;
+            } else {
+                idx = Math.max(0, Math.min(maxIndex, idx));
+            }
+
+            currentIdx = idx;
+            slider.style.transition = transitionCss;
+            slider.style.transform = `translateX(${getTranslationForIndex(currentIdx)}px)`;
+        }
+
+        function stopAutoPlay() {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+            }
+        }
+
+        function startAutoPlay() {
+            stopAutoPlay();
+            if (enableAutoPlay && isScrollable()) {
+                autoPlayInterval = setInterval(() => {
+                    showSlide(currentIdx + 1, true);
+                }, 4500);
+            }
+        }
+
+        function getPoint(e) {
+            if (e.touches && e.touches.length) {
+                return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+            if (e.changedTouches && e.changedTouches.length) {
+                return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+            }
+            return { x: e.clientX, y: e.clientY };
+        }
+
+        function handleDragStart(e) {
+            if (!isScrollable()) return;
+            const isTouch = e.type === 'touchstart';
+            if (isTouch) {
+                lastTouchTime = Date.now();
+            } else {
+                if (Date.now() - lastTouchTime < 500) return;
+                if (e.button !== 0) return;
+            }
+
+            const pt = getPoint(e);
+            isDragging = true;
+            axisLocked = isTouch ? null : 'x';
+            startX = pt.x;
+            startY = pt.y;
+            currentX = pt.x;
+            wasDragged = false;
+            stopAutoPlay();
+            if (!isTouch) {
+                slider.style.transition = 'none';
+            }
+        }
+
+        function handleDragMove(e) {
+            if (!isDragging) return;
+            const isTouch = e.type === 'touchmove';
+            const pt = getPoint(e);
+
+            if (isTouch && axisLocked === null) {
+                const absDx = Math.abs(pt.x - startX);
+                const absDy = Math.abs(pt.y - startY);
+                if (absDx < 6 && absDy < 6) return;
+                if (absDy > absDx) {
+                    // Vertical scroll gesture: release slider immediately so page scroll stays smooth
+                    axisLocked = 'y';
+                    isDragging = false;
+                    showSlide(currentIdx, false);
+                    startAutoPlay();
+                    return;
+                }
+                axisLocked = 'x';
+                slider.style.transition = 'none';
+            }
+
+            if (axisLocked !== 'x') return;
+            if (isTouch && e.cancelable) {
+                e.preventDefault();
+            }
+
+            currentX = pt.x;
+            const diffX = currentX - startX;
+            if (Math.abs(diffX) > 6) {
+                wasDragged = true;
+            }
+
+            const baseTranslation = getTranslationForIndex(currentIdx);
+            const maxIndex = getMaxIndex();
+            const atLeftEdge = currentIdx === 0 && diffX > 0;
+            const atRightEdge = currentIdx >= maxIndex && diffX < 0;
+            const effectiveDiffX = (atLeftEdge || atRightEdge) ? diffX * 0.35 : diffX;
+
+            slider.style.transform = `translateX(${baseTranslation + effectiveDiffX}px)`;
+        }
+
+        function handleDragEnd() {
+            if (!isDragging) return;
+            isDragging = false;
+
+            const diffX = currentX - startX;
+            const threshold = Math.min(40, Math.max(24, getSlideWidth() * 0.18));
+
+            if (axisLocked === 'x' && Math.abs(diffX) > threshold) {
+                if (diffX < 0) {
+                    showSlide(currentIdx + 1, false);
+                } else {
+                    showSlide(currentIdx - 1, false);
+                }
+            } else {
+                showSlide(currentIdx, false);
+            }
+
+            axisLocked = null;
+            if (wasDragged) {
+                setTimeout(() => { wasDragged = false; }, 60);
+            }
+            startAutoPlay();
+        }
+
+        container.addEventListener('click', (e) => {
+            if (wasDragged) {
+                e.preventDefault();
+                e.stopPropagation();
+                wasDragged = false;
+            }
+        }, true);
+
+        container.addEventListener('mousedown', handleDragStart);
+        window.addEventListener('mousemove', handleDragMove);
+        window.addEventListener('mouseup', handleDragEnd);
+
+        container.addEventListener('touchstart', handleDragStart, { passive: true });
+        container.addEventListener('touchmove', handleDragMove, { passive: false });
+        container.addEventListener('touchend', handleDragEnd);
+        container.addEventListener('touchcancel', handleDragEnd);
+
+        window.addEventListener('resize', () => {
+            updateSlideStyles();
+            showSlide(currentIdx, false);
+            startAutoPlay();
+        });
+
+        container.addEventListener('mouseenter', stopAutoPlay);
+        container.addEventListener('mouseleave', startAutoPlay);
+
+        updateSlideStyles();
+        showSlide(currentIdx, false);
+        startAutoPlay();
+    });
+}
+
 
 

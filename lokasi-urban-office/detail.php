@@ -215,14 +215,14 @@ require_once dirname(dirname(__FILE__)) . '/inc/header.php';
                         // Map categories for names
                         $cap_title = "Workspace Area";
                         if ($index === 0) $cap_title = "Lobby & Reception Area";
-                        elseif ($index === 1) $cap_title = "Coworking Space / Collaboration Area";
-                        elseif ($index === 2) $cap_title = "Exclusive Private Office";
-                        elseif ($index === 3) $cap_title = "Modern Meeting Room Area";
+                        elseif ($index === 1) $cap_title = "Collaboration Area";
+                        elseif ($index === 2) $cap_title = "Modern Meeting Room Area";
+                        elseif ($index === 3) $cap_title = "Exclusive Private Office";
                     ?>
                         <div class="gallery-item">
-                            <img src="<?php echo $img_url; ?>" alt="Galeri <?php echo $index + 1; ?>" loading="lazy" draggable="false">
+                            <img src="<?php echo sanitize(encode_asset_url($img_url)); ?>" alt="<?php echo sanitize($cap_title . ' - Urban Office ' . $branch['short_title'] . ' (' . $branch['city'] . ')'); ?>" loading="lazy" decoding="async" draggable="false">
                             <div class="gallery-caption">
-                                <h4 style="color: #FFFFFF !important; font-size: 1.05rem; font-weight: 700; margin-bottom: 4px;"><?php echo $cap_title; ?></h4>
+                                <h4 style="color: #FFFFFF !important; font-size: 1.05rem; font-weight: 700; margin-bottom: 4px;"><?php echo sanitize($cap_title); ?></h4>
                                 <p style="color: rgba(255,255,255,0.8); font-size: 0.8rem; margin: 0;">Fasilitas berkelas dengan standar kenyamanan tinggi.</p>
                             </div>
                         </div>
@@ -344,14 +344,6 @@ require_once dirname(dirname(__FILE__)) . '/inc/header.php';
         <div class="pricing-grid">
             <?php 
             $product_features_map = [
-                'virtual-office' => [
-                    'Domisili Gedung Resmi',
-                    'Professional Mail Logging',
-                    'Shared Telephone Line',
-                    'Akses Meeting Room',
-                    'Signage Perusahaan',
-                    'Resepsionis Profesional'
-                ],
                 'coworking' => [
                     'Meja & Kursi Ergonomis',
                     'WiFi berkecepatan Tinggi',
@@ -401,18 +393,19 @@ require_once dirname(dirname(__FILE__)) . '/inc/header.php';
             $card_count = 0;
             foreach ($filtered_pricing as $pkg):
                 $card_count++;
-                $is_popular = ($pkg['category'] === 'virtual-office' && strpos(strtolower($pkg['name']), 'pro') !== false) || ($pkg['category'] === 'private-office');
+                $is_vo = ($pkg['category'] === 'virtual-office');
+                $is_popular = $is_vo ? !empty($pkg['popular']) : ($pkg['category'] === 'private-office');
                 $is_claim_only = isset($pkg['booking_mode']) && $pkg['booking_mode'] === 'claim-only';
                 $pkg_wa_url = "https://api.whatsapp.com/send?phone=" . WHATSAPP_NUMBER . "&text=" . urlencode($pkg['cta_wa']);
 
-                // Override features list based on package category to align with landing pages
+                // Override features list based on package category to align with landing pages (VO uses per-tier features)
                 if (isset($product_features_map[$pkg['category']])) {
                     $pkg['features'] = $product_features_map[$pkg['category']];
                 }
             ?>
                 <div class="pkg-card<?php echo $is_popular ? ' popular' : ''; ?>" data-category="<?php echo sanitize($pkg['category']); ?>">
                     <?php if ($is_popular): ?>
-                        <span class="pkg-badge">Best Seller</span>
+                        <span class="pkg-badge"><?php echo $is_vo ? 'Populer' : 'Best Seller'; ?></span>
                     <?php endif; ?>
 
                     <div class="pkg-card-top">
@@ -425,9 +418,12 @@ require_once dirname(dirname(__FILE__)) . '/inc/header.php';
                             </div>
                             <p class="pkg-minimum-info">*Hanya tersedia sebagai klaim jatah bulanan Virtual Office, tidak dapat disewa lepas per jam.</p>
                         <?php else: ?>
+                            <?php if ($is_vo): ?>
+                                <div class="pkg-price-label">Hanya</div>
+                            <?php endif; ?>
                             <div class="pkg-price-wrap">
                                 <span class="pkg-currency">Rp</span>
-                                <span class="pkg-price"><?php echo sanitize($pkg['price']); ?></span>
+                                <span class="pkg-price"><?php echo sanitize($pkg['price']) . ($is_vo ? '-an' : ''); ?></span>
                                 <span class="pkg-period">/ <?php echo sanitize($pkg['period']); ?></span>
                             </div>
                             <?php if (in_array($pkg['category'], ['virtual-office', 'private-office'])): ?>

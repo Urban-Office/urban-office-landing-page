@@ -108,14 +108,14 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
         
         <!-- Slider Window (draggable/swipeable) -->
         <div class="office-gallery-window" style="overflow: hidden; margin: 0 -10px; padding: 10px 0; cursor: grab; user-select: none;">
-            <div class="office-gallery-wrapper" id="office-gallery-slider" style="display: flex; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform;">
+            <div class="office-gallery-wrapper" id="office-gallery-slider" data-gallery-slider data-slide-selector=".gallery-card-slide" data-visible-desktop="4" data-visible-laptop="3" data-visible-tablet="2.2" data-visible-mobile="1.3" style="display: flex; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform;">
                 
                 <!-- Card 1 -->
                 <div class="gallery-card-slide">
                     <div class="gallery-item-card">
                         <!-- Image Container -->
                         <div class="gallery-img-container">
-                            <img src="<?php echo BASE_URL; ?>assets/images/sharingroom/sharing-room-desk.png" alt="Sharing Desk Area" draggable="false">
+                            <img src="<?php echo BASE_URL; ?>assets/images/sharingroom/sharing-room-desk.webp" alt="Sharing Desk Area" width="400" height="300" loading="lazy" decoding="async" draggable="false">
                             <span class="gallery-pax-badge">Dedicated Desk</span>
                         </div>
                         
@@ -138,7 +138,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
                     <div class="gallery-item-card">
                         <!-- Image Container -->
                         <div class="gallery-img-container">
-                            <img src="<?php echo BASE_URL; ?>assets/images/sharingroom/sharing-room-lounge.png" alt="Sharing Lounge & Pantry" draggable="false">
+                            <img src="<?php echo BASE_URL; ?>assets/images/sharingroom/sharing-room-lounge.webp" alt="Sharing Lounge & Pantry" width="400" height="300" loading="lazy" decoding="async" draggable="false">
                             <span class="gallery-pax-badge">Shared Space</span>
                         </div>
                         
@@ -428,161 +428,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
 }
 </style>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const slider = document.getElementById('office-gallery-slider');
-    const container = document.querySelector('.office-gallery-window');
-    const slides = slider.querySelectorAll('.gallery-card-slide');
-    
-    let currentIdx = 0;
-    let autoPlayInterval = null;
-    
-    function getVisibleCount() {
-        const width = window.innerWidth;
-        if (width > 1200) return 4;  
-        if (width > 991) return 3; 
-        if (width > 768) return 2.2;   
-        return 1.3;                  
-    }
-    
-    function getSlideWidth() {
-        return container.clientWidth / getVisibleCount();
-    }
-    
-    function updateSlideStyles() {
-        const visibleCount = getVisibleCount();
-        slides.forEach(slide => {
-            slide.style.flex = `0 0 ${100 / visibleCount}%`;
-            slide.style.width = `${100 / visibleCount}%`;
-        });
-        if (slides.length <= visibleCount) {
-            slider.style.justifyContent = 'center';
-        } else {
-            slider.style.justifyContent = 'flex-start';
-        }
-    }
-    
-    function showSlide(idx) {
-        const visibleCount = getVisibleCount();
-        const maxIndex = Math.max(0, Math.ceil(slides.length - visibleCount));
-        
-        if (idx > maxIndex) {
-            idx = 0; // Wrap around to first
-        } else if (idx < 0) {
-            idx = maxIndex; // Wrap around to last
-        }
-        
-        currentIdx = idx;
-        const slideWidth = getSlideWidth();
-        slider.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-        
-        // Calculate offset to center the active card on mobile
-        let translation = -currentIdx * slideWidth;
-        const width = window.innerWidth;
-        if (width <= 768) {
-            const containerWidth = container.clientWidth;
-            const leftOffset = (containerWidth - slideWidth) / 2;
-            translation = -currentIdx * slideWidth + leftOffset;
-        }
-        
-        slider.style.transform = `translateX(${translation}px)`;
-    }
-    
-    function nextSlide() {
-        showSlide(currentIdx + 1);
-    }
-    
-    function prevSlide() {
-        showSlide(currentIdx - 1);
-    }
-    
-    function startAutoPlay() {
-        stopAutoPlay();
-        if (slides.length > getVisibleCount()) {
-            autoPlayInterval = setInterval(nextSlide, 4500); // Auto slide every 4.5 seconds
-        }
-    }
-    
-    function stopAutoPlay() {
-        if (autoPlayInterval) {
-            clearInterval(autoPlayInterval);
-        }
-    }
-    
-    // Drag and swipe logic
-    let isDragging = false;
-    let startX = 0;
-    let currentX = 0;
-    let dragThreshold = 50; // pixels to trigger slide change
-    
-    function handleDragStart(e) {
-        if (slides.length <= getVisibleCount()) return;
-        isDragging = true;
-        stopAutoPlay();
-        startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-        slider.style.transition = 'none'; // disable transitions while dragging
-    }
-    
-    function handleDragMove(e) {
-        if (!isDragging) return;
-        currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-        const diffX = currentX - startX;
-        
-        const slideWidth = getSlideWidth();
-        let currentTranslation = -currentIdx * slideWidth;
-        const width = window.innerWidth;
-        if (width <= 768) {
-            const containerWidth = container.clientWidth;
-            const leftOffset = (containerWidth - slideWidth) / 2;
-            currentTranslation = -currentIdx * slideWidth + leftOffset;
-        }
-        slider.style.transform = `translateX(${currentTranslation + diffX}px)`;
-    }
-    
-    function handleDragEnd() {
-        if (!isDragging) return;
-        isDragging = false;
-        slider.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)'; // restore transition
-        
-        const diffX = currentX - startX;
-        if (Math.abs(diffX) > dragThreshold) {
-            if (diffX < 0) {
-                nextSlide();
-            } else {
-                prevSlide();
-            }
-        } else {
-            showSlide(currentIdx);
-        }
-        startAutoPlay();
-    }
-    
-    // Mouse dragging
-    container.addEventListener('mousedown', handleDragStart);
-    window.addEventListener('mousemove', handleDragMove);
-    window.addEventListener('mouseup', handleDragEnd);
-    
-    // Touch swiping
-    container.addEventListener('touchstart', handleDragStart, { passive: true });
-    container.addEventListener('touchmove', handleDragMove, { passive: true });
-    container.addEventListener('touchend', handleDragEnd);
-    
-    // Resize responsiveness
-    window.addEventListener('resize', () => {
-        updateSlideStyles();
-        showSlide(currentIdx);
-    });
-    
-    // Initial calls
-    updateSlideStyles();
-    showSlide(currentIdx);
-    startAutoPlay();
-    
-    // Pause on hover
-    container.addEventListener('mouseenter', stopAutoPlay);
-    container.addEventListener('mouseleave', startAutoPlay);
-});
-</script>
+<!-- Gallery slider initialized via assets/js/main.js (initOfficeGallerySliders) -->
 
 <!-- Advantages / Keuntungan Section -->
 <section class="section" style="background-color: hsl(var(--clr-bg-secondary)); border-top: 1px solid hsl(var(--clr-border)); border-bottom: 1px solid hsl(var(--clr-border)); padding: 60px 0;">
@@ -628,20 +474,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- FAQs Section -->
 <?php
-$faqs = [
-    [
-        'question' => 'Apakah Sharing Room berbeda dengan Coworking Space?',
-        'answer' => 'Ya, sangat berbeda. Sharing Room adalah ruang kantor pribadi (private office) yang digunakan bersama (sharing) dengan penyewa lainnya dalam satu ruangan terbagi. Sedangkan Coworking Space berkonsep area kerja terbuka (open space) di Lantai 1 yang terintegrasi langsung dengan akses ke café jika Anda ingin memesan makanan/minuman di luar fasilitas utama.'
-    ],
-    [
-        'question' => 'Bagaimana jika ingin melakukan perpanjangan sewa?',
-        'answer' => 'Untuk saat ini, perpanjangan sewa Sharing Room dapat dikonfirmasikan langsung melalui tim admin kami dengan menyebutkan keinginan "Perpanjangan Sewa".'
-    ],
-    [
-        'question' => 'Apakah ada koneksi WiFi? Kecepatannya berapa?',
-        'answer' => 'Tentu saja. Seluruh penyewa mendapatkan akses WiFi stabil berkecepatan tinggi up to 100 Mbps di area Sharing Room.'
-    ]
-];
+$faqs = get_sharing_room_faqs();
 include dirname(dirname(__FILE__)) . '/inc/components/faq.php';
 ?>
 
