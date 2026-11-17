@@ -45,14 +45,15 @@ if (isset($locations_db) && is_array($locations_db)) {
                 $faq[] = ['question' => $f['question'], 'answer' => $f['answer'] ?? ''];
             }
         }
-        $slug = $b['slug'] ?? (string)$key;
+        $slug   = $b['slug'] ?? (string)$key;
+        $labels = api_clean_branch_labels($b, $slug);
         $out[] = [
             'key'         => (string)$key,
             'slug'        => $slug,
-            'name'        => $b['short_title'] ?? ($b['title'] ?? ''),
-            'full_title'  => $b['title'] ?? '',
+            'name'        => $labels['name'],
+            'full_title'  => $labels['full_title'],
             'city'        => $b['city'] ?? '',
-            'location'    => $b['location'] ?? '',
+            'location'    => $labels['location'],
             'nearby'      => $b['nearby'] ?? '',
             'address'     => $b['address'] ?? '',
             'services'    => $b['services'] ?? '',

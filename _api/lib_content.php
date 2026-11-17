@@ -199,9 +199,14 @@ function uo_build_hero_image(string $title, ?string $bgPhotoPath, string $outAbs
 function uo_pick_relevant_page(string $content, string $title): ?array {
     try {
         $pages = Database::fetchAll(
-            "SELECT slug, title, meta_title, og_image FROM pages WHERE slug <> '' AND slug <> 'blog'"
+            "SELECT slug, title, meta_title, og_image FROM pages WHERE slug <> ''"
         );
     } catch (Exception $e) { return null; }
+    $excluded = function_exists('api_excluded_link_slugs') ? api_excluded_link_slugs() : ['blog'];
+    $pages = array_values(array_filter(
+        $pages ?: [],
+        fn($p) => !in_array((string)($p['slug'] ?? ''), $excluded, true)
+    ));
     if (!$pages) return null;
 
     $titleLow   = strtolower($title);
@@ -316,13 +321,17 @@ function uo_build_end_cta(): string {
     $cities = [];
     $path = DIR_ROOT . 'inc/locations_data.php';
     if (is_file($path)) {
+        global $locations_db;
         require_once $path;
         if (isset($locations_db) && is_array($locations_db)) {
-            foreach ($locations_db as $b) {
+            foreach ($locations_db as $key => $b) {
                 if (isset($b['is_public']) && $b['is_public'] === false) continue;
                 $city = trim($b['city'] ?? '');
                 if ($city === '') continue;
-                $area = trim($b['short_title'] ?? ($b['location'] ?? ''));
+                $slug = (string)($b['slug'] ?? $key);
+                $area = function_exists('api_clean_branch_labels')
+                    ? api_clean_branch_labels($b, $slug)['area']
+                    : trim($b['short_title'] ?? ($b['location'] ?? ''));
                 if ($area !== '') $cities[$city][] = $area;
                 elseif (!isset($cities[$city])) $cities[$city] = [];
             }

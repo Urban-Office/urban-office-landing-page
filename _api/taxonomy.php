@@ -24,11 +24,12 @@ $categories = Database::fetchAll("SELECT id, name, slug FROM categories ORDER BY
 $tags       = Database::fetchAll("SELECT id, name, slug FROM tags ORDER BY name ASC");
 
 $pages = Database::fetchAll("SELECT slug, title FROM pages ORDER BY title ASC");
+$excluded = api_excluded_link_slugs();
 $link_targets = [];
 foreach ($pages as $p) {
     $slug = (string)$p['slug'];
-    // Skip the blog index itself as an internal-link target for articles.
-    if ($slug === 'blog') continue;
+    // Skip utility/retired pages so internal-link equity flows to money pages.
+    if (in_array($slug, $excluded, true)) continue;
     $link_targets[] = [
         'title' => $p['title'],
         'slug'  => $slug,

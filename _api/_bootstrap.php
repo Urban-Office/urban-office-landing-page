@@ -305,3 +305,41 @@ function api_download_image(string $url): array {
     }
     return ['path' => 'assets/images/blog/' . $name, 'warning' => null];
 }
+
+/**
+ * Page slugs excluded from automation internal links and mid-content cards
+ * (non-money utility pages plus the retired Fatmawati Jakarta redirect).
+ */
+function api_excluded_link_slugs(): array {
+    return [
+        'blog',
+        'about',
+        'gallery',
+        'newsletter',
+        'urban-office-karir',
+        'kemitraan-urban-office',
+        'virtual-office-jakarta',
+    ];
+}
+
+/**
+ * Normalize public branch display labels exposed via automation endpoints
+ * (masks legacy 'Gorebiz' branding on jakarta-timur to 'Jakarta Timur').
+ */
+function api_clean_branch_labels(array $b, string $slug): array {
+    if ($slug === 'jakarta-timur') {
+        return [
+            'name'       => 'Jakarta Timur',
+            'full_title' => 'Urban Office Jakarta Timur',
+            'location'   => 'Jakarta Timur',
+            'area'       => 'Jakarta Timur',
+        ];
+    }
+    $name = trim((string)($b['short_title'] ?? ($b['title'] ?? '')));
+    return [
+        'name'       => $name,
+        'full_title' => trim((string)($b['title'] ?? '')),
+        'location'   => trim((string)($b['location'] ?? '')),
+        'area'       => trim((string)($b['short_title'] ?? ($b['location'] ?? ''))),
+    ];
+}
