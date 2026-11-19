@@ -22,6 +22,28 @@ $title = $pricing_title ?? 'Pilih Paket Ruang Kerja Anda';
     <div class="container">
         <h2 class="text-center section-title"><?php echo sanitize($title); ?></h2>
         <p class="text-center section-subtitle">Penawaran harga terbaik dengan kontrak fleksibel sesuai kebutuhan skala bisnis Anda.</p>
+
+        <?php if (!empty($pricing_branch_options) && is_array($pricing_branch_options) && count($pricing_branch_options) > 1): ?>
+            <div class="booking-branch-picker" data-booking-branch-picker>
+                <span class="booking-branch-picker-label">Pilih Cabang untuk Booking Online</span>
+                <div class="booking-branch-pills" role="group" aria-label="Pilih cabang lokasi booking">
+                    <?php foreach ($pricing_branch_options as $b_opt):
+                        $is_opt_active = (!empty($active_booking_branch_slug) && $b_opt['slug'] === $active_booking_branch_slug);
+                    ?>
+                        <button type="button"
+                                class="booking-branch-pill<?php echo $is_opt_active ? ' active' : ''; ?>"
+                                aria-pressed="<?php echo $is_opt_active ? 'true' : 'false'; ?>"
+                                data-branch-slug="<?php echo sanitize($b_opt['slug']); ?>"
+                                data-branch-label="<?php echo sanitize($b_opt['label']); ?>"
+                                data-branch-address="<?php echo sanitize($b_opt['address']); ?>"
+                                data-booking-url="<?php echo sanitize($b_opt['booking_url']); ?>">
+                            <i class="bi bi-geo-alt-fill"></i> <?php echo sanitize($b_opt['label']); ?>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+                <p class="booking-branch-address" aria-live="polite"></p>
+            </div>
+        <?php endif; ?>
         
         <?php 
         $show_toggle = $has_billing_toggle ?? false;
@@ -137,7 +159,12 @@ $title = $pricing_title ?? 'Pilih Paket Ruang Kerja Anda';
                     </div>
                     
                     <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 10px;">
-                        <a href="<?php echo sanitize($pkg['cta_link'] ?? '#contact'); ?>" class="btn <?php echo !empty($pkg['popular']) ? 'btn-primary' : 'btn-outline'; ?>" style="width: 100%;">
+                        <?php
+                        $cta_href   = $pkg['cta_link'] ?? '#contact';
+                        $cta_target = !empty($pkg['cta_target']) ? ' target="' . sanitize($pkg['cta_target']) . '" rel="noopener"' : '';
+                        $cta_webapp = !empty($pkg['is_webapp_booking']) ? ' data-webapp-booking-link="1"' : '';
+                        ?>
+                        <a href="<?php echo sanitize($cta_href); ?>"<?php echo $cta_target . $cta_webapp; ?> class="btn <?php echo !empty($pkg['popular']) ? 'btn-primary' : 'btn-outline'; ?>" style="width: 100%;">
                             <?php echo sanitize($pkg['cta_text'] ?? 'Beli Sekarang'); ?>
                         </a>
                         <?php if ($show_toggle || !empty($pkg['show_offer_btn'])): ?>

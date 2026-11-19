@@ -445,13 +445,19 @@ require_once dirname(dirname(__FILE__)) . '/inc/header.php';
                     </div>
 
                     <div class="pkg-actions">
+                        <?php
+                        $pkg_has_webapp = has_webapp_booking($branch_slug) && get_webapp_room_type($pkg['category'] ?? '') !== '';
+                        $pkg_booking_url = $pkg_has_webapp
+                            ? build_webapp_booking_url($branch_slug, $pkg['category'] ?? '', $pkg_wa_url)
+                            : $pkg_wa_url;
+                        ?>
                         <?php if ($is_claim_only): ?>
-                            <a href="<?php echo $pkg_wa_url; ?>" target="_blank" rel="noopener" class="btn btn-booking" style="width: 100%; justify-content: center;">
+                            <a href="<?php echo $pkg_wa_url; ?>" target="_blank" rel="noopener" data-wa-channel="cs" class="btn btn-booking" style="width: 100%; justify-content: center;">
                                 <i class="bi bi-whatsapp"></i> Tanya Cara Klaim Jatah
                             </a>
                         <?php else: ?>
-                            <a href="https://my.urbanoffice.co.id/beforelogin" target="_blank" rel="noopener" class="btn btn-booking">
-                                Booking Now
+                            <a href="<?php echo sanitize($pkg_booking_url); ?>" target="_blank" rel="noopener" class="btn btn-booking">
+                                <?php echo $pkg_has_webapp ? 'Booking Now' : 'Pesan via WhatsApp'; ?>
                             </a>
                             <a href="<?php echo $pkg_wa_url; ?>" target="_blank" rel="noopener" class="btn btn-whatsapp-icon" aria-label="Hubungi via WhatsApp">
                                 <i class="bi bi-whatsapp"></i>

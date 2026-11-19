@@ -191,7 +191,7 @@ function log_activity(?int $user_id, string $action, string $details): void {
  * Saves compiled HTML pages into /cache to bypass MySQL queries on subsequent requests
  */
 function start_page_cache(string $page_key): void {
-    if (DEV_MODE || is_admin() || $_SERVER['REQUEST_METHOD'] !== 'GET' || isset($_GET['lokasi']) || isset($_GET['type'])) {
+    if (DEV_MODE || is_admin() || $_SERVER['REQUEST_METHOD'] !== 'GET' || isset($_GET['lokasi']) || isset($_GET['type']) || isset($_GET['cabang'])) {
         return; // Bypass cache in dev mode, for admins, on POST, for ?lokasi city variants, or ?type detail
         // pages. ?type is critical: detail.php reuses page_key 'sewa-kantor-surabaya' for every room, so
         // without this every detail?type=N (and the index page) would collide on one cache entry.
@@ -214,7 +214,7 @@ function start_page_cache(string $page_key): void {
 }
 
 function end_page_cache(string $page_key): void {
-    if (DEV_MODE || is_admin() || $_SERVER['REQUEST_METHOD'] !== 'GET' || isset($_GET['lokasi']) || isset($_GET['type'])) {
+    if (DEV_MODE || is_admin() || $_SERVER['REQUEST_METHOD'] !== 'GET' || isset($_GET['lokasi']) || isset($_GET['type']) || isset($_GET['cabang'])) {
         return;
     }
 
@@ -992,4 +992,221 @@ function get_pendirian_faqs(string $slug): array {
         'answer'   => 'Tentu saja bisa. Anda dapat melakukan konsultasi gratis terlebih dahulu dengan tim legal kami untuk menentukan jenis badan usaha yang paling tepat untuk model bisnis Anda.'
     ];
     return $faqs;
+}
+
+/**
+ * Web App Portal URLs & Booking Auto-Fill Integration Helpers
+ * Safe fallbacks ensure production works even before inc/config.php is updated.
+ */
+function get_webapp_base_url(): string {
+    return defined('APP_BASE_URL') ? rtrim(APP_BASE_URL, '/') : 'https://my.urbanoffice.co.id';
+}
+
+function get_webapp_home_url(): string {
+    return defined('APP_HOME_URL') ? APP_HOME_URL : (get_webapp_base_url() . '/dashboard/home');
+}
+
+function get_webapp_booking_base_url(): string {
+    return defined('APP_BOOKING_URL') ? APP_BOOKING_URL : (get_webapp_base_url() . '/dashboard/bookingform');
+}
+
+/**
+ * Maps Landing Page service category slugs to exact Web App room_types.name values.
+ */
+function get_webapp_room_type(string $category): string {
+    $map = [
+        'virtual-office'      => 'Virtual Office',
+        'private-office'      => 'Private Office',
+        'meeting-room'        => 'Meeting Room',
+        'coworking'           => 'Coworking Space',
+        'event-space'         => 'Event Space',
+        'sharing-room-office' => 'Sharing Room',
+    ];
+    return $map[strtolower(trim($category))] ?? '';
+}
+
+/**
+ * Safely returns $locations_db from global scope or loads inc/locations_data.php.
+ */
+function get_locations_db_safe(): array {
+    global $locations_db;
+    if (!isset($locations_db) || !is_array($locations_db)) {
+        $path = __DIR__ . '/locations_data.php';
+        if (file_exists($path)) {
+            require $path;
+        }
+    }
+    return (isset($locations_db) && is_array($locations_db)) ? $locations_db : [];
+}
+
+/**
+ * Returns true if the branch is registered & active for direct Web App booking prefill.
+ */
+function has_webapp_booking(string $branch_slug): bool {
+    $db = get_locations_db_safe();
+    if (!isset($db[$branch_slug]) || !is_public_location($db[$branch_slug])) {
+        return false;
+    }
+    $b = $db[$branch_slug];
+    return !empty($b['app_city_id']) && !empty($b['app_location_id']);
+}
+
+/**
+ * Builds the Web App booking URL with auto-fill query params (?city_id=&location_id=&room_type=).
+ * Falls back cleanly to $fallback_url or a context-aware WhatsApp link when a branch
+ * (e.g. Malang) is not yet registered in the Web App database.
+ */
+function build_webapp_booking_url(string $branch_slug, string $category, ?string $fallback_url = null): string {
+    $db = get_locations_db_safe();
+    $room_type = get_webapp_room_type($category);
+
+    if (isset($db[$branch_slug]) && is_public_location($db[$branch_slug])) {
+        $branch = $db[$branch_slug];
+        if (!empty($branch['app_city_id']) && !empty($branch['app_location_id']) && $room_type !== '') {
+            return get_webapp_booking_base_url() . '?' . http_build_query([
+                'city_id'     => (int) $branch['app_city_id'],
+                'location_id' => (int) $branch['app_location_id'],
+                'room_type'   => $room_type,
+            ]);
+        }
+    }
+
+    if ($fallback_url !== null && $fallback_url !== '') {
+        return $fallback_url;
+    }
+
+    $branch_label = isset($db[$branch_slug]['title']) ? $db[$branch_slug]['title'] : ucwords(str_replace('-', ' ', $branch_slug));
+    $service_label = $room_type !== '' ? $room_type : ucwords(str_replace('-', ' ', $category));
+    $wa_num = defined('WHATSAPP_NUMBER_SALES') ? WHATSAPP_NUMBER_SALES : (defined('WHATSAPP_NUMBER') ? WHATSAPP_NUMBER : '6285107620100');
+    $msg = "Halo Urban Office, saya ingin memesan layanan {$service_label} di {$branch_label}. Mohon info ketersediaan dan langkah booking-nya.";
+    return 'https://api.whatsapp.com/send?phone=' . $wa_num . '&text=' . rawurlencode($msg);
+}
+
+/**
+ * Resolves the active branch on a city service landing page, honoring ?cabang={slug}.
+ */
+function resolve_active_booking_branch(array $svc_branches): ?array {
+    if (empty($svc_branches)) {
+        return null;
+    }
+    $requested = isset($_GET['cabang']) ? strtolower(trim((string) $_GET['cabang'])) : '';
+    if ($requested !== '') {
+        foreach ($svc_branches as $b) {
+            if (strtolower((string) ($b['slug'] ?? '')) === $requested) {
+                return $b;
+            }
+        }
+    }
+    return $svc_branches[0];
+}
+
+/**
+ * Computes the clean Landing Page URL for a given (service category, branch) pair.
+ * Used by the Homepage Search Bar so every search lands on the exact branch/city page.
+ */
+function get_service_landing_url(string $category, string $branch_slug, array $branch): string {
+    $city_slug = strtolower(trim((string) ($branch['city'] ?? 'surabaya')));
+    $same_city_branches = service_city_branches($category, $city_slug);
+    $is_multi_branch_city = count($same_city_branches) > 1;
+    $branch_query = $is_multi_branch_city ? ('?cabang=' . urlencode($branch_slug) . '#pricing') : '#pricing';
+
+    switch ($category) {
+        case 'virtual-office':
+            return BASE_URL . 'virtual-office-' . $branch_slug . '/';
+        case 'private-office':
+            return BASE_URL . 'sewa-kantor-' . $city_slug . '/' . $branch_query;
+        case 'meeting-room':
+            return BASE_URL . 'meeting-room-' . $city_slug . '/' . $branch_query;
+        case 'coworking':
+            $base = ($city_slug === 'surabaya')
+                ? (BASE_URL . 'coworking-space-urban-office/')
+                : (BASE_URL . 'coworking-space-' . $city_slug . '/');
+            return $base . $branch_query;
+        case 'event-space':
+            $base = ($city_slug === 'surabaya')
+                ? (BASE_URL . 'event-space-55k-perjam-urbanoffice/')
+                : (BASE_URL . 'event-space-' . $city_slug . '/');
+            return $base . $branch_query;
+        case 'sharing-room-office':
+            if ($city_slug === 'surabaya') {
+                return BASE_URL . 'sharing-room-office/#pricing';
+            }
+            return BASE_URL . 'sharing-room-office/?lokasi=' . urlencode($city_slug) . '#pricing';
+        default:
+            return BASE_URL . 'lokasi-urban-office/' . $branch_slug . '/';
+    }
+}
+
+/**
+ * Builds the single-source-of-truth catalog for the Homepage Search Bar (Option A).
+ * Only includes public branches and the services each branch actually offers.
+ */
+function get_homepage_search_catalog(): array {
+    $db = get_locations_db_safe();
+    $catalog = [];
+    $tracked_categories = [
+        'virtual-office',
+        'private-office',
+        'meeting-room',
+        'coworking',
+        'event-space',
+        'sharing-room-office',
+    ];
+
+    foreach ($db as $slug => $b) {
+        if (!is_public_location($b) || empty($b['pricing'])) {
+            continue;
+        }
+        $present = [];
+        foreach ($b['pricing'] as $pkg) {
+            $cat = $pkg['category'] ?? '';
+            if (in_array($cat, $tracked_categories, true)) {
+                $present[$cat] = true;
+            }
+        }
+        if (empty($present)) {
+            continue;
+        }
+
+        $services = [];
+        foreach (array_keys($present) as $cat) {
+            $services[$cat] = [
+                'landingUrl' => get_service_landing_url($cat, $slug, $b),
+                'bookingUrl' => build_webapp_booking_url($slug, $cat),
+            ];
+        }
+
+        $city = (string) ($b['city'] ?? '');
+        $location = (string) ($b['location'] ?? $city);
+        $short_title = (string) ($b['short_title'] ?? ucwords(str_replace('-', ' ', $slug)));
+        $display_label = (strtolower($short_title) === strtolower($city))
+            ? $city
+            : ($city . ' — ' . $short_title);
+
+        $keywords = strtolower(implode(' ', array_filter([
+            $slug,
+            str_replace('-', ' ', $slug),
+            $city,
+            $location,
+            $short_title,
+            $b['title'] ?? '',
+            $b['address'] ?? '',
+        ])));
+
+        $catalog[] = [
+            'slug'          => $slug,
+            'city'          => $city,
+            'location'      => $location,
+            'shortTitle'    => $short_title,
+            'label'         => $display_label,
+            'sublabel'      => $location . ' • ' . ($b['title'] ?? $short_title),
+            'lat'           => isset($b['lat']) ? (float) $b['lat'] : null,
+            'lng'           => isset($b['lng']) ? (float) $b['lng'] : null,
+            'hasWebapp'     => has_webapp_booking($slug),
+            'keywords'      => $keywords,
+            'services'      => $services,
+        ];
+    }
+
+    return $catalog;
 }

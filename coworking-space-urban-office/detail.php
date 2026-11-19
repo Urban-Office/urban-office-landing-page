@@ -110,8 +110,18 @@ $cs_back_url = ($cs_lokasi === 'surabaya')
             </div>
             
             <!-- Call to Actions -->
+            <?php
+            $cs_detail_slug = (string) ($cs_branch['slug'] ?? 'surabaya');
+            $cs_detail_has_webapp = has_webapp_booking($cs_detail_slug);
+            $cs_detail_booking_url = $cs_detail_has_webapp ? build_webapp_booking_url($cs_detail_slug, 'coworking') : '#contact';
+            ?>
             <div class="hero-cta-container">
+                <?php if ($cs_detail_has_webapp): ?>
+                <a href="<?php echo sanitize($cs_detail_booking_url); ?>" class="btn btn-primary" target="_blank" rel="noopener">Booking Online</a>
+                <a href="#contact" class="btn btn-outline" onclick="window.activateDetailOfferMode('<?php echo sanitize($office['name']); ?>')">Ajukan Penawaran</a>
+                <?php else: ?>
                 <a href="#contact" class="btn btn-primary" onclick="window.activateDetailOfferMode('<?php echo sanitize($office['name']); ?>')">Ajukan Penawaran</a>
+                <?php endif; ?>
                 <a href="https://api.whatsapp.com/send?phone=6285107620100&text=<?php echo urlencode('Halo Urban Office, saya tertarik dengan layanan ' . $office['name'] . ' di Cabang ' . $cs_branch_label . ' (' . $cs_city_label . '). Mohon info selengkapnya.'); ?>" class="btn btn-outline" target="_blank" rel="noopener">
                     <i class="bi bi-whatsapp"></i> WhatsApp
                 </a>

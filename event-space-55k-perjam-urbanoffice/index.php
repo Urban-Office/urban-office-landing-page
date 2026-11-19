@@ -60,6 +60,27 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
 <!-- Pricing Configuration -->
 <div id="pricing">
     <?php
+    $es_active_branch = resolve_active_booking_branch($svc_branches) ?: $svc_branches[0];
+    $es_active_slug   = (string) ($es_active_branch['slug'] ?? 'surabaya');
+    $es_has_webapp    = has_webapp_booking($es_active_slug);
+    $es_booking_url   = $es_has_webapp ? build_webapp_booking_url($es_active_slug, 'event-space') : '#contact';
+    $es_cta_target    = $es_has_webapp ? '_blank' : '';
+    $es_cta_label     = $es_has_webapp ? 'Booking Online' : 'Pesan Sekarang';
+
+    $active_booking_branch_slug = $es_active_slug;
+    $pricing_branch_options = [];
+    if (count($svc_branches) > 1) {
+        foreach ($svc_branches as $sb) {
+            $sb_slug = (string) ($sb['slug'] ?? '');
+            $pricing_branch_options[] = [
+                'slug'        => $sb_slug,
+                'label'       => ($sb['short_title'] ?? ucwords(str_replace('-', ' ', $sb_slug))) . ' (' . ($sb['location'] ?? $sb['city']) . ')',
+                'address'     => (string) ($sb['address'] ?? ''),
+                'booking_url' => has_webapp_booking($sb_slug) ? build_webapp_booking_url($sb_slug, 'event-space') : '#contact',
+            ];
+        }
+    }
+
     $pricing_title = 'Pilihan Ruang Event Space';
     $packages = [
         [
@@ -69,8 +90,10 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
             'description' => 'Sangat cocok untuk seminar, workshop, atau presentasi bisnis dengan durasi setengah hari (kapasitas 30 - 80 orang).',
             'features' => [],
             'hide_minimum_info' => true,
-            'cta_text' => 'Pesan Sekarang',
-            'cta_link' => '#contact'
+            'cta_text' => $es_cta_label,
+            'cta_link' => $es_booking_url,
+            'cta_target' => $es_cta_target,
+            'is_webapp_booking' => $es_has_webapp
         ],
         [
             'name' => 'Event Space Full-Day',
@@ -80,8 +103,10 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
             'description' => 'Paket terbaik untuk pelatihan penuh seharian, press conference, atau gathering perusahaan (kapasitas 30 - 80 orang).',
             'features' => [],
             'hide_minimum_info' => true,
-            'cta_text' => 'Pesan Sekarang',
-            'cta_link' => '#contact'
+            'cta_text' => $es_cta_label,
+            'cta_link' => $es_booking_url,
+            'cta_target' => $es_cta_target,
+            'is_webapp_booking' => $es_has_webapp
         ]
     ];
     include dirname(dirname(__FILE__)) . '/inc/components/pricing_cards.php';
@@ -197,9 +222,9 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
                                 <p class="gallery-card-desc"><?php echo sanitize($item['desc']); ?></p>
                             </div>
                             
-                            <!-- Action button connecting to contact -->
-                            <a href="#contact" class="btn btn-primary gallery-cta-btn" draggable="false">
-                                Pesan Sekarang <i class="bi bi-arrow-right"></i>
+                            <!-- Action button connecting to booking -->
+                            <a href="<?php echo sanitize($es_booking_url); ?>"<?php echo $es_has_webapp ? ' target="_blank" rel="noopener"' : ''; ?> class="btn btn-primary gallery-cta-btn" draggable="false">
+                                <?php echo $es_has_webapp ? 'Booking Online' : 'Pesan Sekarang'; ?> <i class="bi bi-arrow-right"></i>
                             </a>
                         </div>
                     </div>

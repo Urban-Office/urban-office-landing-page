@@ -149,8 +149,18 @@ $price_rows = $is_big ? [
             </div>
             
             <!-- Call to Actions -->
+            <?php
+            $mr_detail_slug = (string) ($mr_branch['slug'] ?? 'surabaya');
+            $mr_detail_has_webapp = has_webapp_booking($mr_detail_slug);
+            $mr_detail_booking_url = $mr_detail_has_webapp ? build_webapp_booking_url($mr_detail_slug, 'meeting-room') : '#contact';
+            ?>
             <div class="hero-cta-container">
+                <?php if ($mr_detail_has_webapp): ?>
+                <a href="<?php echo sanitize($mr_detail_booking_url); ?>" class="btn btn-primary" target="_blank" rel="noopener">Booking Online</a>
+                <a href="#contact" class="btn btn-outline" onclick="window.activateDetailOfferMode('<?php echo sanitize($office['name'] === 'Small Meeting Room' ? 'Small Meeting Room' : 'Big Meeting Room'); ?>')">Ajukan Penawaran</a>
+                <?php else: ?>
                 <a href="#contact" class="btn btn-primary" onclick="window.activateDetailOfferMode('<?php echo sanitize($office['name'] === 'Small Meeting Room' ? 'Small Meeting Room' : 'Big Meeting Room'); ?>')">Ajukan Penawaran</a>
+                <?php endif; ?>
                 <a href="https://api.whatsapp.com/send?phone=6285107620100&text=<?php echo urlencode('Halo Urban Office, saya tertarik dengan layanan ' . $office['name'] . ' di Cabang ' . $mr_branch_label . ' (' . $mr_city_label . '). Mohon info selengkapnya.'); ?>" class="btn btn-outline" target="_blank" rel="noopener">
                     <i class="bi bi-whatsapp"></i> WhatsApp
                 </a>

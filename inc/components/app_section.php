@@ -20,7 +20,7 @@
                         <li>Periksa tagihan dan rincian transaksi layanan Anda.</li>
                     </ul>
                     
-                    <a href="https://my.urbanoffice.id" target="_blank" rel="noopener" class="btn btn-primary">Lihat My Urban Office</a>
+                    <a href="<?php echo sanitize(get_webapp_home_url()); ?>" target="_blank" rel="noopener" class="btn btn-primary">Lihat My Urban Office</a>
                 </div>
                 <img src="<?php echo BASE_URL; ?>assets/images/imgcomponent/app-component.webp" alt="My Urban Office App Mockup" width="600" height="500" loading="lazy" decoding="async" style="width: 100%; height: auto; display: block;">
             </div>

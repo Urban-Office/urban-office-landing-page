@@ -140,7 +140,7 @@ if ($p_link_type === 'whatsapp') {
         $p_link_url .= '&text=' . rawurlencode($wa_raw_msg);
     }
 } else {
-    $p_link_url  = !empty($active_popup['target_url']) ? trim((string)$active_popup['target_url']) : 'https://my.urbanoffice.co.id/beforelogin';
+    $p_link_url  = !empty($active_popup['target_url']) ? trim((string)$active_popup['target_url']) : get_webapp_home_url();
 }
 $p_freq      = $active_popup['frequency'];
 $p_days      = max(1, (int)$active_popup['frequency_days']);
@@ -150,9 +150,9 @@ $p_delay     = max(2, (int)$active_popup['delay_seconds']);
 <div id="uo-popup-modal" class="uo-popup-wrapper" role="dialog" aria-modal="true" aria-label="<?php echo sanitize($p_title); ?>" style="display: none;">
     <div class="uo-popup-backdrop" id="uo-popup-backdrop"></div>
     <div class="uo-popup-container">
-        <!-- Close Button with 5-Second Countdown -->
-        <button type="button" class="uo-popup-close-btn uo-counting" id="uo-popup-close-btn" aria-label="Tutup Banner Promosi" title="Dapat ditutup dalam 5 detik">
-            <span id="uo-popup-timer-text">5s</span>
+        <!-- Close Button (directly closable without forced countdown lockout) -->
+        <button type="button" class="uo-popup-close-btn uo-ready" id="uo-popup-close-btn" aria-label="Tutup Banner Promosi" title="Tutup Pop-up Banner">
+            &times;
         </button>
         
         <!-- Banner Content -->
@@ -327,10 +327,6 @@ $p_delay     = max(2, (int)$active_popup['delay_seconds']);
 
     if (!modalWrapper) return;
 
-    let countdownSeconds = 5;
-    let countdownInterval = null;
-    let isCloseAllowed = false;
-
     /* 1. Evaluate Frequency / Storage eligibility */
     function shouldShowPopup() {
         if (config.isForced) {
@@ -367,41 +363,8 @@ $p_delay     = max(2, (int)$active_popup['delay_seconds']);
         return;
     }
 
-    /* Countdown Timer Handler (5 seconds) */
-    function startCountdown() {
-        countdownSeconds = 5;
-        isCloseAllowed = false;
-        if (closeBtn) {
-            closeBtn.classList.remove('uo-ready');
-            closeBtn.classList.add('uo-counting');
-            closeBtn.setAttribute('title', 'Dapat ditutup dalam ' + countdownSeconds + ' detik');
-            closeBtn.innerHTML = '<span>' + countdownSeconds + 's</span>';
-        }
-
-        if (countdownInterval) clearInterval(countdownInterval);
-
-        countdownInterval = setInterval(() => {
-            countdownSeconds--;
-            if (countdownSeconds > 0) {
-                if (closeBtn) {
-                    closeBtn.innerHTML = '<span>' + countdownSeconds + 's</span>';
-                    closeBtn.setAttribute('title', 'Dapat ditutup dalam ' + countdownSeconds + ' detik');
-                }
-            } else {
-                clearInterval(countdownInterval);
-                countdownInterval = null;
-                isCloseAllowed = true;
-                if (closeBtn) {
-                    closeBtn.classList.remove('uo-counting');
-                    closeBtn.classList.add('uo-ready');
-                    closeBtn.setAttribute('title', 'Tutup Pop-up Banner');
-                    closeBtn.innerHTML = '&times;';
-                }
-            }
-        }, 1000);
-    }
-
-    /* 2. Open Popup Function */
+    /* 2. Open Popup Function (auto-display stays active; no history.replaceState so GA4
+          Enhanced Measurement never logs a fake 2nd page_view that inflates engagement rate) */
     function openPopup() {
         modalWrapper.style.display = 'flex';
         /* Trigger animation */
@@ -409,42 +372,12 @@ $p_delay     = max(2, (int)$active_popup['delay_seconds']);
             modalWrapper.classList.add('uo-popup-visible');
         });
 
-        /* Start 5-second countdown on close button */
-        startCountdown();
-
-        /* Dynamic URL Update (without page refresh, SEO friendly) */
-        try {
-            const curUrl = new URL(window.location.href);
-            if (curUrl.searchParams.get('promo') !== config.slug) {
-                curUrl.searchParams.set('promo', config.slug);
-                window.history.replaceState(
-                    { uo_popup_open: true, original_search: window.location.search },
-                    '',
-                    curUrl.toString()
-                );
-            }
-        } catch (e) {}
-
         /* Send View Analytics Event (non-blocking) */
         sendTrackEvent('view');
     }
 
-    /* 3. Close Popup Function */
+    /* 3. Close Popup Function (immediately closable via X, backdrop, or Escape) */
     function closePopup() {
-        if (!isCloseAllowed) {
-            /* Pulse animation feedback if user tries to close early */
-            if (closeBtn) {
-                closeBtn.style.transform = 'scale(1.22)';
-                setTimeout(() => { closeBtn.style.transform = ''; }, 200);
-            }
-            return;
-        }
-
-        if (countdownInterval) {
-            clearInterval(countdownInterval);
-            countdownInterval = null;
-        }
-
         modalWrapper.classList.remove('uo-popup-visible');
         setTimeout(() => {
             modalWrapper.style.display = 'none';
@@ -456,16 +389,6 @@ $p_delay     = max(2, (int)$active_popup['delay_seconds']);
                 sessionStorage.setItem('uo_popup_seen_' + config.id, '1');
             } else if (config.frequency === 'daily' || config.frequency === 'custom') {
                 localStorage.setItem('uo_popup_time_' + config.id, Date.now().toString());
-            }
-        } catch (e) {}
-
-        /* Restore URL parameter to original clean state */
-        try {
-            const curUrl = new URL(window.location.href);
-            if (curUrl.searchParams.get('promo') === config.slug) {
-                curUrl.searchParams.delete('promo');
-                const cleanHref = curUrl.pathname + (curUrl.search ? curUrl.search : '') + curUrl.hash;
-                window.history.replaceState({}, '', cleanHref);
             }
         } catch (e) {}
     }

@@ -220,12 +220,18 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
             foreach ($vo_tiers as $vo_i => $vo_tier):
                 $vo_is_popular  = !empty($vo_tier['popular']);
                 $vo_btn_class   = $vo_is_popular ? 'btn-primary' : 'btn-outline';
-                $vo_cta_label   = $vo_is_popular ? 'Pilih Paket Populer' : 'Beli Sekarang';
+                $vo_has_webapp  = has_webapp_booking($requested_branch);
+                $vo_cta_label   = $vo_is_popular
+                    ? ($vo_has_webapp ? 'Booking Paket Populer' : 'Pilih Paket Populer')
+                    : ($vo_has_webapp ? 'Booking Online' : 'Beli Sekarang');
                 $vo_highlights  = get_vo_package_highlights($vo_tier);
                 $vo_tier_wa_txt = !empty($vo_tier['cta_wa'])
                     ? $vo_tier['cta_wa']
                     : ('Halo Urban Office, saya tertarik dengan ' . $vo_tier['name'] . ' di Cabang ' . $vo_branch['short_title'] . ' (' . $vo_branch['location'] . '). Mohon info penawaran selengkapnya.');
                 $vo_tier_wa     = 'https://api.whatsapp.com/send?phone=6285107620100&text=' . urlencode($vo_tier_wa_txt);
+                $vo_primary_url = $vo_has_webapp
+                    ? build_webapp_booking_url($requested_branch, 'virtual-office', $vo_tier_wa)
+                    : $vo_tier_wa;
                 $vo_border      = $vo_is_popular ? 'hsl(var(--clr-primary))' : 'hsl(var(--clr-border))';
                 $vo_period      = !empty($vo_tier['period']) ? $vo_tier['period'] : 'hari';
             ?>
@@ -270,7 +276,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
                 </div>
 
                 <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 10px;">
-                    <a href="<?php echo $vo_tier_wa; ?>" class="btn <?php echo $vo_btn_class; ?> cta-btn" style="width: 100%;" target="_blank" rel="noopener">
+                    <a href="<?php echo sanitize($vo_primary_url); ?>" class="btn <?php echo $vo_btn_class; ?> cta-btn" style="width: 100%;" target="_blank" rel="noopener">
                         <?php echo $vo_cta_label; ?>
                     </a>
                     <button type="button" class="btn btn-secondary offer-btn" style="width: 100%; font-size: 13px;" onclick="activateOfferMode(<?php echo sanitize(json_encode($vo_tier['name'])); ?>)">

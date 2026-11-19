@@ -47,6 +47,11 @@ define('WHATSAPP_NUMBER_SALES', '628212338100'); // Nomor Sales & Konsultasi Pro
 define('WHATSAPP_NUMBER_CS', '6285107620100'); // Nomor Customer Service & Komplain
 define('WHATSAPP_MESSAGE', 'Halo, saya ingin menanyakan perihal layanan Urban Office.');
 
+// Web App Portal URLs (My Urban Office)
+define('APP_BASE_URL', 'https://my.urbanoffice.co.id');
+define('APP_HOME_URL', APP_BASE_URL . '/dashboard/home');
+define('APP_BOOKING_URL', APP_BASE_URL . '/dashboard/bookingform');
+
 // Database Credentials
 define('DB_HOST', 'localhost');
 define('DB_PORT', '3306');

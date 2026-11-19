@@ -77,7 +77,7 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'footer.php') {
                             <span>|</span>
                             <a href="<?php echo BASE_URL; ?>urban-office-karir/">Karir</a>
                             <span>|</span>
-                            <a href="https://my.urbanoffice.id" target="_blank">My Urban Office</a>
+                            <a href="<?php echo sanitize(get_webapp_home_url()); ?>" target="_blank" rel="noopener">My Urban Office</a>
                         </li>
                     </ul>
                 </div>
@@ -156,12 +156,14 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'footer.php') {
                 continue;
             }
             $branch_pricing_js[$bp_slug] = [
-                'name'       => $bp_b['short_title'] . ' (' . $bp_b['location'] . ')',
-                'shortTitle' => $bp_b['short_title'],
-                'location'   => $bp_b['location'],
-                'address'    => $bp_b['address'],
-                'kpp'        => isset($bp_b['kpp']) ? $bp_b['kpp'] : '',
-                'tiers'      => $bp_tiers,
+                'name'             => $bp_b['short_title'] . ' (' . $bp_b['location'] . ')',
+                'shortTitle'       => $bp_b['short_title'],
+                'location'         => $bp_b['location'],
+                'address'          => $bp_b['address'],
+                'kpp'              => isset($bp_b['kpp']) ? $bp_b['kpp'] : '',
+                'hasWebappBooking' => has_webapp_booking($bp_slug),
+                'bookingUrl'       => build_webapp_booking_url($bp_slug, 'virtual-office'),
+                'tiers'            => $bp_tiers,
             ];
         }
     ?>

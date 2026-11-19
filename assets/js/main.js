@@ -4,6 +4,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+    initAttributionAndTracking();
     initHeaderScroll();
     initMobileMenu();
     initActiveMenuHighlight();
@@ -16,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initBenefitsVoSlider();
     initPricingFilter();
     initHomepageSearch();
+    initBookingBranchPickers();
     initBranchesFilter();
     initMobileLogosMarquee();
     initWhatsAppModal();
@@ -32,6 +34,247 @@ window.addEventListener('pageshow', (e) => {
         }
     }
 });
+
+/**
+ * Session Traffic Attribution (SEO / Google Ads / Meta Ads / GEO AI / Social / Referral / Direct),
+ * UTM & Click-ID Passthrough to Web App, and Structured dataLayer Event Tracking.
+ */
+function uoDetectAttributionFromEntry() {
+    const params = new URLSearchParams(window.location.search);
+    const getParam = (k) => (params.get(k) || '').trim();
+
+    const utmSource   = getParam('utm_source');
+    const utmMedium   = getParam('utm_medium');
+    const utmCampaign = getParam('utm_campaign');
+    const utmContent  = getParam('utm_content');
+    const utmTerm     = getParam('utm_term');
+    const gclid       = getParam('gclid');
+    const gbraid      = getParam('gbraid');
+    const wbraid      = getParam('wbraid');
+    const gadSource   = getParam('gad_source');
+    const fbclid      = getParam('fbclid');
+    const ttclid      = getParam('ttclid');
+    const msclkid     = getParam('msclkid');
+
+    const rawRef = (document.referrer || '').trim();
+    let refHost = '';
+    if (rawRef) {
+        try {
+            refHost = new URL(rawRef).hostname.toLowerCase().replace(/^www\./, '');
+        } catch (e) {}
+    }
+
+    const curHost = (window.location.hostname || '').toLowerCase().replace(/^www\./, '');
+    const isInternalRef = !refHost ||
+        refHost === curHost ||
+        refHost.endsWith('urbanoffice.co.id') ||
+        refHost.endsWith('urbanoffice.id');
+
+    const srcLow = utmSource.toLowerCase();
+    const medLow = utmMedium.toLowerCase();
+    const paidMediums = ['cpc', 'ppc', 'paid', 'paidsearch', 'paid_search', 'paidsocial', 'paid_social', 'display', 'cpm', 'ads'];
+    const isPaidMedium = paidMediums.includes(medLow);
+
+    const aiHosts = [
+        'chatgpt.com', 'chat.openai.com', 'perplexity.ai', 'gemini.google.com',
+        'bard.google.com', 'claude.ai', 'copilot.microsoft.com', 'meta.ai',
+        'you.com', 'phind.com', 'grok.com', 'x.ai'
+    ];
+    const searchHosts = ['google.', 'bing.com', 'yahoo.com', 'duckduckgo.com', 'ecosia.org', 'yandex.'];
+    const socialHosts = ['facebook.com', 'm.facebook.com', 'l.facebook.com', 'fb.com', 'instagram.com', 'l.instagram.com', 'tiktok.com', 'linkedin.com', 't.co', 'x.com', 'twitter.com', 'youtube.com', 'threads.net'];
+
+    const matchesHost = (host, list) => host && list.some((h) => host === h || host.endsWith('.' + h) || (h.endsWith('.') && host.includes(h)));
+    const matchesAiSource = (s) => ['chatgpt', 'openai', 'perplexity', 'gemini', 'claude', 'copilot', 'meta.ai', 'grok'].some((k) => s.includes(k));
+
+    let channel = 'direct';
+    let source  = utmSource || (isInternalRef ? 'direct' : refHost);
+    let medium  = utmMedium || (isInternalRef ? 'none' : 'referral');
+    let clickIdType = 'none';
+
+    if (gclid || gbraid || wbraid || gadSource) {
+        channel = 'google_ads';
+        source = utmSource || 'google';
+        medium = utmMedium || 'cpc';
+        clickIdType = gclid ? 'gclid' : (gbraid ? 'gbraid' : (wbraid ? 'wbraid' : 'gad_source'));
+    } else if (isPaidMedium && (srcLow.includes('google') || srcLow === 'adwords')) {
+        channel = 'google_ads';
+    } else if (
+        (fbclid && (isPaidMedium || utmCampaign !== '' || srcLow.includes('fb') || srcLow.includes('ig') || srcLow.includes('meta') || srcLow.includes('facebook') || srcLow.includes('instagram'))) ||
+        (isPaidMedium && (srcLow.includes('fb') || srcLow.includes('ig') || srcLow.includes('meta') || srcLow.includes('facebook') || srcLow.includes('instagram')))
+    ) {
+        channel = 'meta_ads';
+        source = utmSource || 'meta';
+        medium = utmMedium || 'paid_social';
+        if (fbclid) clickIdType = 'fbclid';
+    } else if (ttclid || msclkid || isPaidMedium) {
+        channel = 'paid_ads';
+        if (ttclid) {
+            source = utmSource || 'tiktok';
+            medium = utmMedium || 'paid_social';
+            clickIdType = 'ttclid';
+        } else if (msclkid) {
+            source = utmSource || 'bing';
+            medium = utmMedium || 'cpc';
+            clickIdType = 'msclkid';
+        }
+    } else if (matchesHost(refHost, aiHosts) || matchesAiSource(srcLow) || medLow.includes('ai')) {
+        channel = 'geo_ai';
+        source = utmSource || refHost || 'ai_assistant';
+        medium = utmMedium || 'ai_assistant';
+    } else if (matchesHost(refHost, searchHosts) || medLow === 'organic') {
+        channel = 'seo_organic';
+        source = utmSource || (refHost ? refHost.split('.')[0] : 'google');
+        medium = utmMedium || 'organic';
+    } else if (matchesHost(refHost, socialHosts) || fbclid || medLow === 'social') {
+        channel = 'social_organic';
+        source = utmSource || refHost || 'social';
+        medium = utmMedium || 'social';
+        if (fbclid) clickIdType = 'fbclid';
+    } else if (!isInternalRef) {
+        channel = 'referral';
+        source = utmSource || refHost;
+        medium = utmMedium || 'referral';
+    }
+
+    const passthrough = {};
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'gbraid', 'wbraid', 'fbclid', 'ttclid'].forEach((k) => {
+        const val = getParam(k);
+        if (val) passthrough[k] = val;
+    });
+
+    const hasExplicitCampaignSignal = Boolean(
+        utmSource || utmMedium || utmCampaign || gclid || gbraid || wbraid || gadSource || fbclid || ttclid || msclkid
+    );
+
+    return {
+        channel,
+        source: source || 'direct',
+        medium: medium || 'none',
+        campaign: utmCampaign || '',
+        content: utmContent || '',
+        term: utmTerm || '',
+        click_id_type: clickIdType,
+        landing_page: window.location.pathname,
+        referrer: isInternalRef ? '' : rawRef,
+        passthrough,
+        hasExplicitCampaignSignal
+    };
+}
+
+function uoGetAttribution() {
+    const key = 'uo_attribution_v1';
+    try {
+        const stored = sessionStorage.getItem(key);
+        if (stored) {
+            return JSON.parse(stored);
+        }
+    } catch (e) {}
+    return uoDetectAttributionFromEntry();
+}
+window.uoGetAttribution = uoGetAttribution;
+
+function uoFormatAttributionSummary(attr) {
+    if (!attr) return 'Direct';
+    const labels = {
+        google_ads: 'Google Ads',
+        meta_ads: 'Meta Ads',
+        paid_ads: 'Paid Ads',
+        geo_ai: 'GEO / AI Search',
+        seo_organic: 'SEO Organic',
+        social_organic: 'Social Organic',
+        referral: 'Referral',
+        direct: 'Direct'
+    };
+    const chLabel = labels[attr.channel] || attr.channel || 'Direct';
+    const parts = [chLabel];
+    if (attr.source && attr.source !== 'direct') parts.push(`${attr.source}/${attr.medium || 'none'}`);
+    if (attr.campaign) parts.push(`campaign: ${attr.campaign}`);
+    if (attr.landing_page) parts.push(`entry: ${attr.landing_page}`);
+    return parts.join(' | ');
+}
+
+function uoAppendAttributionToUrl(rawUrl) {
+    try {
+        const url = new URL(rawUrl, window.location.origin);
+        const attr = uoGetAttribution();
+        const passthrough = (attr && attr.passthrough) ? attr.passthrough : {};
+        Object.keys(passthrough).forEach((k) => {
+            if (!url.searchParams.has(k) && passthrough[k]) {
+                url.searchParams.set(k, passthrough[k]);
+            }
+        });
+        if (attr && attr.channel && !url.searchParams.has('lp_channel')) {
+            url.searchParams.set('lp_channel', attr.channel);
+        }
+        return url.toString();
+    } catch (e) {
+        return rawUrl;
+    }
+}
+
+function initAttributionAndTracking() {
+    const key = 'uo_attribution_v1';
+    const fresh = uoDetectAttributionFromEntry();
+    let activeAttr = fresh;
+
+    try {
+        const existingRaw = sessionStorage.getItem(key);
+        if (existingRaw) {
+            const existing = JSON.parse(existingRaw);
+            // Keep first-touch attribution for the session unless a new explicit ad/UTM entry arrives
+            if (!fresh.hasExplicitCampaignSignal && existing && existing.channel) {
+                activeAttr = existing;
+            }
+        }
+        sessionStorage.setItem(key, JSON.stringify(activeAttr));
+    } catch (e) {}
+
+    // Expose session attribution immediately to GTM / GA4 dataLayer
+    try {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+            event: 'uo_session_attribution',
+            traffic_channel: activeAttr.channel,
+            traffic_source: activeAttr.source,
+            traffic_medium: activeAttr.medium,
+            traffic_campaign: activeAttr.campaign || '(none)',
+            landing_page: activeAttr.landing_page
+        });
+    } catch (e) {}
+
+    // Track clicks on ALL Web App Booking / Portal links & pass through UTM/gclid seamlessly
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest('a[href*="my.urbanoffice.co.id"]');
+        if (!link) return;
+
+        const rawHref = link.getAttribute('href') || '';
+        const enrichedHref = uoAppendAttributionToUrl(rawHref);
+        if (enrichedHref && enrichedHref !== rawHref) {
+            link.setAttribute('href', enrichedHref);
+        }
+
+        try {
+            const parsed = new URL(enrichedHref, window.location.origin);
+            const attr = uoGetAttribution();
+            const isBookingForm = parsed.pathname.includes('/dashboard/bookingform');
+
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({
+                event: isBookingForm ? 'booking_cta_click' : 'webapp_portal_click',
+                booking_service: parsed.searchParams.get('room_type') || 'General',
+                booking_city_id: parsed.searchParams.get('city_id') || '',
+                booking_location_id: parsed.searchParams.get('location_id') || '',
+                cta_text: (link.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80),
+                page_path: window.location.pathname,
+                traffic_channel: attr.channel,
+                traffic_source: attr.source,
+                traffic_medium: attr.medium,
+                traffic_campaign: attr.campaign || '(none)',
+                landing_page: attr.landing_page
+            });
+        } catch (err) {}
+    });
+}
 
 /**
  * Change header background opacity on scroll
@@ -279,32 +522,47 @@ function initContactForm() {
         const budgetVal = budgetInput ? budgetInput.value.trim() : '';
         const pesanVal = pesanInput ? pesanInput.value.trim() : '';
 
+        const feedbackBox = document.getElementById('contact-form-feedback');
+        const showFormFeedback = (html, type) => {
+            if (!feedbackBox) return;
+            feedbackBox.innerHTML = html;
+            feedbackBox.classList.remove('is-error', 'is-success');
+            if (type) feedbackBox.classList.add(`is-${type}`);
+            feedbackBox.hidden = false;
+        };
+        if (feedbackBox) {
+            feedbackBox.hidden = true;
+            feedbackBox.innerHTML = '';
+        }
+
         if (honey) {
             // Bot detected, silently block submission
-            alert('Pesan Anda berhasil dikirim!');
+            showFormFeedback('<strong>Terima kasih!</strong> Pesan Anda berhasil dikirim.', 'success');
             form.reset();
             return;
         }
 
         if (isOfferMode) {
             if (!name || !phone || !service || !budgetVal || !pesanVal) {
-                alert('Harap isi semua kolom wajib (*).');
+                showFormFeedback('Harap isi semua kolom wajib (*).', 'error');
                 return;
             }
         } else {
             const requiresVisitDate = Boolean(dateInput && dateInput.required);
             if (!name || !phone || !service || (requiresVisitDate && !dateVal)) {
-                alert('Harap isi semua kolom wajib (*).');
+                showFormFeedback('Harap isi semua kolom wajib (*).', 'error');
                 return;
             }
         }
 
-        // Format message for DB compatibility
+        // Format message for DB compatibility (append session traffic source for internal sales/marketing research)
+        const sessionAttr = (typeof uoGetAttribution === 'function') ? uoGetAttribution() : null;
+        const attrLine = sessionAttr ? `\n[Sumber: ${uoFormatAttributionSummary(sessionAttr)}]` : '';
         let message = '';
         if (isOfferMode) {
-            message = `[Pengajuan Penawaran]\nCabang / Lokasi: ${locationVal}\nPaket: ${offerPackage || '-'}\nEkspektasi Budget: ${budgetVal}\nPesan: ${pesanVal}`;
+            message = `[Pengajuan Penawaran]\nCabang / Lokasi: ${locationVal}\nPaket: ${offerPackage || '-'}\nEkspektasi Budget: ${budgetVal}\nPesan: ${pesanVal}${attrLine}`;
         } else {
-            message = `[Pemesanan Kunjungan]\nJumlah Orang: ${peopleVal || '-'}\nTanggal: ${dateVal}`;
+            message = `[Pemesanan Kunjungan]\nJumlah Orang: ${peopleVal || '-'}\nTanggal: ${dateVal}${attrLine}`;
         }
 
         const submitBtn = form.querySelector('button[type="submit"]');
@@ -313,14 +571,38 @@ function initContactForm() {
         submitBtn.innerHTML = 'Mengirim...';
 
         try {
+            // Fetch a fresh per-session CSRF token so statically cached HTML pages never
+            // fail with 403 due to another visitor's cached CSRF token.
+            let activeCsrfToken = csrfToken;
+            const csrfUrl = form.dataset.csrfUrl;
+            if (csrfUrl) {
+                try {
+                    const tokenRes = await fetch(csrfUrl, {
+                        method: 'GET',
+                        credentials: 'same-origin',
+                        cache: 'no-store'
+                    });
+                    if (tokenRes.ok) {
+                        const tokenJson = await tokenRes.json();
+                        if (tokenJson && tokenJson.csrf_token) {
+                            activeCsrfToken = tokenJson.csrf_token;
+                            if (csrfInput) csrfInput.value = activeCsrfToken;
+                        }
+                    }
+                } catch (tokenErr) {
+                    // Fallback to hidden input token if endpoint is temporarily unavailable
+                }
+            }
+
             // Post data to our AJAX lead handler script
             const response = await fetch(form.getAttribute('action') || `${window.location.origin}/inc/lead_handler.php`, {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    name, email, phone, service, message, csrf_token: csrfToken
+                    name, email, phone, service, message, csrf_token: activeCsrfToken
                 })
             });
 
@@ -360,22 +642,49 @@ function initContactForm() {
                 if (typeof resetOfferMode === 'function') {
                     resetOfferMode();
                 }
-                submitBtn.innerHTML = 'Sukses!';
+                submitBtn.innerHTML = 'Terkirim!';
 
-                // Direct to WhatsApp via Channel Selector Modal (Khusus Sales untuk pengajuan formulir)
-                if (typeof window.uoOpenWaModal === 'function') {
-                    window.uoOpenWaModal(waText, 'sales_only');
-                } else if (typeof window.uoDirectOpenWhatsApp === 'function') {
-                    window.uoDirectOpenWhatsApp('628212338100', waText);
+                // Push GA4/GTM conversion events with full session channel attribution
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push({
+                    event: 'lead_form_submit',
+                    lead_service: service,
+                    lead_mode: isOfferMode ? 'offer' : 'consultation',
+                    page_path: window.location.pathname,
+                    traffic_channel: sessionAttr ? sessionAttr.channel : 'direct',
+                    traffic_source: sessionAttr ? sessionAttr.source : 'direct',
+                    traffic_medium: sessionAttr ? sessionAttr.medium : 'none',
+                    traffic_campaign: (sessionAttr && sessionAttr.campaign) ? sessionAttr.campaign : '(none)',
+                    landing_page: sessionAttr ? sessionAttr.landing_page : window.location.pathname
+                });
+                if (typeof window.uoTrackWhatsAppClick === 'function') {
+                    window.uoTrackWhatsAppClick('sales', 'contact_form', service);
+                }
+
+                const salesNumber = document.getElementById('uo-wa-modal')?.getAttribute('data-wa-sales') || '628212338100';
+                const waFallbackHref = `https://api.whatsapp.com/send?phone=${salesNumber}&text=${encodeURIComponent(waText)}`;
+
+                // Inline confirmation + 1-click fallback in case browser blocks async popup tab
+                showFormFeedback(
+                    `<span><strong>Data Anda berhasil tersimpan!</strong> Menghubungkan ke WhatsApp Tim Sales...</span>
+                     <a href="${waFallbackHref}" target="_blank" rel="noopener" data-wa-bypass="1" class="contact-form-wa-fallback">
+                        <i class="bi bi-whatsapp"></i> Buka WhatsApp Sales
+                     </a>`,
+                    'success'
+                );
+
+                // Direct launch to Sales WhatsApp (no extra modal step)
+                if (typeof window.uoDirectOpenWhatsApp === 'function') {
+                    window.uoDirectOpenWhatsApp(salesNumber, waText);
                 } else {
-                    window.open(`https://api.whatsapp.com/send/?phone=628212338100&text=${encodeURIComponent(waText)}`, '_blank');
+                    window.open(waFallbackHref, '_blank', 'noopener,noreferrer');
                 }
             } else {
-                alert('Gagal mengirim pesan: ' + (result.message || 'Error tidak diketahui.'));
+                showFormFeedback('Gagal mengirim pesan: ' + escapeVoHtml(result.message || 'Error tidak diketahui.'), 'error');
             }
         } catch (error) {
             console.error('Submission error:', error);
-            alert('Terjadi kesalahan saat mengirim pesan. Silakan hubungi langsung via WhatsApp.');
+            showFormFeedback('Terjadi kesalahan saat mengirim pesan. Silakan coba lagi atau hubungi langsung via WhatsApp.', 'error');
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = origBtnText;
@@ -446,12 +755,160 @@ function goToSlide(index) {
 
 
 /**
- * Search Bar Tab Switcher (Homepage Only)
+ * Smart Homepage Search Bar (Option A)
+ * Cascading Service Tab -> Available Branches dropdown + Haversine "Di Dekat Saya"
+ * Routes directly to the exact branch/city Landing Page URL.
  */
+const uoSearchState = {
+    category: 'virtual-office',
+    serviceName: 'Virtual Office',
+    targetFallback: '',
+    selectedSlug: '',
+    userCoords: null,
+    highlightedIndex: -1,
+    filteredBranches: []
+};
+
+function uoCalcDistanceKm(lat1, lng1, lat2, lng2) {
+    const toRad = (deg) => (deg * Math.PI) / 180;
+    const R = 6371;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function uoFormatDistanceKm(km) {
+    if (km === null || typeof km !== 'number' || Number.isNaN(km)) return '';
+    if (km < 1) return `${Math.round(km * 1000)} m`;
+    if (km < 10) return `${km.toFixed(1).replace('.', ',')} km`;
+    return `${Math.round(km)} km`;
+}
+
+function uoGetSearchBranchesForCategory(category) {
+    const catalog = Array.isArray(window.uoSearchCatalog) ? window.uoSearchCatalog : [];
+    const list = catalog
+        .filter((branch) => branch && branch.services && branch.services[category])
+        .map((branch) => {
+            let distanceKm = null;
+            if (uoSearchState.userCoords && typeof branch.lat === 'number' && typeof branch.lng === 'number') {
+                distanceKm = uoCalcDistanceKm(
+                    uoSearchState.userCoords.lat,
+                    uoSearchState.userCoords.lng,
+                    branch.lat,
+                    branch.lng
+                );
+            }
+            return { ...branch, distanceKm };
+        });
+
+    if (uoSearchState.userCoords) {
+        list.sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity));
+    }
+    return list;
+}
+
+function uoSetSearchFeedback(message, type = '') {
+    const feedback = document.getElementById('search-feedback');
+    if (!feedback) return;
+    feedback.textContent = message || '';
+    feedback.classList.remove('is-visible', 'is-error', 'is-success');
+    if (message) {
+        feedback.classList.add('is-visible');
+        if (type === 'error') feedback.classList.add('is-error');
+        if (type === 'success') feedback.classList.add('is-success');
+    }
+}
+
+function uoOpenSearchDropdown(open) {
+    const combobox = document.getElementById('search-combobox');
+    const dropdown = document.getElementById('search-location-dropdown');
+    const input = document.getElementById('search-location-input');
+    if (!combobox || !dropdown || !input) return;
+
+    if (open) {
+        dropdown.hidden = false;
+        combobox.classList.add('is-open');
+        input.setAttribute('aria-expanded', 'true');
+    } else {
+        dropdown.hidden = true;
+        combobox.classList.remove('is-open');
+        input.setAttribute('aria-expanded', 'false');
+        uoSearchState.highlightedIndex = -1;
+    }
+}
+
+function uoSelectSearchBranch(branch, distanceNote = false) {
+    const input = document.getElementById('search-location-input');
+    if (!input || !branch) return;
+    uoSearchState.selectedSlug = branch.slug;
+    const distLabel = (distanceNote && branch.distanceKm !== null)
+        ? ` (${uoFormatDistanceKm(branch.distanceKm)})`
+        : '';
+    input.value = branch.label + distLabel;
+    input.classList.remove('search-input-error');
+    uoOpenSearchDropdown(false);
+}
+
+function uoRenderSearchDropdown(query = '') {
+    const dropdown = document.getElementById('search-location-dropdown');
+    if (!dropdown) return;
+
+    const allForService = uoGetSearchBranchesForCategory(uoSearchState.category);
+    const q = query.trim().toLowerCase();
+
+    // If the input already matches the currently selected branch label, show all options so user can switch easily
+    const selectedBranch = allForService.find((b) => b.slug === uoSearchState.selectedSlug);
+    const effectiveQuery = (selectedBranch && q.startsWith(selectedBranch.label.toLowerCase())) ? '' : q;
+
+    const matches = effectiveQuery
+        ? allForService.filter((b) =>
+            b.label.toLowerCase().includes(effectiveQuery) ||
+            b.city.toLowerCase().includes(effectiveQuery) ||
+            b.location.toLowerCase().includes(effectiveQuery) ||
+            b.shortTitle.toLowerCase().includes(effectiveQuery) ||
+            (b.keywords && b.keywords.includes(effectiveQuery))
+        )
+        : allForService;
+
+    uoSearchState.filteredBranches = matches;
+    uoSearchState.highlightedIndex = matches.length > 0 ? 0 : -1;
+
+    if (!matches.length) {
+        dropdown.innerHTML = `<div class="search-loc-empty">Belum ada cabang <strong>${escapeVoHtml(uoSearchState.serviceName)}</strong> di "${escapeVoHtml(query.trim())}". Pilih dari ${allForService.length} lokasi tersedia.</div>`;
+        return;
+    }
+
+    const headerHtml = `<div class="search-loc-header">Lokasi ${escapeVoHtml(uoSearchState.serviceName)} Tersedia (${matches.length} cabang)</div>`;
+    const itemsHtml = matches.map((b, idx) => {
+        const isSelected = b.slug === uoSearchState.selectedSlug;
+        const distBadge = (b.distanceKm !== null)
+            ? `<span class="search-loc-distance"><i class="bi bi-geo-alt"></i> ${escapeVoHtml(uoFormatDistanceKm(b.distanceKm))}</span>`
+            : '';
+        return `
+            <button type="button" class="search-loc-option${isSelected ? ' is-selected' : ''}${idx === 0 ? ' is-highlighted' : ''}" role="option" aria-selected="${isSelected ? 'true' : 'false'}" data-branch-slug="${escapeVoHtml(b.slug)}" data-idx="${idx}">
+                <span class="search-loc-main">
+                    <span class="search-loc-title">${escapeVoHtml(b.label)}</span>
+                    <span class="search-loc-sub">${escapeVoHtml(b.sublabel || b.location)}</span>
+                </span>
+                <span class="search-loc-meta">${distBadge}</span>
+            </button>
+        `;
+    }).join('');
+
+    dropdown.innerHTML = headerHtml + itemsHtml;
+}
+
 function initHomepageSearch() {
     const form = document.querySelector('.search-form');
     const activeTab = document.querySelector('.search-tab.active') || document.querySelector('.search-tab');
     const input = document.getElementById('search-location-input');
+    const dropdown = document.getElementById('search-location-dropdown');
+    const toggleBtn = document.getElementById('search-combobox-toggle');
+    const combobox = document.getElementById('search-combobox');
 
     if (activeTab) {
         switchSearchTab(activeTab);
@@ -462,11 +919,92 @@ function initHomepageSearch() {
     }
 
     if (input) {
+        input.addEventListener('focus', () => {
+            uoRenderSearchDropdown(input.value);
+            uoOpenSearchDropdown(true);
+        });
+
+        input.addEventListener('click', () => {
+            uoRenderSearchDropdown(input.value);
+            uoOpenSearchDropdown(true);
+        });
+
         input.addEventListener('input', () => {
-            delete input.dataset.lat;
-            delete input.dataset.lng;
+            uoSearchState.selectedSlug = '';
+            input.classList.remove('search-input-error');
+            uoSetSearchFeedback('');
+            uoRenderSearchDropdown(input.value);
+            uoOpenSearchDropdown(true);
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (!dropdown || dropdown.hidden) {
+                if (e.key === 'ArrowDown') {
+                    uoRenderSearchDropdown(input.value);
+                    uoOpenSearchDropdown(true);
+                    e.preventDefault();
+                }
+                return;
+            }
+
+            const options = dropdown.querySelectorAll('.search-loc-option');
+            if (!options.length) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                uoSearchState.highlightedIndex = (uoSearchState.highlightedIndex + 1) % options.length;
+                options.forEach((opt, i) => opt.classList.toggle('is-highlighted', i === uoSearchState.highlightedIndex));
+                options[uoSearchState.highlightedIndex]?.scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                uoSearchState.highlightedIndex = (uoSearchState.highlightedIndex - 1 + options.length) % options.length;
+                options.forEach((opt, i) => opt.classList.toggle('is-highlighted', i === uoSearchState.highlightedIndex));
+                options[uoSearchState.highlightedIndex]?.scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'Enter' && uoSearchState.highlightedIndex >= 0 && !uoSearchState.selectedSlug) {
+                const chosen = uoSearchState.filteredBranches[uoSearchState.highlightedIndex];
+                if (chosen) {
+                    e.preventDefault();
+                    uoSelectSearchBranch(chosen, Boolean(uoSearchState.userCoords));
+                    triggerSearch();
+                }
+            } else if (e.key === 'Escape') {
+                uoOpenSearchDropdown(false);
+            }
         });
     }
+
+    if (toggleBtn && input) {
+        toggleBtn.addEventListener('click', () => {
+            const isOpen = combobox && combobox.classList.contains('is-open');
+            if (isOpen) {
+                uoOpenSearchDropdown(false);
+            } else {
+                uoRenderSearchDropdown('');
+                uoOpenSearchDropdown(true);
+                input.focus();
+            }
+        });
+    }
+
+    if (dropdown) {
+        dropdown.addEventListener('mousedown', (e) => {
+            const optionBtn = e.target.closest('.search-loc-option');
+            if (!optionBtn) return;
+            e.preventDefault();
+            const slug = optionBtn.dataset.branchSlug;
+            const branch = uoGetSearchBranchesForCategory(uoSearchState.category).find((b) => b.slug === slug);
+            if (branch) {
+                uoSelectSearchBranch(branch, Boolean(uoSearchState.userCoords));
+                uoSetSearchFeedback('');
+            }
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (combobox && !combobox.contains(e.target)) {
+            uoOpenSearchDropdown(false);
+        }
+    });
 }
 
 function switchSearchTab(button, serviceName, placeholderText) {
@@ -474,19 +1012,51 @@ function switchSearchTab(button, serviceName, placeholderText) {
 
     const tabs = document.querySelectorAll('.search-tab');
     tabs.forEach(t => t.classList.remove('active'));
-    
     button.classList.add('active');
 
+    const category = button.dataset.category || 'virtual-office';
     const service = serviceName || button.dataset.service || button.textContent.trim();
-    const placeholder = placeholderText || button.dataset.placeholder || 'Masukkan kota lokasi bisnis';
+    const placeholder = placeholderText || button.dataset.placeholder || 'Pilih atau ketik kota/cabang...';
+
+    uoSearchState.category = category;
+    uoSearchState.serviceName = service;
+    uoSearchState.targetFallback = button.dataset.target || '';
 
     const input = document.getElementById('search-location-input');
+    const available = uoGetSearchBranchesForCategory(category);
+
     if (input) {
         input.placeholder = placeholder;
         input.dataset.service = service;
+        input.dataset.category = category;
         input.dataset.target = button.dataset.target || '';
+
+        // Keep selected branch if it also offers the newly selected service; otherwise clear cleanly
+        if (uoSearchState.selectedSlug) {
+            const stillValid = available.find((b) => b.slug === uoSearchState.selectedSlug);
+            if (!stillValid) {
+                uoSearchState.selectedSlug = '';
+                input.value = '';
+                if (uoSearchState.userCoords && available.length > 0) {
+                    uoSelectSearchBranch(available[0], true);
+                    uoSetSearchFeedback(
+                        `Cabang terdekat untuk ${service}: ${available[0].label} (${uoFormatDistanceKm(available[0].distanceKm)})`,
+                        'success'
+                    );
+                } else {
+                    uoSetSearchFeedback(`Tersedia di ${available.length} cabang untuk ${service}.`);
+                }
+            }
+        } else {
+            uoSetSearchFeedback('');
+        }
     }
-    
+
+    const combobox = document.getElementById('search-combobox');
+    if (combobox && combobox.classList.contains('is-open')) {
+        uoRenderSearchDropdown(input ? input.value : '');
+    }
+
     window.selectedService = service;
     window.selectedServiceTarget = button.dataset.target || '';
 }
@@ -497,36 +1067,83 @@ function triggerSearch(event) {
     }
 
     const input = document.getElementById('search-location-input');
-    const activeTab = document.querySelector('.search-tab.active');
-    const city = input ? input.value.trim() : '';
-    const target = activeTab?.dataset.target || window.selectedServiceTarget;
+    const rawQuery = input ? input.value.trim() : '';
+    const available = uoGetSearchBranchesForCategory(uoSearchState.category);
 
-    if (!city) {
-        if (input) {
-            input.classList.add('search-input-error');
-            input.focus();
-            setTimeout(() => input.classList.remove('search-input-error'), 1600);
-        }
-        alert('Masukkan kota terlebih dahulu, atau gunakan tombol Di Dekat Saya.');
+    let chosenBranch = null;
+
+    // 1. Exact selected branch from dropdown / "Di Dekat Saya"
+    if (uoSearchState.selectedSlug) {
+        chosenBranch = available.find((b) => b.slug === uoSearchState.selectedSlug) || null;
+    }
+
+    // 2. Smart text match against available branches for this service
+    if (!chosenBranch && rawQuery) {
+        const q = rawQuery.toLowerCase().replace(/^kota\s+/, '');
+        chosenBranch =
+            available.find((b) => b.slug === q || b.label.toLowerCase() === q || b.city.toLowerCase() === q || b.shortTitle.toLowerCase() === q) ||
+            available.find((b) => b.label.toLowerCase().includes(q) || b.location.toLowerCase().includes(q) || (b.keywords && b.keywords.includes(q))) ||
+            null;
+    }
+
+    const searchAttr = (typeof uoGetAttribution === 'function') ? uoGetAttribution() : null;
+
+    if (chosenBranch && chosenBranch.services && chosenBranch.services[uoSearchState.category]) {
+        try {
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({
+                event: 'homepage_search',
+                search_service: uoSearchState.serviceName,
+                search_category: uoSearchState.category,
+                search_branch: chosenBranch.slug,
+                search_city: chosenBranch.city,
+                search_query: rawQuery || chosenBranch.label,
+                search_matched: true,
+                used_nearby: Boolean(uoSearchState.userCoords),
+                traffic_channel: searchAttr ? searchAttr.channel : 'direct',
+                traffic_source: searchAttr ? searchAttr.source : 'direct',
+                traffic_medium: searchAttr ? searchAttr.medium : 'none',
+                landing_page: searchAttr ? searchAttr.landing_page : window.location.pathname
+            });
+        } catch (err) {}
+        window.location.href = chosenBranch.services[uoSearchState.category].landingUrl;
         return;
     }
 
-    if (target) {
-        const targetUrl = new URL(target, window.location.href);
-        targetUrl.searchParams.set('lokasi', city);
-
-        if (input?.dataset.lat && input?.dataset.lng) {
-            targetUrl.searchParams.set('lat', input.dataset.lat);
-            targetUrl.searchParams.set('lng', input.dataset.lng);
-        }
-
-        window.location.href = targetUrl.toString();
-        return;
+    if (rawQuery) {
+        try {
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({
+                event: 'homepage_search',
+                search_service: uoSearchState.serviceName,
+                search_category: uoSearchState.category,
+                search_branch: '',
+                search_city: '',
+                search_query: rawQuery,
+                search_matched: false,
+                used_nearby: Boolean(uoSearchState.userCoords),
+                traffic_channel: searchAttr ? searchAttr.channel : 'direct',
+                traffic_source: searchAttr ? searchAttr.source : 'direct',
+                traffic_medium: searchAttr ? searchAttr.medium : 'none',
+                landing_page: searchAttr ? searchAttr.landing_page : window.location.pathname
+            });
+        } catch (err) {}
     }
 
-    const contactSection = document.getElementById('contact');
-    if (contactSection) {
-        contactSection.scrollIntoView({ behavior: 'smooth' });
+    // Show clean inline guidance & open dropdown instead of browser alert()
+    if (input) {
+        input.classList.add('search-input-error');
+        input.focus();
+        setTimeout(() => input.classList.remove('search-input-error'), 1800);
+    }
+    uoRenderSearchDropdown(rawQuery);
+    uoOpenSearchDropdown(true);
+
+    if (!rawQuery) {
+        uoSetSearchFeedback(`Silakan pilih salah satu dari ${available.length} cabang ${uoSearchState.serviceName} di atas, atau klik "Di Dekat Saya".`, 'error');
+    } else {
+        const citiesList = [...new Set(available.map((b) => b.city))].join(', ');
+        uoSetSearchFeedback(`Layanan ${uoSearchState.serviceName} saat ini tersedia di: ${citiesList}. Pilih salah satu dari daftar.`, 'error');
     }
 }
 
@@ -534,26 +1151,43 @@ function setSearchNearMe(button) {
     const input = document.getElementById('search-location-input');
 
     if (!navigator.geolocation) {
-        alert('Browser Anda belum mendukung fitur lokasi otomatis.');
+        uoSetSearchFeedback('Browser Anda belum mendukung fitur lokasi otomatis. Silakan pilih cabang dari daftar.', 'error');
+        uoRenderSearchDropdown('');
+        uoOpenSearchDropdown(true);
         return;
     }
 
     const originalHtml = button.innerHTML;
     button.disabled = true;
-    button.innerHTML = '<i class="bi bi-crosshair"></i><span>Mengambil lokasi...</span>';
+    button.innerHTML = '<i class="bi bi-crosshair"></i><span>Mencari terdekat...</span>';
 
     navigator.geolocation.getCurrentPosition(
         (position) => {
-            if (input) {
-                input.value = 'Lokasi saya saat ini';
-                input.dataset.lat = position.coords.latitude.toFixed(6);
-                input.dataset.lng = position.coords.longitude.toFixed(6);
+            uoSearchState.userCoords = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+
+            const sorted = uoGetSearchBranchesForCategory(uoSearchState.category);
+            if (sorted.length > 0) {
+                const nearest = sorted[0];
+                uoSelectSearchBranch(nearest, true);
+                uoSetSearchFeedback(
+                    `Cabang terdekat untuk ${uoSearchState.serviceName}: ${nearest.label} (${uoFormatDistanceKm(nearest.distanceKm)}) — klik Telusuri untuk melihat paket.`,
+                    'success'
+                );
+            } else if (input) {
+                input.value = '';
+                uoSetSearchFeedback('Belum ada cabang tersedia untuk layanan ini.', 'error');
             }
+
             button.disabled = false;
             button.innerHTML = originalHtml;
         },
         () => {
-            alert('Lokasi belum bisa diakses. Silakan izinkan akses lokasi atau ketik kota secara manual.');
+            uoSetSearchFeedback('Akses lokasi belum diizinkan. Silakan pilih kota atau cabang dari daftar di atas.', 'error');
+            uoRenderSearchDropdown('');
+            uoOpenSearchDropdown(true);
             button.disabled = false;
             button.innerHTML = originalHtml;
         },
@@ -566,6 +1200,56 @@ function setSearchNearMe(button) {
 }
 
 window.setSearchNearMe = setSearchNearMe;
+
+/**
+ * Multi-Branch Booking Pill Switcher (City Landing Pages with >1 Branch)
+ * Updates all Web App booking CTA links inside the pricing/service section to match
+ * the chosen branch's exact city_id & location_id.
+ */
+function initBookingBranchPickers() {
+    const pickers = document.querySelectorAll('[data-booking-branch-picker]');
+    if (!pickers.length) return;
+
+    pickers.forEach((picker) => {
+        const pills = picker.querySelectorAll('.booking-branch-pill');
+        const addressEl = picker.querySelector('.booking-branch-address');
+        const scopeSelector = picker.dataset.targetScope || '';
+        const scopeEl = scopeSelector ? document.querySelector(scopeSelector) : (picker.closest('section') || document);
+
+        if (!pills.length || !scopeEl) return;
+
+        const applyBranch = (pill) => {
+            const bookingUrl = pill.dataset.bookingUrl || '';
+            const branchLabel = pill.dataset.branchLabel || '';
+            const branchAddress = pill.dataset.branchAddress || '';
+
+            pills.forEach((p) => {
+                const isActive = p === pill;
+                p.classList.toggle('active', isActive);
+                p.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            });
+
+            if (addressEl && branchAddress) {
+                addressEl.innerHTML = `<i class="bi bi-geo-alt-fill" style="color: hsl(var(--clr-primary));"></i> <strong>${escapeVoHtml(branchLabel)}:</strong> ${escapeVoHtml(branchAddress)}`;
+            }
+
+            if (bookingUrl) {
+                scopeEl.querySelectorAll('[data-webapp-booking-link]').forEach((link) => {
+                    link.setAttribute('href', bookingUrl);
+                });
+            }
+        };
+
+        pills.forEach((pill) => {
+            pill.addEventListener('click', () => applyBranch(pill));
+        });
+
+        const initialPill = picker.querySelector('.booking-branch-pill.active') || pills[0];
+        if (initialPill) {
+            applyBranch(initialPill);
+        }
+    });
+}
 
 /**
  * Homepage Branch City Filter
@@ -1112,7 +1796,10 @@ function escapeVoHtml(str) {
 function buildVoPricingCardHtml(tier, branchData, showKpp) {
     const isPopular = Boolean(tier.popular);
     const btnClass = isPopular ? 'btn-primary' : 'btn-outline';
-    const ctaLabel = isPopular ? 'Pilih Paket Populer' : 'Beli Sekarang';
+    const hasWebapp = Boolean(branchData.hasWebappBooking && branchData.bookingUrl);
+    const ctaLabel = isPopular
+        ? (hasWebapp ? 'Booking Paket Populer' : 'Pilih Paket Populer')
+        : (hasWebapp ? 'Booking Online' : 'Beli Sekarang');
     const borderColor = isPopular ? 'hsl(var(--clr-primary))' : 'hsl(var(--clr-border))';
     const period = tier.period || 'hari';
 
@@ -1120,6 +1807,7 @@ function buildVoPricingCardHtml(tier, branchData, showKpp) {
         ? tier.cta_wa
         : `Halo Urban Office, saya tertarik dengan ${tier.name} di Cabang ${branchData.shortTitle || branchData.name} (${branchData.location || ''}). Mohon info penawaran selengkapnya.`;
     const waUrl = `https://api.whatsapp.com/send?phone=6285107620100&text=${encodeURIComponent(waMsg)}`;
+    const primaryHref = hasWebapp ? branchData.bookingUrl : waUrl;
 
     const kppText = branchData.kpp || '';
     const kppStyle = `font-weight: bold; color: #FF6B00; margin-top: 5px; font-size: 0.9rem; display: ${(showKpp && kppText) ? 'block' : 'none'};`;
@@ -1164,7 +1852,7 @@ function buildVoPricingCardHtml(tier, branchData, showKpp) {
             </div>
 
             <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 10px;">
-                <a href="${escapeVoHtml(waUrl)}" class="btn ${btnClass} cta-btn" style="width: 100%;" target="_blank" rel="noopener">
+                <a href="${escapeVoHtml(primaryHref)}" class="btn ${btnClass} cta-btn" style="width: 100%;" target="_blank" rel="noopener">
                     ${escapeVoHtml(ctaLabel)}
                 </a>
                 <button type="button" class="btn btn-secondary offer-btn" style="width: 100%; font-size: 13px;" data-package="${escapeVoHtml(tier.name)}" onclick="activateOfferMode(this.dataset.package)">
@@ -1724,12 +2412,36 @@ function initWhatsAppModal() {
         }
     });
 
+/**
+ * Pushes structured WhatsApp conversion events to GTM / GA4 dataLayer.
+ */
+function uoTrackWhatsAppClick(channel, source, context = '') {
+    try {
+        const attr = (typeof uoGetAttribution === 'function') ? uoGetAttribution() : null;
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+            event: 'whatsapp_click',
+            wa_channel: channel || 'sales',
+            wa_source: source || 'direct_cta',
+            wa_context: context || document.title || window.location.pathname,
+            page_path: window.location.pathname,
+            traffic_channel: attr ? attr.channel : 'direct',
+            traffic_source: attr ? attr.source : 'direct',
+            traffic_medium: attr ? attr.medium : 'none',
+            traffic_campaign: (attr && attr.campaign) ? attr.campaign : '(none)',
+            landing_page: attr ? attr.landing_page : window.location.pathname
+        });
+    } catch (e) {}
+}
+window.uoTrackWhatsAppClick = uoTrackWhatsAppClick;
+
     // Choice 1: Sales & Konsultasi Produk
     const salesBtn = modal.querySelector('[data-wa-choice="sales"]');
     if (salesBtn) {
         salesBtn.addEventListener('click', (e) => {
             e.preventDefault();
             const msg = pendingSalesMessage || 'Halo Tim Sales Urban Office, saya tertarik untuk konsultasi layanan dan sewa ruang kerja.';
+            uoTrackWhatsAppClick('sales', 'modal_selector', document.getElementById('uo-wa-context-text')?.textContent || 'General');
             uoDirectOpenWhatsApp(salesNumber, msg);
             closeModal();
         });
@@ -1740,6 +2452,7 @@ function initWhatsAppModal() {
         csBtn.addEventListener('click', (e) => {
             e.preventDefault();
             const msg = pendingCsMessage || 'Halo Tim Customer Service Urban Office, saya ingin bertanya / menyampaikan kendala terkait layanan Urban Office.';
+            uoTrackWhatsAppClick('cs', 'modal_selector', document.getElementById('uo-wa-context-text')?.textContent || 'General');
             uoDirectOpenWhatsApp(csNumber, msg);
             closeModal();
         });
@@ -1779,10 +2492,13 @@ function initWhatsAppModal() {
         }
     });
 
-    // Global click interceptor across ALL WhatsApp links & buttons on the website
+    // Intent-Based Global WhatsApp Click Router:
+    // 1. Floating WA widget & Footer general WA links -> open 2-option modal (Sales vs CS & Komplain).
+    // 2. Explicit CS triggers (e.g. "Tanya Cara Klaim Jatah" / data-wa-channel="cs") -> direct to CS WhatsApp.
+    // 3. All product/branch/service/legalitas/partnership/blog CTAs -> direct to Sales WhatsApp (zero extra modal click).
     document.addEventListener('click', (e) => {
-        // Do not intercept clicks inside the modal itself
-        if (e.target.closest('#uo-wa-modal')) return;
+        // Do not intercept clicks inside the WA modal, promo popup modal, or explicit bypass links
+        if (e.target.closest('#uo-wa-modal, #uo-popup-modal, [data-wa-bypass="1"]')) return;
 
         // Check if the clicked target is a WhatsApp link or button
         const trigger = e.target.closest(
@@ -1814,23 +2530,41 @@ function initWhatsAppModal() {
             extractedMsg = trigger.getAttribute('data-wa-text');
         }
 
-        // Mode Determination:
-        // - Semua tombol WA dari lokasi cabang, opsi paket produk, maupun floating pojok kanan bawah
-        //   TETAP MENAMPILKAN DUA OPSI (mode: 'all').
-        // - Khusus yang hanya ke Sales adalah hasil pengisian formulir kontak (mode: 'sales_only').
-        let detectedMode = 'all';
-        const explicitChannel = trigger.getAttribute('data-wa-channel');
-        const explicitMode = trigger.getAttribute('data-wa-mode');
+        const explicitChannel = (trigger.getAttribute('data-wa-channel') || '').toLowerCase();
+        const explicitMode = (trigger.getAttribute('data-wa-mode') || '').toLowerCase();
+        const isGeneralContactTrigger =
+            trigger.classList.contains('floating-wa-widget') ||
+            Boolean(trigger.closest('footer, .footer')) ||
+            explicitMode === 'all';
 
-        if (explicitMode === 'sales_only') {
-            detectedMode = 'sales_only';
-        } else if (explicitChannel === 'cs' || explicitMode === 'cs_only') {
-            detectedMode = 'cs_only';
-        } else {
-            detectedMode = 'all';
+        // 1. General contact entry points -> show Sales vs CS selector modal
+        if (isGeneralContactTrigger && explicitChannel !== 'sales' && explicitChannel !== 'cs') {
+            openModal(extractedMsg, 'all', trigger);
+            return;
         }
 
-        openModal(extractedMsg, detectedMode, trigger);
+        const msgData = uoBuildWhatsAppMessages(extractedMsg, trigger);
+        const triggerLabel = (trigger.textContent || '').toLowerCase();
+        const rawLower = (extractedMsg || '').toLowerCase();
+
+        // 2. Customer Service / existing member claim triggers -> direct to CS WhatsApp
+        const isCsDirect =
+            explicitChannel === 'cs' ||
+            explicitMode === 'cs_only' ||
+            triggerLabel.includes('klaim jatah') ||
+            rawLower.includes('klaim jatah') ||
+            rawLower.includes('komplain');
+
+        if (isCsDirect) {
+            const csMsg = extractedMsg || msgData.csMessage;
+            uoTrackWhatsAppClick('cs', 'direct_cta', msgData.summary || triggerLabel.trim());
+            uoDirectOpenWhatsApp(csNumber, csMsg);
+            return;
+        }
+
+        // 3. High-intent product/branch/service/blog/partnership CTAs -> direct to Sales WhatsApp
+        uoTrackWhatsAppClick('sales', 'direct_cta', msgData.summary || triggerLabel.trim());
+        uoDirectOpenWhatsApp(salesNumber, msgData.salesMessage);
     }, true);
 }
 

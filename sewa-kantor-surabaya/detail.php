@@ -156,8 +156,18 @@ $po_back_url = BASE_URL . 'sewa-kantor-' . $po_lokasi . '/#gallery';
             </div>
             
             <!-- Call to Actions -->
+            <?php
+            $po_detail_slug = (string) ($po_branch['slug'] ?? 'surabaya');
+            $po_detail_has_webapp = has_webapp_booking($po_detail_slug);
+            $po_detail_booking_url = $po_detail_has_webapp ? build_webapp_booking_url($po_detail_slug, 'private-office') : '#contact';
+            ?>
             <div class="hero-cta-container">
+                <?php if ($po_detail_has_webapp): ?>
+                <a href="<?php echo sanitize($po_detail_booking_url); ?>" class="btn btn-primary" target="_blank" rel="noopener">Booking Online</a>
+                <a href="#contact" class="btn btn-outline" onclick="window.activateDetailOfferMode(<?php echo sanitize(json_encode($office['name'])); ?>)">Ajukan Penawaran</a>
+                <?php else: ?>
                 <a href="#contact" class="btn btn-primary" onclick="window.activateDetailOfferMode(<?php echo sanitize(json_encode($office['name'])); ?>)">Ajukan Penawaran</a>
+                <?php endif; ?>
                 <a href="https://api.whatsapp.com/send?phone=6285107620100&text=<?php echo urlencode('Halo Urban Office, saya tertarik dengan ' . $office['name'] . ' di Cabang ' . $po_branch_label . ' (' . $po_city_label . '). Mohon info selengkapnya.'); ?>" class="btn btn-outline" target="_blank" rel="noopener">
                     <i class="bi bi-whatsapp"></i> WhatsApp
                 </a>

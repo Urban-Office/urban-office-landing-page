@@ -146,36 +146,42 @@ require_once __DIR__ . '/inc/header.php';
         <div class="container">
             <div class="workspace-search-card">
                 <div class="search-tabs" role="tablist" aria-label="Pilihan ruang kerja">
-                    <button type="button" class="search-tab active" onclick="switchSearchTab(this)" data-service="Virtual Office" data-target="<?php echo BASE_URL; ?>virtual-office-surabaya/" data-placeholder="Masukkan kota untuk alamat Virtual Office">
+                    <button type="button" class="search-tab active" onclick="switchSearchTab(this)" data-category="virtual-office" data-service="Virtual Office" data-target="<?php echo BASE_URL; ?>virtual-office-surabaya/" data-placeholder="Pilih atau ketik kota/cabang Virtual Office...">
                         <span class="search-tab-icon"><i class="bi bi-building-check"></i></span>
                         <span>Virtual Office</span>
                     </button>
-                    <button type="button" class="search-tab" onclick="switchSearchTab(this)" data-service="Private Office" data-target="<?php echo BASE_URL; ?>sewa-kantor-surabaya/" data-placeholder="Masukkan kota untuk Private Office">
+                    <button type="button" class="search-tab" onclick="switchSearchTab(this)" data-category="private-office" data-service="Private Office" data-target="<?php echo BASE_URL; ?>sewa-kantor-surabaya/" data-placeholder="Pilih atau ketik kota/cabang Private Office...">
                         <span class="search-tab-icon"><i class="bi bi-buildings"></i></span>
                         <span>Private Office</span>
                     </button>
-                    <button type="button" class="search-tab" onclick="switchSearchTab(this)" data-service="Ruang Meeting" data-target="<?php echo BASE_URL; ?>meeting-room-surabaya/" data-placeholder="Masukkan kota untuk Ruang Meeting">
+                    <button type="button" class="search-tab" onclick="switchSearchTab(this)" data-category="meeting-room" data-service="Ruang Meeting" data-target="<?php echo BASE_URL; ?>meeting-room-surabaya/" data-placeholder="Pilih atau ketik kota/cabang Ruang Meeting...">
                         <span class="search-tab-icon"><i class="bi bi-people-fill"></i></span>
                         <span>Ruang Meeting</span>
                     </button>
-                    <button type="button" class="search-tab" onclick="switchSearchTab(this)" data-service="Coworking Space" data-target="<?php echo BASE_URL; ?>coworking-space-urban-office/" data-placeholder="Masukkan kota untuk Coworking Space">
+                    <button type="button" class="search-tab" onclick="switchSearchTab(this)" data-category="coworking" data-service="Coworking Space" data-target="<?php echo BASE_URL; ?>coworking-space-urban-office/" data-placeholder="Pilih atau ketik kota/cabang Coworking Space...">
                         <span class="search-tab-icon"><i class="bi bi-laptop"></i></span>
                         <span>Coworking Space</span>
                     </button>
-                    <button type="button" class="search-tab" onclick="switchSearchTab(this)" data-service="Event Space" data-target="<?php echo BASE_URL; ?>event-space-55k-perjam-urbanoffice/" data-placeholder="Masukkan kota untuk Event Space">
+                    <button type="button" class="search-tab" onclick="switchSearchTab(this)" data-category="event-space" data-service="Event Space" data-target="<?php echo BASE_URL; ?>event-space-55k-perjam-urbanoffice/" data-placeholder="Pilih atau ketik kota/cabang Event Space...">
                         <span class="search-tab-icon"><i class="bi bi-calendar-event"></i></span>
                         <span>Event Space</span>
                     </button>
-                    <button type="button" class="search-tab" onclick="switchSearchTab(this)" data-service="Sharing Room Office" data-target="<?php echo BASE_URL; ?>sharing-room-office/" data-placeholder="Masukkan kota untuk Sharing Room Office">
+                    <button type="button" class="search-tab" onclick="switchSearchTab(this)" data-category="sharing-room-office" data-service="Sharing Room Office" data-target="<?php echo BASE_URL; ?>sharing-room-office/" data-placeholder="Pilih atau ketik kota/cabang Sharing Room Office...">
                         <span class="search-tab-icon"><i class="bi bi-door-open"></i></span>
                         <span>Sharing Room Office</span>
                     </button>
                 </div>
                 <form class="search-form" autocomplete="off">
-                    <label class="search-input-wrapper" for="search-location-input">
+                    <div class="search-input-wrapper">
                         <span class="search-icon-marker"><i class="bi bi-geo-alt-fill"></i></span>
-                        <input type="text" id="search-location-input" class="search-input" placeholder="Masukkan kota, contoh: Surabaya" autocomplete="address-level2">
-                    </label>
+                        <div class="search-combobox" id="search-combobox">
+                            <input type="text" id="search-location-input" class="search-input" placeholder="Pilih atau ketik kota/cabang Virtual Office..." role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-location-dropdown" autocomplete="off">
+                            <button type="button" class="search-combobox-caret" id="search-combobox-toggle" aria-label="Tampilkan daftar cabang tersedia" tabindex="-1">
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                            <div id="search-location-dropdown" class="search-location-dropdown" role="listbox" aria-label="Daftar cabang tersedia" hidden></div>
+                        </div>
+                    </div>
                     <button type="button" class="nearby-btn" onclick="setSearchNearMe(this)">
                         <i class="bi bi-crosshair"></i>
                         <span>Di Dekat Saya</span>
@@ -185,8 +191,10 @@ require_once __DIR__ . '/inc/header.php';
                         <span>Telusuri</span>
                     </button>
                 </form>
+                <p id="search-feedback" class="search-feedback" aria-live="polite"></p>
             </div>
         </div>
+        <script>window.uoSearchCatalog = <?php echo json_encode(get_homepage_search_catalog(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;</script>
     </section>
 
     <!-- ABOUT SECTION -->

@@ -189,6 +189,9 @@ try {
                 <?php endfor; ?>
             </div>
         <?php endif; ?>
+
+        <!-- Contextual Service Conversion CTA -->
+        <?php include dirname(dirname(__FILE__)) . '/inc/components/blog_cta.php'; ?>
         
     </div>
 </article>

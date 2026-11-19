@@ -49,7 +49,28 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
 <!-- Pricing Card Configuration -->
 <div id="pricing">
     <?php
-    $po_branch_name = get_private_office_branch_label($svc_city_slug, $svc_branches[0]);
+    $po_active_branch = resolve_active_booking_branch($svc_branches) ?: $svc_branches[0];
+    $po_active_slug   = (string) ($po_active_branch['slug'] ?? 'surabaya');
+    $po_has_webapp    = has_webapp_booking($po_active_slug);
+    $po_booking_url   = $po_has_webapp ? build_webapp_booking_url($po_active_slug, 'private-office') : '#contact';
+    $po_cta_target    = $po_has_webapp ? '_blank' : '';
+    $po_cta_label     = $po_has_webapp ? 'Booking Online' : 'Pesan Ruangan';
+    $po_branch_name   = get_private_office_branch_label($svc_city_slug, $po_active_branch);
+
+    $active_booking_branch_slug = $po_active_slug;
+    $pricing_branch_options = [];
+    if (count($svc_branches) > 1) {
+        foreach ($svc_branches as $sb) {
+            $sb_slug = (string) ($sb['slug'] ?? '');
+            $pricing_branch_options[] = [
+                'slug'        => $sb_slug,
+                'label'       => ($sb['short_title'] ?? ucwords(str_replace('-', ' ', $sb_slug))) . ' (' . ($sb['location'] ?? $sb['city']) . ')',
+                'address'     => (string) ($sb['address'] ?? ''),
+                'booking_url' => has_webapp_booking($sb_slug) ? build_webapp_booking_url($sb_slug, 'private-office') : '#contact',
+            ];
+        }
+    }
+
     $pricing_title = 'Pilihan Ruang Private Office ' . $po_city_label;
     $has_billing_toggle = true;
     $packages = [
@@ -64,8 +85,10 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
                 'Kapasitas 2 orang',
                 'Ukuran Ruangan 6m²'
             ],
-            'cta_text' => 'Pesan Ruangan',
-            'cta_link' => '#contact'
+            'cta_text' => $po_cta_label,
+            'cta_link' => $po_booking_url,
+            'cta_target' => $po_cta_target,
+            'is_webapp_booking' => $po_has_webapp
         ],
         [
             'name' => 'Private Office Medium',
@@ -79,8 +102,10 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
                 'Kapasitas 4-5 orang',
                 'Ukuran Ruangan 10m² - 12m²'
             ],
-            'cta_text' => 'Pesan Ruangan',
-            'cta_link' => '#contact'
+            'cta_text' => $po_cta_label,
+            'cta_link' => $po_booking_url,
+            'cta_target' => $po_cta_target,
+            'is_webapp_booking' => $po_has_webapp
         ],
         [
             'name' => 'Private Office Corporate',
@@ -93,8 +118,10 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
                 'Kapasitas 5-6 orang',
                 'Ukuran Ruangan 14m² - 16m²'
             ],
-            'cta_text' => 'Pesan Ruangan',
-            'cta_link' => '#contact'
+            'cta_text' => $po_cta_label,
+            'cta_link' => $po_booking_url,
+            'cta_target' => $po_cta_target,
+            'is_webapp_booking' => $po_has_webapp
         ]
     ];
     include dirname(dirname(__FILE__)) . '/inc/components/pricing_cards.php';

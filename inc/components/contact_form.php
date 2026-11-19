@@ -100,7 +100,7 @@ require_once dirname(dirname(__FILE__)) . '/functions.php';
             
             <!-- Right Side: Contact Form -->
             <div class="contact-form-wrap">
-                <form action="<?php echo BASE_URL; ?>inc/lead_handler.php" method="POST">
+                <form action="<?php echo BASE_URL; ?>inc/lead_handler.php" method="POST" data-csrf-url="<?php echo BASE_URL; ?>inc/csrf_token.php">
                     <?php echo csrf_field(); ?>
                     
                     <!-- Honeypot for spam bots -->
@@ -116,8 +116,8 @@ require_once dirname(dirname(__FILE__)) . '/functions.php';
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="contact-email">EMAIL (*)</label>
-                            <input type="email" id="contact-email" name="email" class="form-control" placeholder="Email" required>
+                            <label for="contact-email">EMAIL (opsional)</label>
+                            <input type="email" id="contact-email" name="email" class="form-control" placeholder="Email (opsional)">
                         </div>
                         <div class="form-group">
                             <label for="contact-phone">TELP / WA (*)</label>
@@ -129,19 +129,24 @@ require_once dirname(dirname(__FILE__)) . '/functions.php';
                         <label for="contact-service">PRODUK (*)</label>
                         <?php
                         $current_service = '';
-                        if (isset($page_slug)) {
-                            if ($page_slug === 'sharing-room-office') {
+                        if (isset($page_slug) && is_string($page_slug)) {
+                            $ps = strtolower(trim($page_slug));
+                            if (strpos($ps, 'sharing-room-office') === 0) {
                                 $current_service = 'Sharing Room Office';
-                            } elseif ($page_slug === 'sewa-kantor-surabaya') {
+                            } elseif (strpos($ps, 'sewa-kantor') === 0) {
                                 $current_service = 'Private Office';
-                            } elseif ($page_slug === 'virtual-office-surabaya') {
+                            } elseif (strpos($ps, 'virtual-office') === 0) {
                                 $current_service = 'Virtual Office';
-                            } elseif ($page_slug === 'meeting-room-surabaya') {
+                            } elseif (strpos($ps, 'meeting-room') === 0) {
                                 $current_service = 'Meeting Room';
-                            } elseif ($page_slug === 'coworking-space-urban-office') {
+                            } elseif (strpos($ps, 'coworking-space') === 0) {
                                 $current_service = 'Coworking Space';
-                            } elseif ($page_slug === 'event-space-55k-perjam-urbanoffice') {
+                            } elseif (strpos($ps, 'event-space') === 0) {
                                 $current_service = 'Event Space';
+                            } elseif (strpos($ps, 'pendirian-') === 0 || strpos($ps, 'perizinan-') === 0) {
+                                $current_service = 'Pendirian Legalitas';
+                            } elseif (strpos($ps, 'pajak-dan-akunting') === 0) {
+                                $current_service = 'Pajak dan Akunting';
                             }
                         }
                         ?>
@@ -182,13 +187,20 @@ require_once dirname(dirname(__FILE__)) . '/functions.php';
                     <div class="form-group" id="offer-location-group" style="display: none;">
                         <label for="contact-location">LOKASI CABANG</label>
                         <select id="contact-location" name="location" class="form-control">
-                            <option value="MERR (Surabaya Timur)">MERR (Surabaya Timur)</option>
-                            <option value="Klampis (Surabaya Timur)">Klampis (Surabaya Timur)</option>
-                            <option value="Grand Sungkono (Surabaya Barat)">Grand Sungkono (Surabaya Barat)</option>
-                            <option value="Fatmawati (Jakarta Selatan)">Fatmawati (Jakarta Selatan)</option>
-                            <option value="Gorebiz (Jakarta Timur)">Gorebiz (Jakarta Timur)</option>
-                            <option value="PTGM Tower (Gresik)">PTGM Tower (Gresik)</option>
-                            <option value="Medan">Medan</option>
+                            <?php
+                            $cf_locations = function_exists('get_locations_db_safe') ? get_locations_db_safe() : [];
+                            foreach ($cf_locations as $cf_loc):
+                                if (function_exists('is_public_location') && !is_public_location($cf_loc)) {
+                                    continue;
+                                }
+                                $cf_short = (string) ($cf_loc['short_title'] ?? '');
+                                $cf_area  = (string) ($cf_loc['location'] ?? ($cf_loc['city'] ?? ''));
+                                $cf_opt_label = (strtolower($cf_short) === strtolower($cf_area) || $cf_area === '')
+                                    ? $cf_short
+                                    : ($cf_short . ' (' . $cf_area . ')');
+                            ?>
+                                <option value="<?php echo sanitize($cf_opt_label); ?>"><?php echo sanitize($cf_opt_label); ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
@@ -208,6 +220,9 @@ require_once dirname(dirname(__FILE__)) . '/functions.php';
                     <!-- Offer Mode State Trackers -->
                     <input type="hidden" id="is-offer-mode" name="is_offer_mode" value="0">
                     <input type="hidden" id="offer-package" name="offer_package" value="">
+
+                    <!-- Inline Form Status Feedback (replaces browser alert popups) -->
+                    <div id="contact-form-feedback" class="contact-form-feedback" role="status" aria-live="polite" hidden></div>
                     
                     <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Kirim & Hubungi via WhatsApp</button>
                 </form>

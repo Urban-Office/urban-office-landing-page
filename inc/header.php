@@ -22,7 +22,7 @@ if (!isset($page_slug)) {
 $nav_vo_branches = [];     // slug => city-area label, e.g. 'surabaya-timur' => 'Surabaya Timur'
 $nav_service_cities = [];  // category => [cityLower => 'City Name']
 foreach ($locations_db as $nav_loc_slug => $nav_loc) {
-    if (empty($nav_loc['pricing'])) {
+    if (!is_public_location($nav_loc) || empty($nav_loc['pricing'])) {
         continue;
     }
     $nav_loc_cats = [];
@@ -53,10 +53,13 @@ $nav_workspace_services = [
 ];
 
 // Detect if accessing Virtual Office landing page or any of its location branches
-$is_vo_page = (
+// Exclude /blog/ articles whose slug happens to start with "virtual-office-"
+$req_uri_for_vo = $_SERVER['REQUEST_URI'] ?? '';
+$is_blog_route  = (strpos($req_uri_for_vo, '/blog/') !== false);
+$is_vo_page = !$is_blog_route && (
     (isset($page_slug) && strpos($page_slug, 'virtual-office') === 0) ||
     (isset($_GET['branch']) && !empty($_GET['branch'])) ||
-    (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/virtual-office') !== false)
+    (strpos($req_uri_for_vo, '/virtual-office') !== false)
 );
 
 // Auto-publish scheduled posts whose published_at has arrived
@@ -96,6 +99,16 @@ start_page_cache($page_slug);
     <!-- Bootstrap Icons for premium vector support -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
+    <?php
+    // Only load Google Tag Manager on live production domains for non-admin visitors
+    // so localhost / staging testing and admin previews never pollute GA4 data.
+    $gtm_host = strtolower(preg_replace('/:\d+$/', '', (string) ($_SERVER['HTTP_HOST'] ?? '')));
+    $is_local_host = in_array($gtm_host, ['localhost', '127.0.0.1', '::1', ''], true)
+        || substr($gtm_host, -6) === '.local'
+        || substr($gtm_host, -5) === '.test';
+    $enable_gtm = (!defined('DEV_MODE') || !DEV_MODE) && !$is_local_host && !is_admin();
+    ?>
+    <?php if ($enable_gtm): ?>
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -103,15 +116,20 @@ start_page_cache($page_slug);
     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
     })(window,document,'script','dataLayer','GTM-WWSSXT7P');</script>
     <!-- End Google Tag Manager -->
+    <?php else: ?>
+    <!-- GTM disabled in local/dev/admin environment to prevent GA4 data pollution -->
+    <?php endif; ?>
 
 
 </head>
 <body>
 
+    <?php if ($enable_gtm): ?>
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe title="Google Tag Manager" src="https://www.googletagmanager.com/ns.html?id=GTM-WWSSXT7P"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
+    <?php endif; ?>
 
     <!-- NAVBAR -->
     <nav class="navbar" id="navbar">
@@ -200,7 +218,7 @@ start_page_cache($page_slug);
                     <a href="<?php echo BASE_URL; ?>urban-office-karir/" class="nav-link">Karir</a>
                 </li>
                 <li class="nav-cta-btn">
-                    <a href="https://my.urbanoffice.id" class="btn btn-primary" style="padding: 10px 20px;">Login App</a>
+                    <a href="<?php echo sanitize(get_webapp_home_url()); ?>" target="_blank" rel="noopener" class="btn btn-primary" style="padding: 10px 20px;">Login App</a>
                 </li>
             </ul>
         </div>

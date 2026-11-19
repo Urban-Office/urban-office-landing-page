@@ -64,6 +64,26 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
 <!-- Pricing Card Configuration -->
 <div id="pricing">
     <?php
+    $cs_active_branch = resolve_active_booking_branch($svc_branches) ?: $svc_branches[0];
+    $cs_active_slug   = (string) ($cs_active_branch['slug'] ?? 'surabaya');
+    $cs_has_webapp    = has_webapp_booking($cs_active_slug);
+    $cs_booking_url   = $cs_has_webapp ? build_webapp_booking_url($cs_active_slug, 'coworking') : '#contact';
+    $cs_cta_target    = $cs_has_webapp ? '_blank' : '';
+
+    $active_booking_branch_slug = $cs_active_slug;
+    $pricing_branch_options = [];
+    if (count($svc_branches) > 1) {
+        foreach ($svc_branches as $sb) {
+            $sb_slug = (string) ($sb['slug'] ?? '');
+            $pricing_branch_options[] = [
+                'slug'        => $sb_slug,
+                'label'       => ($sb['short_title'] ?? ucwords(str_replace('-', ' ', $sb_slug))) . ' (' . ($sb['location'] ?? $sb['city']) . ')',
+                'address'     => (string) ($sb['address'] ?? ''),
+                'booking_url' => has_webapp_booking($sb_slug) ? build_webapp_booking_url($sb_slug, 'coworking') : '#contact',
+            ];
+        }
+    }
+
     $pricing_title = 'Paket Coworking Space';
     $packages = [
         [
@@ -73,8 +93,10 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
             'description' => 'Akses kerja fleksibel per jam di area komunal, sangat cocok untuk produktivitas singkat.',
             'features' => [],
             'hide_minimum_info' => true,
-            'cta_text' => 'Sewa Per Jam',
-            'cta_link' => '#contact'
+            'cta_text' => $cs_has_webapp ? 'Booking Per Jam' : 'Sewa Per Jam',
+            'cta_link' => $cs_booking_url,
+            'cta_target' => $cs_cta_target,
+            'is_webapp_booking' => $cs_has_webapp
         ],
         [
             'name' => 'Coworking Daily',
@@ -84,8 +106,10 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
             'description' => 'Akses hot-desking harian di area komunal dengan fasilitas lengkap selama jam operasional.',
             'features' => [],
             'hide_minimum_info' => true,
-            'cta_text' => 'Beli Daily Pass',
-            'cta_link' => '#contact'
+            'cta_text' => $cs_has_webapp ? 'Booking Daily Pass' : 'Beli Daily Pass',
+            'cta_link' => $cs_booking_url,
+            'cta_target' => $cs_cta_target,
+            'is_webapp_booking' => $cs_has_webapp
         ],
         [
             'name' => 'Coworking Monthly',
@@ -94,8 +118,10 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
             'description' => 'Akses kerja bulanan tanpa batas, pilihan ideal untuk freelancer dan startup professional.',
             'features' => [],
             'hide_minimum_info' => true,
-            'cta_text' => 'Daftar Bulanan',
-            'cta_link' => '#contact'
+            'cta_text' => $cs_has_webapp ? 'Booking Bulanan' : 'Daftar Bulanan',
+            'cta_link' => $cs_booking_url,
+            'cta_target' => $cs_cta_target,
+            'is_webapp_booking' => $cs_has_webapp
         ]
     ];
     include dirname(dirname(__FILE__)) . '/inc/components/pricing_cards.php';

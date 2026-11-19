@@ -27,6 +27,18 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
 <!-- Pricing Cards -->
 <div id="pricing">
     <?php
+    $sr_lokasi_q   = isset($_GET['lokasi']) ? strtolower(trim((string) $_GET['lokasi'])) : 'surabaya';
+    $sr_branches   = service_city_branches('sharing-room-office', $sr_lokasi_q);
+    if (empty($sr_branches)) {
+        $sr_branches = service_city_branches('sharing-room-office', 'surabaya');
+    }
+    $sr_active_branch = resolve_active_booking_branch($sr_branches) ?: ($sr_branches[0] ?? ['slug' => 'surabaya', 'short_title' => 'MERR', 'location' => 'Surabaya Timur']);
+    $sr_active_slug   = (string) ($sr_active_branch['slug'] ?? 'surabaya');
+    $sr_has_webapp    = has_webapp_booking($sr_active_slug);
+    $sr_booking_url   = $sr_has_webapp ? build_webapp_booking_url($sr_active_slug, 'sharing-room-office') : '#contact';
+    $sr_cta_target    = $sr_has_webapp ? '_blank' : '';
+    $sr_branch_label  = ($sr_active_branch['short_title'] ?? 'MERR') . ' (' . ($sr_active_branch['location'] ?? 'Surabaya Timur') . ')';
+
     $pricing_title = 'Pilihan Paket Sharing Room Office';
     $has_billing_toggle = true;
     $packages = [
@@ -39,10 +51,12 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
             'hide_minimum_info' => true,
             'description' => 'Meja kerja khusus di dalam ruangan kantor bersama (sharing office) untuk 1 pax.',
             'features' => [],
-            'cta_text' => 'Booking Sekarang',
-            'cta_link' => '#contact',
+            'cta_text' => $sr_has_webapp ? 'Booking Online' : 'Booking Sekarang',
+            'cta_link' => $sr_booking_url,
+            'cta_target' => $sr_cta_target,
+            'is_webapp_booking' => $sr_has_webapp,
             'service' => 'Sharing Room Office',
-            'branch' => 'MERR (Surabaya Timur)'
+            'branch' => $sr_branch_label
         ]
     ];
     include dirname(dirname(__FILE__)) . '/inc/components/pricing_cards.php';

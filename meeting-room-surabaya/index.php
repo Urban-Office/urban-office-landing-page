@@ -52,10 +52,42 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
 <!-- Meeting Room pricing has two axes (durasi + coffee break). We keep just 2 products
      (Small / Big) and switch the whole price list with a "coffee break" toggle, instead of
      multiplying cards. All prices are crawlable HTML text (better for SEO/LPE than an image). -->
+<?php
+$mr_active_branch = resolve_active_booking_branch($svc_branches) ?: $svc_branches[0];
+$mr_active_slug   = (string) ($mr_active_branch['slug'] ?? 'surabaya');
+$mr_has_webapp    = has_webapp_booking($mr_active_slug);
+$mr_booking_url   = $mr_has_webapp ? build_webapp_booking_url($mr_active_slug, 'meeting-room') : '#contact';
+$mr_cta_attrs     = $mr_has_webapp ? ' target="_blank" rel="noopener" data-webapp-booking-link="1"' : '';
+?>
 <section class="section" id="pricing" style="background-color: hsl(var(--clr-bg-secondary));">
     <div class="container">
         <h2 class="text-center section-title">Paket Sewa Ruang Meeting</h2>
         <p class="text-center section-subtitle">Harga transparan per durasi. Pilih dengan atau tanpa coffee break sesuai kebutuhan rapat Anda.</p>
+
+        <?php if (count($svc_branches) > 1): ?>
+            <div class="booking-branch-picker" data-booking-branch-picker data-target-scope="#main-content">
+                <span class="booking-branch-picker-label">Pilih Cabang untuk Booking Online</span>
+                <div class="booking-branch-pills" role="group" aria-label="Pilih cabang lokasi ruang meeting">
+                    <?php foreach ($svc_branches as $sb):
+                        $sb_slug = (string) ($sb['slug'] ?? '');
+                        $sb_is_active = ($sb_slug === $mr_active_slug);
+                        $sb_label = ($sb['short_title'] ?? ucwords(str_replace('-', ' ', $sb_slug))) . ' (' . ($sb['location'] ?? $sb['city']) . ')';
+                        $sb_url = has_webapp_booking($sb_slug) ? build_webapp_booking_url($sb_slug, 'meeting-room') : '#contact';
+                    ?>
+                        <button type="button"
+                                class="booking-branch-pill<?php echo $sb_is_active ? ' active' : ''; ?>"
+                                aria-pressed="<?php echo $sb_is_active ? 'true' : 'false'; ?>"
+                                data-branch-slug="<?php echo sanitize($sb_slug); ?>"
+                                data-branch-label="<?php echo sanitize($sb_label); ?>"
+                                data-branch-address="<?php echo sanitize((string) ($sb['address'] ?? '')); ?>"
+                                data-booking-url="<?php echo sanitize($sb_url); ?>">
+                            <i class="bi bi-geo-alt-fill"></i> <?php echo sanitize($sb_label); ?>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+                <p class="booking-branch-address" aria-live="polite"></p>
+            </div>
+        <?php endif; ?>
 
         <!-- Coffee break toggle (switches the price list in both cards) -->
         <div class="mr-cb-toggle-container">
@@ -95,7 +127,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
                     <p class="mr-note">+ Extra lunch Rp 30.000 / pax (opsional)</p>
                 </div>
                 <div style="margin-top: 24px;">
-                    <a href="#contact" class="btn btn-outline" style="width: 100%;">Booking Sekarang</a>
+                    <a href="<?php echo sanitize($mr_booking_url); ?>"<?php echo $mr_cta_attrs; ?> class="btn btn-outline" style="width: 100%;"><?php echo $mr_has_webapp ? 'Booking Online' : 'Booking Sekarang'; ?></a>
                 </div>
             </div>
 
@@ -126,7 +158,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
                     <p class="mr-note">+ Over time Rp 21.000 / orang / jam</p>
                 </div>
                 <div style="margin-top: 24px;">
-                    <a href="#contact" class="btn btn-primary" style="width: 100%;">Booking Sekarang</a>
+                    <a href="<?php echo sanitize($mr_booking_url); ?>"<?php echo $mr_cta_attrs; ?> class="btn btn-primary" style="width: 100%;"><?php echo $mr_has_webapp ? 'Booking Online' : 'Booking Sekarang'; ?></a>
                 </div>
             </div>
         </div>
@@ -223,7 +255,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
                 <p style="font-size: 1.1rem; color: rgba(255, 255, 255, 0.95); margin-bottom: 30px; line-height: 1.6; font-weight: 500;">
                     Lebih dari 40+ Lokasi di Indonesia. Pilih lokasi terdekat dan sesuai kebutuhan anda
                 </p>
-                <a href="#contact" class="btn" style="background-color: #FFFFFF; color: #FF6B00; padding: 14px 28px; font-weight: 800; font-size: 0.95rem; border-radius: var(--radius-full); display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; text-decoration: none; text-transform: uppercase; letter-spacing: 0.05em; transition: transform 0.2s ease, box-shadow: 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)';">
+                <a href="<?php echo sanitize($mr_booking_url); ?>"<?php echo $mr_cta_attrs; ?> class="btn" style="background-color: #FFFFFF; color: #FF6B00; padding: 14px 28px; font-weight: 800; font-size: 0.95rem; border-radius: var(--radius-full); display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; text-decoration: none; text-transform: uppercase; letter-spacing: 0.05em; transition: transform 0.2s ease, box-shadow: 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.1)';">
                     Book Now <i class="bi bi-cart-plus" style="font-size: 1.2rem; -webkit-text-stroke: 0.5px;"></i>
                 </a>
             </div>
