@@ -73,14 +73,16 @@ $contact_email = $settings['contact_email'] ?? 'info@urbanoffice.co.id';
             </div>
 
             <?php if (!empty($error)): ?>
-                <div style="background-color: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 6px; margin-bottom: 24px; font-weight: 500;">
-                    ✗ <?php echo $error; ?>
+                <div class="admin-alert admin-alert-error" role="alert">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span><?php echo sanitize($error); ?></span>
                 </div>
             <?php endif; ?>
 
             <?php if (!empty($success)): ?>
-                <div style="background-color: #dcfce7; color: #15803d; padding: 12px; border-radius: 6px; margin-bottom: 24px; font-weight: 500;">
-                    ✓ <?php echo $success; ?>
+                <div class="admin-alert admin-alert-success" role="status">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <span><?php echo sanitize($success); ?></span>
                 </div>
             <?php endif; ?>
 
@@ -89,23 +91,23 @@ $contact_email = $settings['contact_email'] ?? 'info@urbanoffice.co.id';
                     <?php echo csrf_field(); ?>
 
                     <div style="margin-bottom: 20px;">
-                        <label class="form-label">Nama Website / Perusahaan</label>
-                        <input type="text" name="site_title" class="form-control" value="<?php echo sanitize($site_title); ?>" style="background-color: white; border:1px solid #cbd5e1; width:100%;" required>
+                        <label class="form-label" for="set-title">Nama Website / Perusahaan</label>
+                        <input type="text" id="set-title" name="site_title" class="form-control" value="<?php echo sanitize($site_title); ?>" required>
                     </div>
 
                     <div style="margin-bottom: 20px;">
-                        <label class="form-label">Kontak Email Perusahaan</label>
-                        <input type="email" name="contact_email" class="form-control" value="<?php echo sanitize($contact_email); ?>" style="background-color: white; border:1px solid #cbd5e1; width:100%;" required>
+                        <label class="form-label" for="set-email">Kontak Email Perusahaan</label>
+                        <input type="email" id="set-email" name="contact_email" class="form-control" value="<?php echo sanitize($contact_email); ?>" required>
                     </div>
 
                     <div style="margin-bottom: 20px;">
-                        <label class="form-label">WhatsApp Number (Gunakan kode negara tanpa tanda tambah, cth: 6285107620100)</label>
-                        <input type="text" name="wa_number" class="form-control" value="<?php echo sanitize($wa_number); ?>" style="background-color: white; border:1px solid #cbd5e1; width:100%;" required>
+                        <label class="form-label" for="set-wa">WhatsApp Number (Gunakan kode negara tanpa tanda tambah, cth: 6285107620100)</label>
+                        <input type="text" id="set-wa" name="wa_number" class="form-control" value="<?php echo sanitize($wa_number); ?>" required>
                     </div>
 
                     <div style="margin-bottom: 20px;">
-                        <label class="form-label">Default WhatsApp Pre-filled Message</label>
-                        <textarea name="wa_text" class="form-control" style="background-color: white; border:1px solid #cbd5e1; width:100%; height:80px;" required><?php echo sanitize($wa_text); ?></textarea>
+                        <label class="form-label" for="set-watext">Default WhatsApp Pre-filled Message</label>
+                        <textarea id="set-watext" name="wa_text" class="form-control" style="height: 86px;" required><?php echo sanitize($wa_text); ?></textarea>
                     </div>
 
                     <button type="submit" name="save_settings" class="btn-admin btn-admin-primary" style="padding: 10px 24px;">

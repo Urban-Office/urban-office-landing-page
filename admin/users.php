@@ -184,14 +184,16 @@ if (isset($_GET['success']) && $_GET['success'] === 'updated') {
             </div>
 
             <?php if (!empty($error)): ?>
-                <div style="background-color: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 6px; margin-bottom: 24px; font-weight: 500;">
-                    ✗ <?php echo $error; ?>
+                <div class="admin-alert admin-alert-error" role="alert">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span><?php echo sanitize($error); ?></span>
                 </div>
             <?php endif; ?>
 
             <?php if (!empty($success)): ?>
-                <div style="background-color: #dcfce7; color: #15803d; padding: 12px; border-radius: 6px; margin-bottom: 24px; font-weight: 500;">
-                    ✓ <?php echo $success; ?>
+                <div class="admin-alert admin-alert-success" role="status">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <span><?php echo sanitize($success); ?></span>
                 </div>
             <?php endif; ?>
 
@@ -199,59 +201,59 @@ if (isset($_GET['success']) && $_GET['success'] === 'updated') {
                 <!-- Edit User Mode -->
                 <div class="admin-card" style="max-width: 600px; margin: 0 auto;">
                     <h3>Edit User: <?php echo sanitize($user_data['username']); ?></h3>
-                    <form action="" method="POST" style="margin-top: 20px;">
+                    <form action="" method="POST" style="margin-top: 16px;">
                         <?php echo csrf_field(); ?>
                         <input type="hidden" name="id" value="<?php echo $user_data['id']; ?>">
                         
                         <div style="margin-bottom: 16px;">
-                            <label class="form-label">Username *</label>
-                            <input type="text" name="username" class="form-control" value="<?php echo sanitize($user_data['username']); ?>" required style="background-color: white; border:1px solid #cbd5e1; width:100%;">
+                            <label class="form-label" for="edit-username">Username *</label>
+                            <input type="text" id="edit-username" name="username" class="form-control" value="<?php echo sanitize($user_data['username']); ?>" required>
                         </div>
 
                         <div style="margin-bottom: 16px;">
-                            <label class="form-label">Email *</label>
-                            <input type="email" name="email" class="form-control" value="<?php echo sanitize($user_data['email']); ?>" required style="background-color: white; border:1px solid #cbd5e1; width:100%;">
+                            <label class="form-label" for="edit-email">Email *</label>
+                            <input type="email" id="edit-email" name="email" class="form-control" value="<?php echo sanitize($user_data['email']); ?>" required>
                         </div>
 
                         <div style="margin-bottom: 16px;">
-                            <label class="form-label">Password Baru (Biarkan kosong jika tidak ingin mengganti)</label>
+                            <label class="form-label" for="edit-password">Password Baru (Biarkan kosong jika tidak ingin mengganti)</label>
                             <div style="position: relative; display: flex; align-items: center;">
-                                <input type="password" id="edit-password" name="password" class="form-control" placeholder="Isi hanya jika ingin mengganti password" style="background-color: white; border:1px solid #cbd5e1; width:100%; padding-right: 40px;">
-                                <button type="button" onclick="togglePassword('edit-password', this)" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: #64748b; display: flex; align-items: center; justify-content: center; height: 100%; padding: 0 5px; z-index: 10;">
-                                    <i class="bi bi-eye-slash" style="font-size: 1.15rem; margin: 0;"></i>
+                                <input type="password" id="edit-password" name="password" class="form-control" placeholder="Isi hanya jika ingin mengganti password" style="padding-right: 42px;">
+                                <button type="button" onclick="togglePassword('edit-password', this)" aria-label="Tampilkan password" style="position: absolute; right: 6px; background: none; border: none; cursor: pointer; color: #64748b; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px;">
+                                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                                 </button>
                             </div>
                         </div>
 
                         <div style="margin-bottom: 16px;">
-                            <label class="form-label">Role</label>
-                            <select name="role" class="form-control" style="background-color: white; border:1px solid #cbd5e1; width:100%;" <?php echo $user_data['id'] === $_SESSION['admin_user_id'] ? 'disabled' : ''; ?>>
+                            <label class="form-label" for="edit-role">Role</label>
+                            <select id="edit-role" name="role" class="form-control" <?php echo $user_data['id'] === $_SESSION['admin_user_id'] ? 'disabled' : ''; ?>>
                                 <option value="administrator" <?php echo $user_data['role'] === 'administrator' ? 'selected' : ''; ?>>Administrator</option>
                                 <option value="editor" <?php echo $user_data['role'] === 'editor' ? 'selected' : ''; ?>>Editor</option>
                             </select>
                             <?php if ($user_data['id'] === $_SESSION['admin_user_id']): ?>
                                 <input type="hidden" name="role" value="administrator">
-                                <small style="color: #64748b; display: block; margin-top: 4px;">Anda tidak bisa mengubah role akun Anda sendiri.</small>
+                                <p class="form-help">Anda tidak bisa mengubah role akun Anda sendiri.</p>
                             <?php endif; ?>
                         </div>
 
                         <div style="margin-bottom: 24px;">
-                            <label class="form-label">Status</label>
-                            <select name="status" class="form-control" style="background-color: white; border:1px solid #cbd5e1; width:100%;" <?php echo $user_data['id'] === $_SESSION['admin_user_id'] ? 'disabled' : ''; ?>>
+                            <label class="form-label" for="edit-status">Status</label>
+                            <select id="edit-status" name="status" class="form-control" <?php echo $user_data['id'] === $_SESSION['admin_user_id'] ? 'disabled' : ''; ?>>
                                 <option value="1" <?php echo $user_data['status'] == 1 ? 'selected' : ''; ?>>Aktif</option>
                                 <option value="0" <?php echo $user_data['status'] == 0 ? 'selected' : ''; ?>>Nonaktif</option>
                             </select>
                             <?php if ($user_data['id'] === $_SESSION['admin_user_id']): ?>
                                 <input type="hidden" name="status" value="1">
-                                <small style="color: #64748b; display: block; margin-top: 4px;">Anda tidak bisa menonaktifkan akun Anda sendiri.</small>
+                                <p class="form-help">Anda tidak bisa menonaktifkan akun Anda sendiri.</p>
                             <?php endif; ?>
                         </div>
 
                         <div style="display: flex; gap: 10px;">
-                            <button type="submit" name="update" class="btn-admin btn-admin-primary" style="flex: 1; justify-content: center; padding: 10px;">
+                            <button type="submit" name="update" class="btn-admin btn-admin-primary" style="flex: 1; padding: 10px;">
                                 Simpan Perubahan
                             </button>
-                            <a href="users.php" class="btn-admin btn-admin-danger" style="flex: 1; justify-content: center; padding: 10px; text-decoration: none; text-align: center;">
+                            <a href="users.php" class="btn-admin btn-admin-secondary" style="flex: 1; padding: 10px;">
                                 Batal
                             </a>
                         </div>
@@ -259,51 +261,51 @@ if (isset($_GET['success']) && $_GET['success'] === 'updated') {
                 </div>
             <?php else: ?>
                 <!-- List & Add User Mode -->
-                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px;">
+                <div class="admin-split-grid">
                     
                     <!-- Left Column: Add User form -->
                     <div class="admin-card">
                         <h3>Tambah User</h3>
-                        <form action="" method="POST" style="margin-top: 20px;">
+                        <form action="" method="POST" style="margin-top: 16px;">
                             <?php echo csrf_field(); ?>
                             
                             <div style="margin-bottom: 16px;">
-                                <label class="form-label">Username *</label>
-                                <input type="text" name="username" class="form-control" placeholder="Contoh: admin_dua" required style="background-color: white; border:1px solid #cbd5e1; width:100%;">
+                                <label class="form-label" for="create-username">Username *</label>
+                                <input type="text" id="create-username" name="username" class="form-control" placeholder="Contoh: admin_dua" required>
                             </div>
 
                             <div style="margin-bottom: 16px;">
-                                <label class="form-label">Email *</label>
-                                <input type="email" name="email" class="form-control" placeholder="Contoh: admin2@urbanoffice.co.id" required style="background-color: white; border:1px solid #cbd5e1; width:100%;">
+                                <label class="form-label" for="create-email">Email *</label>
+                                <input type="email" id="create-email" name="email" class="form-control" placeholder="Contoh: admin2@urbanoffice.co.id" required>
                             </div>
 
                             <div style="margin-bottom: 16px;">
-                                <label class="form-label">Password *</label>
+                                <label class="form-label" for="create-password">Password *</label>
                                 <div style="position: relative; display: flex; align-items: center;">
-                                    <input type="password" id="create-password" name="password" class="form-control" placeholder="Masukkan password kuat" required style="background-color: white; border:1px solid #cbd5e1; width:100%; padding-right: 40px;">
-                                    <button type="button" onclick="togglePassword('create-password', this)" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: #64748b; display: flex; align-items: center; justify-content: center; height: 100%; padding: 0 5px; z-index: 10;">
-                                        <i class="bi bi-eye-slash" style="font-size: 1.15rem; margin: 0;"></i>
+                                    <input type="password" id="create-password" name="password" class="form-control" placeholder="Masukkan password kuat" required style="padding-right: 42px;">
+                                    <button type="button" onclick="togglePassword('create-password', this)" aria-label="Tampilkan password" style="position: absolute; right: 6px; background: none; border: none; cursor: pointer; color: #64748b; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px;">
+                                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                                     </button>
                                 </div>
                             </div>
 
                             <div style="margin-bottom: 16px;">
-                                <label class="form-label">Role</label>
-                                <select name="role" class="form-control" style="background-color: white; border:1px solid #cbd5e1; width:100%;">
+                                <label class="form-label" for="create-role">Role</label>
+                                <select id="create-role" name="role" class="form-control">
                                     <option value="administrator">Administrator</option>
                                     <option value="editor" selected>Editor</option>
                                 </select>
                             </div>
 
                             <div style="margin-bottom: 20px;">
-                                <label class="form-label">Status</label>
-                                <select name="status" class="form-control" style="background-color: white; border:1px solid #cbd5e1; width:100%;">
+                                <label class="form-label" for="create-status">Status</label>
+                                <select id="create-status" name="status" class="form-control">
                                     <option value="1" selected>Aktif</option>
                                     <option value="0">Nonaktif</option>
                                 </select>
                             </div>
 
-                            <button type="submit" name="create" class="btn-admin btn-admin-primary" style="width: 100%; justify-content: center; padding: 10px;">
+                            <button type="submit" name="create" class="btn-admin btn-admin-primary" style="width: 100%; padding: 10px;">
                                 Tambah User
                             </button>
                         </form>
@@ -312,7 +314,7 @@ if (isset($_GET['success']) && $_GET['success'] === 'updated') {
                     <!-- Right Column: Users List table -->
                     <div class="admin-card">
                         <h3>Daftar User</h3>
-                        <div class="table-responsive" style="margin-top: 20px;">
+                        <div class="table-responsive" style="margin-top: 16px;">
                             <table class="admin-table">
                                 <thead>
                                     <tr>
@@ -339,10 +341,10 @@ if (isset($_GET['success']) && $_GET['success'] === 'updated') {
                                                     <span class="badge badge-danger">Nonaktif</span>
                                                 <?php endif; ?>
                                             </td>
-                                            <td><small><?php echo date('d M Y H:i', strtotime($u['created_at'])); ?></small></td>
+                                            <td class="admin-num" style="font-size: 0.78rem; white-space: nowrap;"><?php echo date('d M Y H:i', strtotime($u['created_at'])); ?></td>
                                             <td>
-                                                <div style="display: flex; gap: 5px;">
-                                                    <a href="?action=edit&id=<?php echo $u['id']; ?>" class="btn-admin btn-admin-primary btn-admin-sm" style="text-decoration: none;">Edit</a>
+                                                <div style="display: flex; gap: 6px;">
+                                                    <a href="?action=edit&id=<?php echo $u['id']; ?>" class="btn-admin btn-admin-primary btn-admin-sm">Edit</a>
                                                     <?php if ($u['id'] !== $_SESSION['admin_user_id']): ?>
                                                         <a href="?delete=<?php echo $u['id']; ?>" class="btn-admin btn-admin-danger btn-admin-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus user ini?')">Delete</a>
                                                     <?php endif; ?>
@@ -351,7 +353,7 @@ if (isset($_GET['success']) && $_GET['success'] === 'updated') {
                                         </tr>
                                     <?php endforeach; else: ?>
                                         <tr>
-                                            <td colspan="6" style="text-align: center; color: #94a3b8;">Belum ada user.</td>
+                                            <td colspan="6" class="admin-empty">Belum ada user.</td>
                                         </tr>
                                     <?php endif; ?>
                                 </tbody>
@@ -366,17 +368,14 @@ if (isset($_GET['success']) && $_GET['success'] === 'updated') {
     </div>
     <script>
     function togglePassword(inputId, btn) {
-        const input = document.getElementById(inputId);
-        const icon = btn.querySelector('i');
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.classList.remove('bi-eye-slash');
-            icon.classList.add('bi-eye');
-        } else {
-            input.type = 'password';
-            icon.classList.remove('bi-eye');
-            icon.classList.add('bi-eye-slash');
-        }
+        var input = document.getElementById(inputId);
+        if (!input) return;
+        var reveal = input.type === 'password';
+        input.type = reveal ? 'text' : 'password';
+        btn.setAttribute('aria-label', reveal ? 'Sembunyikan password' : 'Tampilkan password');
+        btn.innerHTML = reveal
+            ? '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>'
+            : '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
     }
     </script>
 </body>

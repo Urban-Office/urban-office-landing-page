@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_popup'])) {
             $target_url = 'https://web.whatsapp.com/send?phone=' . $clean_phone . (!empty($wa_message) ? ('&text=' . rawurlencode($wa_message)) : '');
         } else {
             if (empty($target_url)) {
-                $target_url = 'https://my.urbanoffice.co.id/beforelogin';
+                $target_url = 'https://my.urbanoffice.co.id/dashboard/home';
             }
         }
 
@@ -443,14 +443,16 @@ if ($action === 'list') {
 
             <!-- Alerts -->
             <?php if (!empty($error)): ?>
-                <div style="background-color: #fee2e2; color: #b91c1c; padding: 12px 18px; border-radius: 6px; margin-bottom: 24px; font-weight: 500;">
-                    ✗ <?php echo sanitize($error); ?>
+                <div class="admin-alert admin-alert-error" role="alert">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span><?php echo sanitize($error); ?></span>
                 </div>
             <?php endif; ?>
 
             <?php if (!empty($success)): ?>
-                <div style="background-color: #dcfce7; color: #15803d; padding: 12px 18px; border-radius: 6px; margin-bottom: 24px; font-weight: 500;">
-                    ✓ <?php echo sanitize($success); ?>
+                <div class="admin-alert admin-alert-success" role="status">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <span><?php echo sanitize($success); ?></span>
                 </div>
             <?php endif; ?>
 
@@ -613,7 +615,7 @@ if ($action === 'list') {
                 $form_alt            = $edit_data['alt_text'] ?? '';
                 $form_image          = $edit_data['image_path'] ?? '';
                 $form_link_type      = $edit_data['link_type'] ?? 'url';
-                $form_target_url     = $edit_data['target_url'] ?? 'https://my.urbanoffice.co.id/beforelogin';
+                $form_target_url     = $edit_data['target_url'] ?? 'https://my.urbanoffice.co.id/dashboard/home';
                 $form_wa_number      = !empty($edit_data['wa_number']) ? $edit_data['wa_number'] : '085107620100';
                 $form_wa_message     = $edit_data['wa_message'] ?? (!empty($edit_data['title']) ? "Halo Admin Urban Office, saya tertarik dengan promo \"" . $edit_data['title'] . "\" yang ada di website. Boleh minta info detail dan ketentuannya?" : "Halo Admin Urban Office, saya tertarik dengan promo yang ada di website. Boleh minta info detail dan ketentuannya?");
                 $form_display        = $edit_data['display_target'] ?? 'all';
@@ -675,7 +677,7 @@ if ($action === 'list') {
                                     <!-- Section 1: URL Input -->
                                     <div id="section_link_url" style="<?php echo $form_link_type === 'whatsapp' ? 'display: none;' : ''; ?>">
                                         <label class="form-label" style="font-size: 0.88rem;">Target URL Tujuan Klik</label>
-                                        <input type="text" name="target_url" id="target_url_input" class="form-control" value="<?php echo sanitize($form_link_type === 'url' ? $form_target_url : 'https://my.urbanoffice.co.id/beforelogin'); ?>" placeholder="https://my.urbanoffice.co.id/beforelogin">
+                                        <input type="text" name="target_url" id="target_url_input" class="form-control" value="<?php echo sanitize($form_link_type === 'url' ? $form_target_url : 'https://my.urbanoffice.co.id/dashboard/home'); ?>" placeholder="https://my.urbanoffice.co.id/dashboard/home">
                                         <div class="form-help">Pengunjung akan dialihkan ke halaman web ini saat mengklik banner (default: portal member).</div>
                                     </div>
 

@@ -189,30 +189,154 @@ if ($action === 'edit' && isset($_GET['id'])) {
     }
 }
 
+// Filter, Search & Sort parameters for List view
+$status_filter = isset($_GET['status']) ? trim((string) $_GET['status']) : '';
+if (!in_array($status_filter, ['', 'published', 'draft', 'scheduled'], true)) {
+    $status_filter = '';
+}
+$search_q = isset($_GET['q']) ? trim((string) $_GET['q']) : '';
+$sort_by  = isset($_GET['sort']) ? trim((string) $_GET['sort']) : 'newest';
+$sort_map = [
+    'newest'      => 'p.created_at DESC',
+    'views_desc'  => 'p.views DESC, p.created_at DESC',
+    'views_asc'   => 'p.views ASC, p.created_at DESC',
+    'title_asc'   => 'p.title ASC',
+];
+if (!isset($sort_map[$sort_by])) {
+    $sort_by = 'newest';
+}
+$order_sql = $sort_map[$sort_by];
+
+$posts_kpi = [
+    'total'       => 0,
+    'published'   => 0,
+    'draft'       => 0,
+    'scheduled'   => 0,
+    'total_views' => 0,
+    'this_month'  => 0,
+];
+$posts_chart_series = [];
+$top_viewed_posts   = [];
+$total_posts        = 0;
+$total_pages        = 1;
+$limit              = 10;
+$page               = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+
 // Get Lists of Categories, Tags, and Posts
 try {
     $all_categories = Database::fetchAll("SELECT * FROM categories ORDER BY name ASC");
     $all_tags = Database::fetchAll("SELECT * FROM tags ORDER BY name ASC");
 
-    // Fetch posts list with pagination
-    $limit = 10;
-    $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-    $offset = ($page - 1) * $limit;
-    
-    $total_posts = Database::fetch("SELECT COUNT(*) as total FROM posts")['total'];
-    $total_pages = ceil($total_posts / $limit);
-    
-    $posts_list = Database::fetchAll(
-        "SELECT p.id, p.title, p.slug, p.status, p.published_at, p.views, u.username as author_name FROM posts p
-         JOIN users u ON p.author_id = u.id
-         ORDER BY p.created_at DESC LIMIT ? OFFSET ?",
-        [$limit, $offset]
-    );
+    if ($action === 'list') {
+        // Blog KPI summary (global across all posts)
+        $kpi_row = Database::fetch(
+            "SELECT
+                COUNT(*) AS total,
+                SUM(status = 'published') AS published,
+                SUM(status = 'draft') AS draft,
+                SUM(status = 'scheduled') AS scheduled,
+                COALESCE(SUM(views), 0) AS total_views,
+                SUM(DATE_FORMAT(COALESCE(published_at, created_at), '%Y-%m') = ?) AS this_month
+             FROM posts",
+            [date('Y-m')]
+        );
+        if ($kpi_row) {
+            foreach ($posts_kpi as $k => $_v) {
+                $posts_kpi[$k] = (int) ($kpi_row[$k] ?? 0);
+            }
+        }
+
+        // Monthly publication & views trend (last 12 months, continuous timeline)
+        $monthly_raw = Database::fetchAll(
+            "SELECT DATE_FORMAT(COALESCE(published_at, created_at), '%Y-%m') AS ym,
+                    COUNT(*) AS post_count,
+                    COALESCE(SUM(views), 0) AS total_views
+             FROM posts
+             GROUP BY ym
+             ORDER BY ym DESC
+             LIMIT 12"
+        );
+        if (!empty($monthly_raw)) {
+            $monthly_raw = array_reverse($monthly_raw);
+            $month_map = [];
+            foreach ($monthly_raw as $mr) {
+                $month_map[$mr['ym']] = $mr;
+            }
+            $first_ym = $monthly_raw[0]['ym'];
+            $last_ym  = max($monthly_raw[count($monthly_raw) - 1]['ym'], date('Y-m'));
+            $cursor = new DateTime($first_ym . '-01');
+            $end_dt = new DateTime($last_ym . '-01');
+            $guard = 0;
+            while ($cursor <= $end_dt && $guard < 12) {
+                $ym = $cursor->format('Y-m');
+                $row = $month_map[$ym] ?? null;
+                $posts_chart_series[] = [
+                    'label'      => $cursor->format('M Y'),
+                    'post_count' => $row ? (int) $row['post_count'] : 0,
+                    'views'      => $row ? (int) $row['total_views'] : 0,
+                ];
+                $cursor->modify('+1 month');
+                $guard++;
+            }
+        }
+
+        // Top 5 articles by views
+        $top_viewed_posts = Database::fetchAll(
+            "SELECT id, title, slug, views, status
+             FROM posts
+             ORDER BY views DESC, created_at DESC
+             LIMIT 5"
+        );
+
+        // Filtered & paginated posts list
+        $where_parts = [];
+        $where_params = [];
+        if ($status_filter !== '') {
+            $where_parts[] = 'p.status = ?';
+            $where_params[] = $status_filter;
+        }
+        if ($search_q !== '') {
+            $where_parts[] = '(p.title LIKE ? OR p.slug LIKE ?)';
+            $like = '%' . $search_q . '%';
+            $where_params[] = $like;
+            $where_params[] = $like;
+        }
+        $where_sql = !empty($where_parts) ? ('WHERE ' . implode(' AND ', $where_parts)) : '';
+
+        $total_posts = (int) (Database::fetch("SELECT COUNT(*) AS total FROM posts p {$where_sql}", $where_params)['total'] ?? 0);
+        $total_pages = max(1, (int) ceil($total_posts / $limit));
+        if ($page > $total_pages) {
+            $page = $total_pages;
+        }
+        $offset = ($page - 1) * $limit;
+
+        $posts_list = Database::fetchAll(
+            "SELECT p.id, p.title, p.slug, p.status, p.published_at, p.views, u.username AS author_name
+             FROM posts p
+             JOIN users u ON p.author_id = u.id
+             {$where_sql}
+             ORDER BY {$order_sql}
+             LIMIT {$limit} OFFSET {$offset}",
+            $where_params
+        );
+    } else {
+        $posts_list = [];
+    }
 } catch (Exception $e) {
     error_log("Posts CRUD loading error: " . $e->getMessage());
     $all_categories = $all_tags = $posts_list = [];
     $total_pages = 1;
 }
+
+$build_posts_url = static function (array $overrides = []) use ($status_filter, $search_q, $sort_by): string {
+    $q = array_merge([
+        'status' => $status_filter,
+        'q'      => $search_q,
+        'sort'   => $sort_by === 'newest' ? '' : $sort_by,
+    ], $overrides);
+    $q = array_filter($q, static fn($v) => $v !== '' && $v !== null);
+    return BASE_URL . 'admin/posts.php' . (!empty($q) ? ('?' . http_build_query($q)) : '');
+};
 
 // Success message templates
 if (isset($_GET['success'])) {
@@ -227,38 +351,16 @@ if (isset($_GET['success'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manajemen Artikel - Urban Office</title>
-    <script>
-    window.jsErrors = [];
-    window.addEventListener('error', function(e) {
-        const msg = '❌ JS ERROR: ' + e.message + ' (' + e.filename + ':' + e.lineno + ')';
-        console.error(msg);
-        window.jsErrors.push(msg);
-        const dbg = document.getElementById('debug-errors');
-        if (dbg) {
-            dbg.style.display = 'block';
-            dbg.innerHTML += msg + '\n';
-        }
-    });
-    window.addEventListener('unhandledrejection', function(e) {
-        const msg = '❌ Promise Rejected: ' + (e.reason ? e.reason.stack || e.reason.message || e.reason : 'Unknown reason');
-        console.error(msg);
-        window.jsErrors.push(msg);
-        const dbg = document.getElementById('debug-errors');
-        if (dbg) {
-            dbg.style.display = 'block';
-            dbg.innerHTML += msg + '\n';
-        }
-    });
-    </script>
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/admin.css?v=<?php echo filemtime(dirname(dirname(__FILE__)) . '/assets/css/admin.css'); ?>">
-    
-    <!-- Include CKEditor 5 Super-build for advanced image linking and clean WYSIWYG editing -->
+    <?php if ($action === 'new' || $action === 'edit'): ?>
+    <!-- Include CKEditor 5 Super-build only on editor views -->
     <script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/super-build/ckeditor.js"></script>
     <script>
         if (typeof CKEDITOR === 'undefined') {
             document.write('<script src="<?php echo BASE_URL; ?>assets/js/ckeditor.js"><\/script>');
         }
     </script>
+    <?php endif; ?>
     <style>
     /* Styling for CKEditor height alignment */
     .ck-editor__editable_inline {
@@ -317,6 +419,290 @@ if (isset($_GET['success'])) {
     .feat-tab-btn.active { background: #6366f1; color: #fff; }
     .feat-tab-panel { display: none; }
     .feat-tab-panel.active { display: block; }
+
+    /* Posts List Insights, Chart & Windowed Pagination */
+    .posts-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+    .posts-kpi-card {
+        position: relative;
+        background: var(--admin-surface);
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius);
+        padding: 15px 16px;
+        box-shadow: var(--admin-shadow-sm);
+        overflow: hidden;
+    }
+    .posts-kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: var(--pk-accent, #1e40af);
+    }
+    .posts-kpi-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+    .posts-kpi-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--admin-muted);
+    }
+    .posts-kpi-icon {
+        width: 28px; height: 28px;
+        border-radius: 7px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--pk-bg, #eff6ff);
+        color: var(--pk-accent, #1e40af);
+        flex-shrink: 0;
+    }
+    .posts-kpi-icon svg { width: 15px; height: 15px; }
+    .posts-kpi-val {
+        font-family: var(--admin-font-mono);
+        font-variant-numeric: tabular-nums;
+        font-size: 1.55rem;
+        font-weight: 700;
+        color: var(--admin-ink);
+        margin-top: 8px;
+        line-height: 1.1;
+    }
+    .posts-kpi-sub {
+        font-size: 0.74rem;
+        color: var(--admin-subtle);
+        margin-top: 5px;
+    }
+    .posts-insights-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    .posts-insights-grid .admin-card {
+        margin-bottom: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .posts-card-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+    }
+    .posts-card-head h2 {
+        margin: 0;
+        font-size: 0.98rem;
+        font-weight: 700;
+        color: var(--admin-ink);
+    }
+    .posts-card-sub {
+        margin: 2px 0 0;
+        font-size: 0.77rem;
+        color: var(--admin-subtle);
+    }
+    .posts-seg-toggle {
+        display: inline-flex;
+        background: var(--admin-surface-muted);
+        border: 1px solid var(--admin-border);
+        border-radius: 8px;
+        padding: 3px;
+        gap: 2px;
+    }
+    .posts-seg-btn {
+        border: 0;
+        background: transparent;
+        color: var(--admin-muted);
+        font-family: inherit;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 140ms ease, color 140ms ease;
+    }
+    .posts-seg-btn:hover { color: var(--admin-ink); }
+    .posts-seg-btn.active {
+        background: var(--admin-surface);
+        color: var(--admin-primary);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    }
+    .posts-chart-wrap {
+        position: relative;
+        height: 235px;
+        width: 100%;
+    }
+    .posts-top-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 2px;
+    }
+    .posts-top-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    .posts-top-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+    }
+    .posts-top-rank {
+        font-family: var(--admin-font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--admin-primary);
+        background: #eff6ff;
+        border: 1px solid #dbeafe;
+        border-radius: 5px;
+        padding: 1px 6px;
+        flex-shrink: 0;
+    }
+    .posts-top-link {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--admin-ink);
+        text-decoration: none;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .posts-top-link:hover { color: var(--admin-primary); text-decoration: underline; }
+    .posts-top-views {
+        font-family: var(--admin-font-mono);
+        font-size: 0.77rem;
+        font-weight: 700;
+        color: var(--admin-ink-2);
+        white-space: nowrap;
+    }
+    .posts-bar-track {
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+    .posts-bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #1e40af 0%, #3b82f6 100%);
+    }
+    .posts-search-form {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .posts-filter-input {
+        height: 35px;
+        padding: 0 10px;
+        border: 1px solid var(--admin-border-strong);
+        border-radius: var(--admin-radius-sm);
+        font-family: inherit;
+        font-size: 0.82rem;
+        color: var(--admin-ink);
+        background: var(--admin-surface);
+    }
+    .posts-filter-input:focus {
+        border-color: var(--admin-primary);
+        box-shadow: 0 0 0 3px var(--admin-ring);
+        outline: none;
+    }
+    .posts-dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        display: inline-block;
+        flex-shrink: 0;
+    }
+    .posts-pager-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid var(--admin-border);
+    }
+    .posts-pager-info {
+        font-size: 0.8rem;
+        color: var(--admin-muted);
+    }
+    .posts-pager-info strong {
+        font-family: var(--admin-font-mono);
+        color: var(--admin-ink);
+    }
+    .posts-pager-nav {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+    .posts-page-btn {
+        min-width: 34px;
+        height: 34px;
+        padding: 0 10px;
+        border-radius: 8px;
+        border: 1px solid var(--admin-border-strong);
+        background: var(--admin-surface);
+        color: var(--admin-ink-2);
+        font-family: var(--admin-font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+    }
+    .posts-page-btn:hover {
+        background: var(--admin-surface-muted);
+        border-color: #94a3b8;
+        color: var(--admin-ink);
+    }
+    .posts-page-btn.active {
+        background: var(--admin-primary);
+        border-color: var(--admin-primary);
+        color: #ffffff;
+    }
+    .posts-page-btn.disabled {
+        opacity: 0.45;
+        pointer-events: none;
+        background: var(--admin-light);
+    }
+    .posts-page-ellipsis {
+        padding: 0 6px;
+        color: var(--admin-subtle);
+        font-weight: 600;
+        user-select: none;
+    }
+    .sr-only {
+        position: absolute;
+        width: 1px; height: 1px;
+        padding: 0; margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+    @media (max-width: 1080px) {
+        .posts-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .posts-insights-grid { grid-template-columns: 1fr; }
+    }
     </style>
     <script>
       // ---- Custom CKEditor Upload Adapter ----
@@ -357,17 +743,6 @@ if (isset($_GET['success'])) {
       let ckEditorInstance = null;
 
       document.addEventListener('DOMContentLoaded', function() {
-        // Display any errors that occurred before DOMContentLoaded
-        const dbg = document.getElementById('debug-errors');
-        if (dbg && window.jsErrors && window.jsErrors.length > 0) {
-            dbg.style.display = 'block';
-            window.jsErrors.forEach(err => {
-                if (!dbg.innerHTML.includes(err)) {
-                    dbg.innerHTML += err + '\n';
-                }
-            });
-        }
-
         if (document.querySelector('#content-editor')) {
           if (typeof CKEDITOR !== 'undefined' && CKEDITOR.ClassicEditor) {
             CKEDITOR.ClassicEditor
@@ -629,18 +1004,18 @@ if (isset($_GET['success'])) {
             </div>
 
             <?php if (!empty($error)): ?>
-                <div style="background-color: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 6px; margin-bottom: 24px; font-weight: 500;">
-                    ✗ <?php echo $error; ?>
+                <div class="admin-alert admin-alert-error" role="alert">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span><?php echo sanitize($error); ?></span>
                 </div>
             <?php endif; ?>
 
             <?php if (!empty($success)): ?>
-                <div style="background-color: #dcfce7; color: #15803d; padding: 12px; border-radius: 6px; margin-bottom: 24px; font-weight: 500;">
-                    ✓ <?php echo $success; ?>
+                <div class="admin-alert admin-alert-success" role="status">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <span><?php echo sanitize($success); ?></span>
                 </div>
             <?php endif; ?>
-
-            <div id="debug-errors" style="display:none; background:#fee2e2; border: 1.5px solid #ef4444; color:#b91c1c; padding:16px; margin-bottom:24px; border-radius:8px; font-family:monospace; white-space:pre-wrap; font-size:0.85rem; line-height:1.5;"></div>
 
             <!-- Action: WRITE / EDIT POST Form -->
             <?php if ($action === 'new' || $action === 'edit'): ?>
@@ -902,7 +1277,185 @@ if (isset($_GET['success'])) {
                 </div>
 
             <!-- Action: LIST POSTS view -->
-            <?php else: ?>
+            <?php else:
+                $avg_views = $posts_kpi['total'] > 0 ? round($posts_kpi['total_views'] / $posts_kpi['total'], 1) : 0;
+                $max_top_views = !empty($top_viewed_posts) ? max(1, (int) $top_viewed_posts[0]['views']) : 1;
+                $showing_from = $total_posts > 0 ? (($page - 1) * $limit + 1) : 0;
+                $showing_to   = min($total_posts, $page * $limit);
+
+                // Compute windowed pagination sequence: 1 ... (p-1) p (p+1) ... total_pages
+                $pager_items = [];
+                if ($total_pages <= 7) {
+                    for ($i = 1; $i <= $total_pages; $i++) {
+                        $pager_items[] = $i;
+                    }
+                } else {
+                    $pager_items[] = 1;
+                    $win_start = max(2, $page - 1);
+                    $win_end   = min($total_pages - 1, $page + 1);
+                    if ($page <= 3) {
+                        $win_end = 4;
+                    } elseif ($page >= $total_pages - 2) {
+                        $win_start = $total_pages - 3;
+                    }
+                    if ($win_start > 2) {
+                        $pager_items[] = 'ellipsis';
+                    }
+                    for ($i = $win_start; $i <= $win_end; $i++) {
+                        $pager_items[] = $i;
+                    }
+                    if ($win_end < $total_pages - 1) {
+                        $pager_items[] = 'ellipsis';
+                    }
+                    $pager_items[] = $total_pages;
+                }
+            ?>
+                <!-- 4 Blog KPI Summary Cards -->
+                <section class="posts-kpi-grid" aria-label="Ringkasan Statistik Artikel">
+                    <div class="posts-kpi-card" style="--pk-accent: #1e40af; --pk-bg: #eff6ff;">
+                        <div class="posts-kpi-top">
+                            <span class="posts-kpi-label">Total Artikel</span>
+                            <span class="posts-kpi-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            </span>
+                        </div>
+                        <div class="posts-kpi-val"><?php echo number_format($posts_kpi['total']); ?></div>
+                        <div class="posts-kpi-sub">Published <strong class="admin-num"><?php echo number_format($posts_kpi['published']); ?></strong> · Draft <strong class="admin-num"><?php echo number_format($posts_kpi['draft']); ?></strong></div>
+                    </div>
+
+                    <div class="posts-kpi-card" style="--pk-accent: #059669; --pk-bg: #ecfdf5;">
+                        <div class="posts-kpi-top">
+                            <span class="posts-kpi-label">Total Views Blog</span>
+                            <span class="posts-kpi-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </span>
+                        </div>
+                        <div class="posts-kpi-val"><?php echo number_format($posts_kpi['total_views']); ?></div>
+                        <div class="posts-kpi-sub">Akumulasi pembaca seluruh artikel</div>
+                    </div>
+
+                    <div class="posts-kpi-card" style="--pk-accent: #d97706; --pk-bg: #fff7ed;">
+                        <div class="posts-kpi-top">
+                            <span class="posts-kpi-label">Rata-rata Views</span>
+                            <span class="posts-kpi-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                            </span>
+                        </div>
+                        <div class="posts-kpi-val"><?php echo number_format($avg_views, 1); ?></div>
+                        <div class="posts-kpi-sub">Rata-rata views per artikel</div>
+                    </div>
+
+                    <div class="posts-kpi-card" style="--pk-accent: #7c3aed; --pk-bg: #f5f3ff;">
+                        <div class="posts-kpi-top">
+                            <span class="posts-kpi-label">Terbit Bulan Ini</span>
+                            <span class="posts-kpi-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            </span>
+                        </div>
+                        <div class="posts-kpi-val"><?php echo number_format($posts_kpi['this_month']); ?></div>
+                        <div class="posts-kpi-sub">Periode <?php echo date('M Y'); ?> · Scheduled <strong class="admin-num"><?php echo number_format($posts_kpi['scheduled']); ?></strong></div>
+                    </div>
+                </section>
+
+                <!-- 2-Column Insights: Monthly Chart + Top 5 Popular Articles -->
+                <section class="posts-insights-grid" aria-label="Grafik dan Performa Artikel">
+                    <div class="admin-card">
+                        <div class="posts-card-head">
+                            <div>
+                                <h2>Tren Publikasi &amp; Views Artikel</h2>
+                                <p class="posts-card-sub">Performa konten blog per bulan (hingga 12 bulan terakhir)</p>
+                            </div>
+                            <div class="posts-seg-toggle" role="group" aria-label="Pilih metrik grafik">
+                                <button type="button" class="posts-seg-btn active" data-posts-metric="combined" aria-pressed="true">Gabungan</button>
+                                <button type="button" class="posts-seg-btn" data-posts-metric="posts" aria-pressed="false">Artikel</button>
+                                <button type="button" class="posts-seg-btn" data-posts-metric="views" aria-pressed="false">Views</button>
+                            </div>
+                        </div>
+
+                        <?php if (!empty($posts_chart_series)): ?>
+                            <div class="posts-chart-wrap">
+                                <canvas id="postsTrendChart" role="img" aria-label="Grafik bulanan jumlah artikel terbit dan total views blog"></canvas>
+                            </div>
+                            <table class="sr-only">
+                                <caption>Data Bulanan Publikasi dan Views Artikel</caption>
+                                <thead><tr><th>Bulan</th><th>Artikel Terbit</th><th>Total Views</th></tr></thead>
+                                <tbody>
+                                    <?php foreach ($posts_chart_series as $pt): ?>
+                                        <tr>
+                                            <td><?php echo sanitize($pt['label']); ?></td>
+                                            <td><?php echo $pt['post_count']; ?></td>
+                                            <td><?php echo $pt['views']; ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php else: ?>
+                            <div class="admin-empty">Belum ada data artikel untuk ditampilkan pada grafik.</div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="admin-card">
+                        <div class="posts-card-head">
+                            <div>
+                                <h2>Top 5 Artikel Terpopuler</h2>
+                                <p class="posts-card-sub">Berdasarkan jumlah views tertinggi</p>
+                            </div>
+                            <a href="<?php echo sanitize($build_posts_url(['sort' => 'views_desc', 'page' => ''])); ?>" class="btn-admin btn-admin-secondary btn-admin-sm">Urutkan Views</a>
+                        </div>
+
+                        <?php if (!empty($top_viewed_posts)): ?>
+                            <div class="posts-top-list">
+                                <?php foreach ($top_viewed_posts as $idx => $tp):
+                                    $pct = round(((int) $tp['views'] / $max_top_views) * 100);
+                                ?>
+                                    <div class="posts-top-item">
+                                        <div class="posts-top-row">
+                                            <span class="posts-top-rank">#<?php echo $idx + 1; ?></span>
+                                            <a href="?action=edit&id=<?php echo (int) $tp['id']; ?>" class="posts-top-link" title="<?php echo sanitize($tp['title']); ?>">
+                                                <?php echo sanitize($tp['title']); ?>
+                                            </a>
+                                            <span class="posts-top-views"><?php echo number_format((int) $tp['views']); ?></span>
+                                        </div>
+                                        <div class="posts-bar-track" aria-hidden="true">
+                                            <div class="posts-bar-fill" style="width: <?php echo max(4, min(100, $pct)); ?>%;"></div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="admin-empty">Belum ada data views artikel.</div>
+                        <?php endif; ?>
+                    </div>
+                </section>
+
+                <!-- Filter, Search & Sort Toolbar -->
+                <div class="admin-toolbar">
+                    <div class="admin-pill-group" role="navigation" aria-label="Filter status artikel">
+                        <a href="<?php echo sanitize($build_posts_url(['status' => '', 'page' => ''])); ?>" class="admin-pill<?php echo $status_filter === '' ? ' active' : ''; ?>">Semua</a>
+                        <a href="<?php echo sanitize($build_posts_url(['status' => 'published', 'page' => ''])); ?>" class="admin-pill<?php echo $status_filter === 'published' ? ' active' : ''; ?>">Published</a>
+                        <a href="<?php echo sanitize($build_posts_url(['status' => 'draft', 'page' => ''])); ?>" class="admin-pill<?php echo $status_filter === 'draft' ? ' active' : ''; ?>">Draft</a>
+                        <a href="<?php echo sanitize($build_posts_url(['status' => 'scheduled', 'page' => ''])); ?>" class="admin-pill<?php echo $status_filter === 'scheduled' ? ' active' : ''; ?>">Scheduled</a>
+                    </div>
+
+                    <form method="GET" action="<?php echo BASE_URL; ?>admin/posts.php" class="posts-search-form">
+                        <?php if ($status_filter !== ''): ?>
+                            <input type="hidden" name="status" value="<?php echo sanitize($status_filter); ?>">
+                        <?php endif; ?>
+                        <input type="search" name="q" value="<?php echo sanitize($search_q); ?>" class="posts-filter-input" style="width: 220px;" placeholder="Cari judul atau slug..." aria-label="Cari artikel">
+                        <select name="sort" class="posts-filter-input" aria-label="Urutkan artikel" onchange="this.form.submit()">
+                            <option value="newest" <?php echo $sort_by === 'newest' ? 'selected' : ''; ?>>Terbaru</option>
+                            <option value="views_desc" <?php echo $sort_by === 'views_desc' ? 'selected' : ''; ?>>Views Terbanyak</option>
+                            <option value="views_asc" <?php echo $sort_by === 'views_asc' ? 'selected' : ''; ?>>Views Tersedikit</option>
+                            <option value="title_asc" <?php echo $sort_by === 'title_asc' ? 'selected' : ''; ?>>Judul A–Z</option>
+                        </select>
+                        <button type="submit" class="btn-admin btn-admin-primary btn-admin-sm" style="height: 35px; padding: 0 12px;">Cari</button>
+                        <?php if ($search_q !== '' || $status_filter !== '' || $sort_by !== 'newest'): ?>
+                            <a href="<?php echo BASE_URL; ?>admin/posts.php" class="btn-admin btn-admin-secondary btn-admin-sm" style="height: 35px; padding: 0 10px;">Reset</a>
+                        <?php endif; ?>
+                    </form>
+                </div>
+
+                <!-- Posts Table Card -->
                 <div class="admin-card">
                     <div class="table-responsive">
                         <table class="admin-table">
@@ -920,57 +1473,246 @@ if (isset($_GET['success'])) {
                                 <?php if (!empty($posts_list)): foreach ($posts_list as $post): ?>
                                     <tr>
                                         <td>
-                                            <strong><?php echo sanitize($post['title']); ?></strong><br>
-                                            <span style="font-size: 0.8rem; color: #64748b;">/blog/<?php echo sanitize($post['slug']); ?>/</span>
+                                            <strong style="color: var(--admin-ink);"><?php echo sanitize($post['title']); ?></strong><br>
+                                            <span class="admin-num" style="font-size: 0.77rem; color: var(--admin-subtle);">/blog/<?php echo sanitize($post['slug']); ?>/</span>
                                         </td>
                                         <td><?php echo sanitize($post['author_name']); ?></td>
                                         <td>
                                             <?php
                                                 $badge_class = 'badge-warning';
-                                                $badge_label = $post['status'];
+                                                $badge_label = 'Draft';
+                                                $dot_color   = '#ca8a04';
                                                 if ($post['status'] === 'published') {
                                                     $badge_class = 'badge-success';
-                                                    $badge_label = '✅ Published';
+                                                    $badge_label = 'Published';
+                                                    $dot_color   = '#059669';
                                                 } elseif ($post['status'] === 'scheduled') {
                                                     $badge_class = 'badge-info';
-                                                    $badge_label = '🕐 Scheduled';
-                                                } else {
-                                                    $badge_label = '📝 Draft';
+                                                    $badge_label = 'Scheduled';
+                                                    $dot_color   = '#2563eb';
                                                 }
                                             ?>
                                             <span class="badge <?php echo $badge_class; ?>">
+                                                <span class="posts-dot" style="background: <?php echo $dot_color; ?>;" aria-hidden="true"></span>
                                                 <?php echo $badge_label; ?>
                                             </span>
                                         </td>
                                         <td>
-                                            <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #64748b;">
-                                                👁 <?php echo number_format($post['views'] ?? 0); ?>
+                                            <span class="admin-num" style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.82rem; color: var(--admin-muted);">
+                                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                                <?php echo number_format($post['views'] ?? 0); ?>
                                             </span>
                                         </td>
-                                        <td><?php echo $post['published_at'] ? date('d M Y H:i', strtotime($post['published_at'])) : '-'; ?></td>
-                                        <td>
+                                        <td class="admin-num" style="font-size: 0.8rem; color: var(--admin-subtle); white-space: nowrap;"><?php echo $post['published_at'] ? date('d M Y H:i', strtotime($post['published_at'])) : '—'; ?></td>
+                                        <td style="white-space: nowrap;">
                                             <a href="?action=edit&id=<?php echo $post['id']; ?>" class="btn-admin btn-admin-secondary btn-admin-sm">Edit</a>
                                             <a href="?action=delete&id=<?php echo $post['id']; ?>" class="btn-admin btn-admin-danger btn-admin-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus artikel ini?')">Delete</a>
                                         </td>
                                     </tr>
                                 <?php endforeach; else: ?>
                                     <tr>
-                                        <td colspan="6" style="text-align: center; color: #94a3b8;">Belum ada artikel yang ditulis.</td>
+                                        <td colspan="6" class="admin-empty">
+                                            <?php echo $search_q !== '' ? 'Tidak ada artikel yang cocok dengan kata kunci tersebut.' : 'Belum ada artikel yang ditulis.'; ?>
+                                        </td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- Pagination -->
-                    <?php if ($total_pages > 1): ?>
-                        <div style="display: flex; gap: 6px; justify-content: center; margin-top: 30px;">
-                            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                                <a href="?page=<?php echo $i; ?>" class="btn-admin <?php echo $i === $page ? 'btn-admin-primary' : 'btn-admin-secondary'; ?> btn-admin-sm"><?php echo $i; ?></a>
-                            <?php endfor; ?>
+                    <!-- Compact Windowed Pagination -->
+                    <?php if ($total_posts > 0): ?>
+                        <div class="posts-pager-bar">
+                            <div class="posts-pager-info">
+                                Menampilkan <strong><?php echo number_format($showing_from); ?>–<?php echo number_format($showing_to); ?></strong> dari <strong><?php echo number_format($total_posts); ?></strong> artikel
+                                (Halaman <strong><?php echo $page; ?></strong> / <strong><?php echo $total_pages; ?></strong>)
+                            </div>
+
+                            <?php if ($total_pages > 1): ?>
+                                <nav class="posts-pager-nav" aria-label="Navigasi halaman artikel">
+                                    <a href="<?php echo sanitize($build_posts_url(['page' => max(1, $page - 1)])); ?>"
+                                       class="posts-page-btn<?php echo $page <= 1 ? ' disabled' : ''; ?>"
+                                       aria-label="Halaman sebelumnya"
+                                       <?php echo $page <= 1 ? 'aria-disabled="true" tabindex="-1"' : ''; ?>>
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                        Prev
+                                    </a>
+
+                                    <?php foreach ($pager_items as $item): ?>
+                                        <?php if ($item === 'ellipsis'): ?>
+                                            <span class="posts-page-ellipsis" aria-hidden="true">&hellip;</span>
+                                        <?php else: ?>
+                                            <a href="<?php echo sanitize($build_posts_url(['page' => $item])); ?>"
+                                               class="posts-page-btn<?php echo $item === $page ? ' active' : ''; ?>"
+                                               <?php echo $item === $page ? 'aria-current="page"' : ''; ?>>
+                                                <?php echo $item; ?>
+                                            </a>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+
+                                    <a href="<?php echo sanitize($build_posts_url(['page' => min($total_pages, $page + 1)])); ?>"
+                                       class="posts-page-btn<?php echo $page >= $total_pages ? ' disabled' : ''; ?>"
+                                       aria-label="Halaman berikutnya"
+                                       <?php echo $page >= $total_pages ? 'aria-disabled="true" tabindex="-1"' : ''; ?>>
+                                        Next
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    </a>
+                                </nav>
+                            <?php endif; ?>
                         </div>
                     <?php endif; ?>
                 </div>
+
+                <?php if (!empty($posts_chart_series)): ?>
+                <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+                <script>
+                (function () {
+                    var canvas = document.getElementById('postsTrendChart');
+                    if (!canvas || typeof Chart === 'undefined') return;
+
+                    var series = <?php echo json_encode($posts_chart_series, JSON_UNESCAPED_UNICODE); ?>;
+                    var labels = series.map(function (d) { return d.label; });
+                    var counts = series.map(function (d) { return d.post_count; });
+                    var views  = series.map(function (d) { return d.views; });
+                    var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+                    var chart = null;
+
+                    function buildChart(mode) {
+                        if (chart) chart.destroy();
+
+                        var datasets = [];
+                        var scales = {
+                            x: {
+                                grid: { display: false },
+                                border: { color: '#e2e8f0' },
+                                ticks: { color: '#64748b', font: { family: "'Fira Sans', sans-serif", size: 11 } }
+                            }
+                        };
+
+                        if (mode === 'combined' || mode === 'posts') {
+                            datasets.push({
+                                type: 'bar',
+                                label: 'Artikel Terbit',
+                                data: counts,
+                                yAxisID: 'yPosts',
+                                backgroundColor: function (context) {
+                                    var c = context.chart;
+                                    if (!c.chartArea) return '#2563eb';
+                                    var g = c.ctx.createLinearGradient(0, c.chartArea.top, 0, c.chartArea.bottom);
+                                    g.addColorStop(0, '#1e40af');
+                                    g.addColorStop(1, '#3b82f6');
+                                    return g;
+                                },
+                                hoverBackgroundColor: '#1d4ed8',
+                                borderRadius: { topLeft: 6, topRight: 6 },
+                                borderSkipped: 'bottom',
+                                maxBarThickness: 34
+                            });
+                            scales.yPosts = {
+                                type: 'linear',
+                                position: 'left',
+                                beginAtZero: true,
+                                border: { display: false },
+                                grid: { color: '#f1f5f9', drawTicks: false },
+                                ticks: { color: '#64748b', precision: 0, padding: 8, font: { family: "'Fira Code', monospace", size: 11 } }
+                            };
+                        }
+
+                        if (mode === 'combined' || mode === 'views') {
+                            datasets.push({
+                                type: mode === 'views' ? 'bar' : 'line',
+                                label: 'Total Views',
+                                data: views,
+                                yAxisID: mode === 'combined' ? 'yViews' : 'yPosts',
+                                borderColor: '#d97706',
+                                backgroundColor: mode === 'views' ? '#f59e0b' : 'rgba(217, 119, 6, 0.14)',
+                                hoverBackgroundColor: '#d97706',
+                                borderWidth: mode === 'views' ? 0 : 2.5,
+                                borderRadius: mode === 'views' ? { topLeft: 6, topRight: 6 } : 0,
+                                maxBarThickness: 34,
+                                fill: mode === 'combined',
+                                tension: 0.35,
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                pointBackgroundColor: '#ffffff',
+                                pointBorderColor: '#d97706',
+                                pointBorderWidth: 2
+                            });
+
+                            if (mode === 'combined') {
+                                scales.yViews = {
+                                    type: 'linear',
+                                    position: 'right',
+                                    beginAtZero: true,
+                                    border: { display: false },
+                                    grid: { drawOnChartArea: false },
+                                    ticks: { color: '#b45309', precision: 0, padding: 8, font: { family: "'Fira Code', monospace", size: 11 } }
+                                };
+                            } else {
+                                scales.yPosts = {
+                                    type: 'linear',
+                                    position: 'left',
+                                    beginAtZero: true,
+                                    border: { display: false },
+                                    grid: { color: '#f1f5f9', drawTicks: false },
+                                    ticks: { color: '#64748b', precision: 0, padding: 8, font: { family: "'Fira Code', monospace", size: 11 } }
+                                };
+                            }
+                        }
+
+                        chart = new Chart(canvas.getContext('2d'), {
+                            data: { labels: labels, datasets: datasets },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                animation: prefersReduced ? false : { duration: 380, easing: 'easeOutQuart' },
+                                interaction: { mode: 'index', intersect: false },
+                                plugins: {
+                                    legend: {
+                                        display: mode === 'combined',
+                                        position: 'top',
+                                        align: 'start',
+                                        labels: {
+                                            boxWidth: 10,
+                                            boxHeight: 10,
+                                            usePointStyle: true,
+                                            color: '#475569',
+                                            font: { family: "'Fira Sans', sans-serif", size: 12, weight: '600' }
+                                        }
+                                    },
+                                    tooltip: {
+                                        backgroundColor: '#0f172a',
+                                        titleColor: '#f8fafc',
+                                        bodyColor: '#e2e8f0',
+                                        padding: 11,
+                                        cornerRadius: 8,
+                                        titleFont: { family: "'Fira Sans', sans-serif", size: 12, weight: '600' },
+                                        bodyFont: { family: "'Fira Code', monospace", size: 12 }
+                                    }
+                                },
+                                scales: scales
+                            }
+                        });
+                    }
+
+                    var btns = document.querySelectorAll('.posts-seg-btn[data-posts-metric]');
+                    btns.forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                            var mode = btn.getAttribute('data-posts-metric');
+                            btns.forEach(function (b) {
+                                var active = b === btn;
+                                b.classList.toggle('active', active);
+                                b.setAttribute('aria-pressed', active ? 'true' : 'false');
+                            });
+                            buildChart(mode);
+                        });
+                    });
+
+                    buildChart('combined');
+                })();
+                </script>
+                <?php endif; ?>
             <?php endif; ?>
 
         </main>

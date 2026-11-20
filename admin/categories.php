@@ -89,36 +89,38 @@ try {
             </div>
 
             <?php if (!empty($error)): ?>
-                <div style="background-color: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 6px; margin-bottom: 24px; font-weight: 500;">
-                    ✗ <?php echo $error; ?>
+                <div class="admin-alert admin-alert-error" role="alert">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span><?php echo sanitize($error); ?></span>
                 </div>
             <?php endif; ?>
 
             <?php if (!empty($success)): ?>
-                <div style="background-color: #dcfce7; color: #15803d; padding: 12px; border-radius: 6px; margin-bottom: 24px; font-weight: 500;">
-                    ✓ <?php echo $success; ?>
+                <div class="admin-alert admin-alert-success" role="status">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <span><?php echo sanitize($success); ?></span>
                 </div>
             <?php endif; ?>
 
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px;">
+            <div class="admin-split-grid">
                 
                 <!-- Left Column: Add Category form -->
                 <div class="admin-card">
                     <h3>Tambah Kategori</h3>
-                    <form action="" method="POST" style="margin-top: 20px;">
+                    <form action="" method="POST" style="margin-top: 16px;">
                         <?php echo csrf_field(); ?>
                         
                         <div style="margin-bottom: 16px;">
-                            <label class="form-label">Nama Kategori *</label>
-                            <input type="text" name="name" class="form-control" placeholder="Contoh: Bisnis WFA" required style="background-color: white; border:1px solid #cbd5e1; width:100%;">
+                            <label class="form-label" for="cat-name">Nama Kategori *</label>
+                            <input type="text" id="cat-name" name="name" class="form-control" placeholder="Contoh: Bisnis WFA" required>
                         </div>
 
                         <div style="margin-bottom: 20px;">
-                            <label class="form-label">Slug (Optional)</label>
-                            <input type="text" name="slug" class="form-control" placeholder="contoh-bisnis-wfa" style="background-color: white; border:1px solid #cbd5e1; width:100%;">
+                            <label class="form-label" for="cat-slug">Slug (Opsional)</label>
+                            <input type="text" id="cat-slug" name="slug" class="form-control" placeholder="contoh-bisnis-wfa">
                         </div>
 
-                        <button type="submit" name="create" class="btn-admin btn-admin-primary" style="width: 100%; justify-content: center; padding: 10px;">
+                        <button type="submit" name="create" class="btn-admin btn-admin-primary" style="width: 100%; padding: 10px;">
                             Tambah Kategori
                         </button>
                     </form>
@@ -127,7 +129,7 @@ try {
                 <!-- Right Column: Categories List table -->
                 <div class="admin-card">
                     <h3>Daftar Kategori</h3>
-                    <div class="table-responsive" style="margin-top: 20px;">
+                    <div class="table-responsive" style="margin-top: 16px;">
                         <table class="admin-table">
                             <thead>
                                 <tr>
@@ -141,15 +143,15 @@ try {
                                 <?php if (!empty($categories)): foreach ($categories as $cat): ?>
                                     <tr>
                                         <td><strong><?php echo sanitize($cat['name']); ?></strong></td>
-                                        <td><code>/category/<?php echo sanitize($cat['slug']); ?>/</code></td>
-                                        <td><span class="badge badge-info"><?php echo $cat['post_count']; ?></span></td>
+                                        <td><span class="admin-code-pill">/category/<?php echo sanitize($cat['slug']); ?>/</span></td>
+                                        <td><span class="badge badge-info admin-num"><?php echo $cat['post_count']; ?></span></td>
                                         <td>
                                             <a href="?delete=<?php echo $cat['id']; ?>" class="btn-admin btn-admin-danger btn-admin-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus kategori ini? Seluruh relasi artikel akan terputus.')">Delete</a>
                                         </td>
                                     </tr>
                                 <?php endforeach; else: ?>
                                     <tr>
-                                        <td colspan="4" style="text-align: center; color: #94a3b8;">Belum ada kategori.</td>
+                                        <td colspan="4" class="admin-empty">Belum ada kategori.</td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>

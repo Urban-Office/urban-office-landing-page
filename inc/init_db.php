@@ -458,6 +458,31 @@ try {
         echo "Applied SEO/GEO meta migration ($migrationKey) for " . count($seo_updates) . " pages.\n";
     }
 
+    // 14. First-Party Analytics Events table (permanent storage, indexed for fast reporting)
+    $db->exec("CREATE TABLE IF NOT EXISTS analytics_events (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        session_hash VARCHAR(64) NOT NULL,
+        event_name VARCHAR(50) NOT NULL,
+        traffic_channel VARCHAR(32) NOT NULL DEFAULT 'direct',
+        traffic_source VARCHAR(100) NOT NULL DEFAULT 'direct',
+        traffic_medium VARCHAR(64) NOT NULL DEFAULT 'none',
+        traffic_campaign VARCHAR(150) DEFAULT NULL,
+        page_path VARCHAR(255) NOT NULL DEFAULT '/',
+        landing_page VARCHAR(255) DEFAULT NULL,
+        service_name VARCHAR(100) DEFAULT NULL,
+        branch_slug VARCHAR(80) DEFAULT NULL,
+        wa_channel VARCHAR(20) DEFAULT NULL,
+        event_detail VARCHAR(255) DEFAULT NULL,
+        device_type VARCHAR(16) NOT NULL DEFAULT 'desktop',
+        ip_address VARCHAR(45) DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_ae_created_event (created_at, event_name),
+        INDEX idx_ae_channel_created (traffic_channel, created_at),
+        INDEX idx_ae_page_created (page_path(120), created_at),
+        INDEX idx_ae_session_created (session_hash, created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    echo "Verified table: analytics_events\n";
+
     echo "Database initialization completed successfully.\n";
 
 } catch (Exception $e) {

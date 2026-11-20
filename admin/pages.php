@@ -177,14 +177,16 @@ if (isset($_GET['created']) && $_GET['created'] == 1) {
             </div>
 
             <?php if (!empty($error)): ?>
-                <div style="background-color: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 6px; margin-bottom: 24px; font-weight: 500;">
-                    ✗ <?php echo $error; ?>
+                <div class="admin-alert admin-alert-error" role="alert">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span><?php echo sanitize($error); ?></span>
                 </div>
             <?php endif; ?>
 
             <?php if (!empty($success)): ?>
-                <div style="background-color: #dcfce7; color: #15803d; padding: 12px; border-radius: 6px; margin-bottom: 24px; font-weight: 500;">
-                    ✓ <?php echo $success; ?>
+                <div class="admin-alert admin-alert-success" role="status">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <span><?php echo sanitize($success); ?></span>
                 </div>
             <?php endif; ?>
 
@@ -313,16 +315,16 @@ if (isset($_GET['created']) && $_GET['created'] == 1) {
                                 <?php if (!empty($pages_list)): foreach ($pages_list as $page): ?>
                                     <tr>
                                         <td><strong><?php echo sanitize($page['title']); ?></strong></td>
-                                        <td><code>/<?php echo sanitize($page['slug']); ?>/</code></td>
-                                        <td><?php echo date('d M Y H:i', strtotime($page['updated_at'])); ?></td>
-                                        <td>
+                                        <td><span class="admin-code-pill">/<?php echo sanitize($page['slug']); ?>/</span></td>
+                                        <td class="admin-num" style="font-size: 0.8rem; color: var(--admin-subtle); white-space: nowrap;"><?php echo date('d M Y H:i', strtotime($page['updated_at'])); ?></td>
+                                        <td style="white-space: nowrap;">
                                             <a href="?action=edit&id=<?php echo $page['id']; ?>" class="btn-admin btn-admin-secondary btn-admin-sm">Edit SEO Meta</a>
-                                            <a href="<?php echo BASE_URL . $page['slug']; ?>" target="_blank" class="btn-admin btn-admin-secondary btn-admin-sm" style="color:var(--admin-primary);">View Page</a>
+                                            <a href="<?php echo BASE_URL . $page['slug']; ?>" target="_blank" rel="noopener" class="btn-admin btn-admin-secondary btn-admin-sm" style="color: var(--admin-primary);">View Page</a>
                                         </td>
                                     </tr>
                                 <?php endforeach; else: ?>
                                     <tr>
-                                        <td colspan="4" style="text-align: center; color: #94a3b8;">Belum ada halaman disematkan di database.</td>
+                                        <td colspan="4" class="admin-empty">Belum ada halaman disematkan di database.</td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>

@@ -61,7 +61,7 @@ try {
                         <tbody>
                             <?php if (!empty($logs)): foreach ($logs as $log): ?>
                                 <tr>
-                                    <td style="white-space: nowrap;"><?php echo date('d M Y H:i:s', strtotime($log['created_at'])); ?></td>
+                                    <td class="admin-num" style="white-space: nowrap; font-size: 0.78rem; color: var(--admin-subtle);"><?php echo date('d M Y H:i:s', strtotime($log['created_at'])); ?></td>
                                     <td>
                                         <strong><?php echo sanitize($log['username'] ?: 'Sistem/Guest'); ?></strong>
                                     </td>
@@ -76,11 +76,11 @@ try {
                                         </span>
                                     </td>
                                     <td><?php echo sanitize($log['details']); ?></td>
-                                    <td><code><?php echo sanitize($log['ip_address']); ?></code></td>
+                                    <td><span class="admin-code-pill"><?php echo sanitize($log['ip_address']); ?></span></td>
                                 </tr>
                             <?php endforeach; else: ?>
                                 <tr>
-                                    <td colspan="5" style="text-align: center; color: #94a3b8;">Belum ada log tercatat.</td>
+                                    <td colspan="5" class="admin-empty">Belum ada log tercatat.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -89,7 +89,7 @@ try {
 
                 <!-- Pagination -->
                 <?php if ($total_pages > 1): ?>
-                    <div style="display: flex; gap: 6px; justify-content: center; margin-top: 30px;">
+                    <div class="admin-pagination">
                         <?php for ($i = 1; $i <= $total_pages; $i++): ?>
                             <a href="?page=<?php echo $i; ?>" class="btn-admin <?php echo $i === $page ? 'btn-admin-primary' : 'btn-admin-secondary'; ?> btn-admin-sm"><?php echo $i; ?></a>
                         <?php endfor; ?>

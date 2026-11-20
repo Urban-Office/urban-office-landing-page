@@ -167,7 +167,10 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'footer.php') {
             ];
         }
     ?>
-    <script>window.branchPricingData = <?php echo json_encode($branch_pricing_js, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;</script>
+    <script>
+        window.branchPricingData = <?php echo json_encode($branch_pricing_js, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+        window.uoAnalyticsEndpoint = <?php echo json_encode(BASE_URL . 'inc/analytics_track.php', JSON_UNESCAPED_SLASHES); ?>;
+    </script>
     <?php endif; ?>
 
     <!-- Frontend Script file -->

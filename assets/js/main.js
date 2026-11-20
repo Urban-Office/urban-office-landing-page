@@ -212,6 +212,55 @@ function uoAppendAttributionToUrl(rawUrl) {
     }
 }
 
+function uoGetSessionId() {
+    const key = 'uo_sid_v1';
+    try {
+        let sid = sessionStorage.getItem(key);
+        if (!sid) {
+            sid = 's_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+            sessionStorage.setItem(key, sid);
+        }
+        return sid;
+    } catch (e) {
+        return '';
+    }
+}
+
+function uoSendFirstPartyEvent(eventName, extra = {}) {
+    const endpoint = window.uoAnalyticsEndpoint;
+    if (!endpoint || !eventName) return;
+    try {
+        const attr = uoGetAttribution();
+        const body = JSON.stringify({
+            session_id: uoGetSessionId(),
+            event_name: eventName,
+            traffic_channel: attr ? attr.channel : 'direct',
+            traffic_source: attr ? attr.source : 'direct',
+            traffic_medium: attr ? attr.medium : 'none',
+            traffic_campaign: (attr && attr.campaign) ? attr.campaign : '',
+            page_path: window.location.pathname,
+            landing_page: attr ? attr.landing_page : window.location.pathname,
+            service_name: extra.service_name || '',
+            branch_slug: extra.branch_slug || '',
+            wa_channel: extra.wa_channel || '',
+            event_detail: extra.event_detail || ''
+        });
+        if (navigator.sendBeacon) {
+            const blob = new Blob([body], { type: 'application/json' });
+            navigator.sendBeacon(endpoint, blob);
+        } else {
+            fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body,
+                keepalive: true,
+                credentials: 'same-origin'
+            }).catch(() => {});
+        }
+    } catch (e) {}
+}
+window.uoSendFirstPartyEvent = uoSendFirstPartyEvent;
+
 function initAttributionAndTracking() {
     const key = 'uo_attribution_v1';
     const fresh = uoDetectAttributionFromEntry();
@@ -242,6 +291,11 @@ function initAttributionAndTracking() {
         });
     } catch (e) {}
 
+    // Record first-party page_view for Urban Office CMS Analytics
+    uoSendFirstPartyEvent('page_view', {
+        event_detail: (document.title || '').slice(0, 180)
+    });
+
     // Track clicks on ALL Web App Booking / Portal links & pass through UTM/gclid seamlessly
     document.addEventListener('click', (e) => {
         const link = e.target.closest('a[href*="my.urbanoffice.co.id"]');
@@ -257,20 +311,29 @@ function initAttributionAndTracking() {
             const parsed = new URL(enrichedHref, window.location.origin);
             const attr = uoGetAttribution();
             const isBookingForm = parsed.pathname.includes('/dashboard/bookingform');
+            const evtName = isBookingForm ? 'booking_cta_click' : 'webapp_portal_click';
+            const bookingService = parsed.searchParams.get('room_type') || 'General';
+            const ctaText = (link.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80);
 
             window.dataLayer = window.dataLayer || [];
             window.dataLayer.push({
-                event: isBookingForm ? 'booking_cta_click' : 'webapp_portal_click',
-                booking_service: parsed.searchParams.get('room_type') || 'General',
+                event: evtName,
+                booking_service: bookingService,
                 booking_city_id: parsed.searchParams.get('city_id') || '',
                 booking_location_id: parsed.searchParams.get('location_id') || '',
-                cta_text: (link.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80),
+                cta_text: ctaText,
                 page_path: window.location.pathname,
                 traffic_channel: attr.channel,
                 traffic_source: attr.source,
                 traffic_medium: attr.medium,
                 traffic_campaign: attr.campaign || '(none)',
                 landing_page: attr.landing_page
+            });
+
+            uoSendFirstPartyEvent(evtName, {
+                service_name: bookingService,
+                branch_slug: parsed.searchParams.get('location_id') ? ('loc_' + parsed.searchParams.get('location_id')) : '',
+                event_detail: ctaText
             });
         } catch (err) {}
     });
@@ -657,6 +720,13 @@ function initContactForm() {
                     traffic_campaign: (sessionAttr && sessionAttr.campaign) ? sessionAttr.campaign : '(none)',
                     landing_page: sessionAttr ? sessionAttr.landing_page : window.location.pathname
                 });
+                if (typeof window.uoSendFirstPartyEvent === 'function') {
+                    window.uoSendFirstPartyEvent('lead_form_submit', {
+                        service_name: service,
+                        branch_slug: locationVal || '',
+                        event_detail: isOfferMode ? (`Offer: ${offerPackage || service}`) : 'Consultation Form'
+                    });
+                }
                 if (typeof window.uoTrackWhatsAppClick === 'function') {
                     window.uoTrackWhatsAppClick('sales', 'contact_form', service);
                 }
@@ -1105,6 +1175,13 @@ function triggerSearch(event) {
                 traffic_medium: searchAttr ? searchAttr.medium : 'none',
                 landing_page: searchAttr ? searchAttr.landing_page : window.location.pathname
             });
+            if (typeof window.uoSendFirstPartyEvent === 'function') {
+                window.uoSendFirstPartyEvent('homepage_search', {
+                    service_name: uoSearchState.serviceName,
+                    branch_slug: chosenBranch.slug,
+                    event_detail: `matched:${rawQuery || chosenBranch.label}`
+                });
+            }
         } catch (err) {}
         window.location.href = chosenBranch.services[uoSearchState.category].landingUrl;
         return;
@@ -1127,6 +1204,13 @@ function triggerSearch(event) {
                 traffic_medium: searchAttr ? searchAttr.medium : 'none',
                 landing_page: searchAttr ? searchAttr.landing_page : window.location.pathname
             });
+            if (typeof window.uoSendFirstPartyEvent === 'function') {
+                window.uoSendFirstPartyEvent('homepage_search', {
+                    service_name: uoSearchState.serviceName,
+                    branch_slug: '',
+                    event_detail: `unmatched:${rawQuery}`
+                });
+            }
         } catch (err) {}
     }
 
@@ -2431,6 +2515,13 @@ function uoTrackWhatsAppClick(channel, source, context = '') {
             traffic_campaign: (attr && attr.campaign) ? attr.campaign : '(none)',
             landing_page: attr ? attr.landing_page : window.location.pathname
         });
+        if (typeof window.uoSendFirstPartyEvent === 'function') {
+            window.uoSendFirstPartyEvent('whatsapp_click', {
+                wa_channel: channel || 'sales',
+                service_name: context || '',
+                event_detail: `${source || 'direct_cta'} | ${context || document.title || window.location.pathname}`
+            });
+        }
     } catch (e) {}
 }
 window.uoTrackWhatsAppClick = uoTrackWhatsAppClick;
