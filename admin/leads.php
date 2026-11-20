@@ -159,7 +159,7 @@ $build_leads_url = static function (array $overrides = []) use ($filter, $search
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manajemen Leads - Urban Office CMS</title>
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/admin.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/admin.css?v=<?php echo filemtime(dirname(__DIR__) . '/assets/css/admin.css'); ?>">
     <style>
         .leads-search-form {
             display: flex;

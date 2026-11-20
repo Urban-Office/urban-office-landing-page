@@ -332,7 +332,7 @@ if ($action === 'list') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo ($action === 'add' ? 'Tambah Pop-up' : ($action === 'edit' ? 'Edit Pop-up' : 'Kelola Pop-up Banner')); ?> - Urban Office</title>
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/admin.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/admin.css?v=<?php echo filemtime(dirname(__DIR__) . '/assets/css/admin.css'); ?>">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
         .badge-pill {
