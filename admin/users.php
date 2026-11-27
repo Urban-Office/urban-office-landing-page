@@ -6,14 +6,12 @@
 require_once __DIR__ . '/auth.php';
 
 // Enforce that only logged in administrators can access user management
-if ($_SESSION['admin_role'] !== 'administrator') {
-    header('Location: ' . BASE_URL . 'admin/index.php');
-    exit;
-}
+require_admin_role('administrator');
 
 $action = isset($_GET['action']) ? $_GET['action'] : 'list';
 $error = '';
 $success = '';
+$allowed_roles = ['administrator', 'editor'];
 
 // Handle Create User
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
@@ -21,16 +19,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
     if (!verify_csrf_token($token)) {
         $error = 'Validasi CSRF token gagal.';
     } else {
-        $username = trim($_POST['username']);
-        $email = trim($_POST['email']);
-        $password = trim($_POST['password']);
-        $role = trim($_POST['role']);
-        $status = intval($_POST['status']);
+        $username = trim((string)($_POST['username'] ?? ''));
+        $email = trim((string)($_POST['email'] ?? ''));
+        $password = (string)($_POST['password'] ?? '');
+        $role = trim((string)($_POST['role'] ?? 'editor'));
+        $status = (intval($_POST['status'] ?? 1) === 1) ? 1 : 0;
+
+        if (!in_array($role, $allowed_roles, true)) {
+            $role = 'editor';
+        }
 
         if (empty($username) || empty($email) || empty($password)) {
             $error = 'Semua kolom bertanda * wajib diisi.';
+        } elseif (!preg_match('/^[a-zA-Z0-9._-]{3,50}$/', $username)) {
+            $error = 'Username harus 3–50 karakter dan hanya boleh huruf, angka, titik, strip, atau garis bawah.';
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = 'Format email tidak valid.';
+        } elseif (strlen($password) < 8) {
+            $error = 'Password minimal 8 karakter.';
         } else {
             try {
                 // Check duplicate username and email
@@ -47,11 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
                         "INSERT INTO users (username, password, email, role, status) VALUES (?, ?, ?, ?, ?)",
                         [$username, $hashed_password, $email, $role, $status]
                     );
-                    log_activity($_SESSION['admin_user_id'], 'create_user', "Created user account: " . sanitize($username) . " ($role)");
+                    log_activity($_SESSION['admin_user_id'], 'create_user', "Created user account: $username ($role)");
                     $success = 'User baru berhasil ditambahkan!';
                 }
             } catch (Exception $e) {
-                $error = 'Gagal menyimpan user: ' . $e->getMessage();
+                $error = admin_friendly_error('Gagal menyimpan user.', $e);
             }
         }
     }
@@ -63,23 +69,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     if (!verify_csrf_token($token)) {
         $error = 'Validasi CSRF token gagal.';
     } else {
-        $id = intval($_POST['id']);
-        $username = trim($_POST['username']);
-        $email = trim($_POST['email']);
-        $password = trim($_POST['password']);
-        $role = trim($_POST['role']);
-        $status = intval($_POST['status']);
+        $id = intval($_POST['id'] ?? 0);
+        $username = trim((string)($_POST['username'] ?? ''));
+        $email = trim((string)($_POST['email'] ?? ''));
+        $password = (string)($_POST['password'] ?? '');
+        $role = trim((string)($_POST['role'] ?? 'editor'));
+        $status = (intval($_POST['status'] ?? 1) === 1) ? 1 : 0;
+
+        if (!in_array($role, $allowed_roles, true)) {
+            $role = 'editor';
+        }
 
         // Prevent admin from deactivating or demoting themselves
-        if ($id === $_SESSION['admin_user_id']) {
+        if ($id === (int)$_SESSION['admin_user_id']) {
             $role = 'administrator';
             $status = 1;
         }
 
         if (empty($username) || empty($email)) {
             $error = 'Kolom Username dan Email wajib diisi.';
+        } elseif (!preg_match('/^[a-zA-Z0-9._-]{3,50}$/', $username)) {
+            $error = 'Username harus 3–50 karakter dan hanya boleh huruf, angka, titik, strip, atau garis bawah.';
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = 'Format email tidak valid.';
+        } elseif ($password !== '' && strlen($password) < 8) {
+            $error = 'Password baru minimal 8 karakter.';
         } else {
             try {
                 // Check duplicates excluding current user
@@ -91,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
                 } elseif ($check_email) {
                     $error = 'Email sudah digunakan oleh user lain.';
                 } else {
-                    if (!empty($password)) {
+                    if ($password !== '') {
                         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
                         Database::query(
                             "UPDATE users SET username = ?, email = ?, password = ?, role = ?, status = ? WHERE id = ?",
@@ -105,36 +119,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
                     }
                     
                     // If current logged-in user updated their own username, update session
-                    if ($id === $_SESSION['admin_user_id']) {
+                    if ($id === (int)$_SESSION['admin_user_id']) {
                         $_SESSION['admin_username'] = $username;
                     }
 
-                    log_activity($_SESSION['admin_user_id'], 'update_user', "Updated user account: " . sanitize($username));
+                    log_activity($_SESSION['admin_user_id'], 'update_user', "Updated user account: $username");
                     header('Location: ' . BASE_URL . 'admin/users.php?success=updated');
                     exit;
                 }
             } catch (Exception $e) {
-                $error = 'Gagal memperbarui user: ' . $e->getMessage();
+                $error = admin_friendly_error('Gagal memperbarui user.', $e);
             }
         }
     }
 }
 
-// Handle User Deletion
-if (isset($_GET['delete'])) {
-    $id = intval($_GET['delete']);
-    if ($id === $_SESSION['admin_user_id']) {
-        $error = 'Anda tidak dapat menghapus akun Anda sendiri!';
+// Handle User Deletion (CSRF-protected POST + FK safety check)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
+    $token = $_POST['csrf_token'] ?? '';
+    if (!verify_csrf_token($token)) {
+        $error = 'Validasi CSRF token gagal.';
     } else {
-        try {
-            $user = Database::fetch("SELECT username FROM users WHERE id = ?", [$id]);
-            if ($user) {
-                Database::query("DELETE FROM users WHERE id = ?", [$id]);
-                log_activity($_SESSION['admin_user_id'], 'delete_user', "Deleted user account ID: $id (" . sanitize($user['username']) . ")");
-                $success = 'User berhasil dihapus!';
+        $id = intval($_POST['delete_id'] ?? 0);
+        if ($id === (int)$_SESSION['admin_user_id']) {
+            $error = 'Anda tidak dapat menghapus akun Anda sendiri!';
+        } else {
+            try {
+                $user = Database::fetch("SELECT username FROM users WHERE id = ?", [$id]);
+                if ($user) {
+                    $post_cnt = (int)(Database::fetch("SELECT COUNT(*) AS c FROM posts WHERE author_id = ?", [$id])['c'] ?? 0);
+                    $media_cnt = (int)(Database::fetch("SELECT COUNT(*) AS c FROM media WHERE uploaded_by = ?", [$id])['c'] ?? 0);
+                    if ($post_cnt > 0 || $media_cnt > 0) {
+                        $error = "User ini tidak dapat dihapus karena masih memiliki {$post_cnt} artikel dan {$media_cnt} file media. Ubah statusnya menjadi Nonaktif saja agar konten tidak hilang.";
+                    } else {
+                        Database::query("DELETE FROM users WHERE id = ?", [$id]);
+                        log_activity($_SESSION['admin_user_id'], 'delete_user', "Deleted user account ID: $id (" . $user['username'] . ")");
+                        $success = 'User berhasil dihapus!';
+                    }
+                }
+            } catch (Exception $e) {
+                $error = admin_friendly_error('Gagal menghapus user.', $e);
             }
-        } catch (Exception $e) {
-            $error = 'Gagal menghapus user: ' . $e->getMessage();
         }
     }
 }
@@ -169,7 +194,6 @@ if (isset($_GET['success']) && $_GET['success'] === 'updated') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kelola User - Urban Office</title>
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/admin.css?v=<?php echo filemtime(dirname(__DIR__) . '/assets/css/admin.css'); ?>">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body class="admin-body">
     <div class="admin-layout">
@@ -343,10 +367,14 @@ if (isset($_GET['success']) && $_GET['success'] === 'updated') {
                                             </td>
                                             <td class="admin-num" style="font-size: 0.78rem; white-space: nowrap;"><?php echo date('d M Y H:i', strtotime($u['created_at'])); ?></td>
                                             <td>
-                                                <div style="display: flex; gap: 6px;">
-                                                    <a href="?action=edit&id=<?php echo $u['id']; ?>" class="btn-admin btn-admin-primary btn-admin-sm">Edit</a>
-                                                    <?php if ($u['id'] !== $_SESSION['admin_user_id']): ?>
-                                                        <a href="?delete=<?php echo $u['id']; ?>" class="btn-admin btn-admin-danger btn-admin-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus user ini?')">Delete</a>
+                                                <div style="display: flex; gap: 6px; align-items: center;">
+                                                    <a href="?action=edit&id=<?php echo (int)$u['id']; ?>" class="btn-admin btn-admin-primary btn-admin-sm">Edit</a>
+                                                    <?php if ((int)$u['id'] !== (int)$_SESSION['admin_user_id']): ?>
+                                                        <form method="POST" action="<?php echo BASE_URL; ?>admin/users.php" style="margin: 0; display: inline-flex;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus user ini?')">
+                                                            <?php echo csrf_field(); ?>
+                                                            <input type="hidden" name="delete_id" value="<?php echo (int)$u['id']; ?>">
+                                                            <button type="submit" name="delete_user" value="1" class="btn-admin btn-admin-danger btn-admin-sm">Delete</button>
+                                                        </form>
                                                     <?php endif; ?>
                                                 </div>
                                             </td>

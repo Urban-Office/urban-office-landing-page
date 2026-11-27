@@ -4,6 +4,7 @@
  */
 
 require_once __DIR__ . '/auth.php';
+require_admin_role('administrator');
 
 // Pagination setup
 $limit = 20;
@@ -75,7 +76,7 @@ try {
                                             <?php echo sanitize($log['action']); ?>
                                         </span>
                                     </td>
-                                    <td><?php echo sanitize($log['details']); ?></td>
+                                    <td><?php echo sanitize(html_entity_decode((string)$log['details'], ENT_QUOTES, 'UTF-8')); ?></td>
                                     <td><span class="admin-code-pill"><?php echo sanitize($log['ip_address']); ?></span></td>
                                 </tr>
                             <?php endforeach; else: ?>

@@ -13,6 +13,21 @@ php inc/init_db.php   # bootstrap skema DB + seed admin (lihat output terminal u
 
 Konfigurasi ada di [inc/config.php](inc/config.php) (bukan `.env` — lihat catatan keamanan di bagian bawah).
 
+## Dokumentasi Proyek (`docs/`)
+
+Dokumen pendukung, panduan setup, baseline audit, dan PRD dikumpulkan di folder `docs/` (diblokir dari akses HTTP publik via `.htaccess` / `nginx.conf`):
+
+| Dokumen | Isi ringkas |
+|---|---|
+| [docs/Installation.md](docs/Installation.md) | Walkthrough migrasi WordPress → PHP murni & impor data |
+| [docs/vps_installation_guide.md](docs/vps_installation_guide.md) | Panduan deploy VPS Linux (LEMP / Nginx + PHP 8.3-FPM) |
+| [docs/implementation.md](docs/implementation.md) | Rencana arsitektur, skema DB, dan konfigurasi performa/keamanan |
+| [docs/PRD-AUTOMATION-BLOG.md](docs/PRD-AUTOMATION-BLOG.md) | PRD otomasi artikel blog (n8n + LLM + fal.ai + Telegram) |
+| [docs/RANGKUMAN-IMPROVEMENT-2026-07.md](docs/RANGKUMAN-IMPROVEMENT-2026-07.md) | Rangkuman improvement landing page & SEO/SEM Juli 2026 |
+| [docs/google-ads-qs-baseline-2026-07-29.md](docs/google-ads-qs-baseline-2026-07-29.md) | Baseline Quality Score & LPE Google Ads (29 Jul 2026) |
+| [docs/REKAP_TEMPLATE_WHATSAPP.md](docs/REKAP_TEMPLATE_WHATSAPP.md) | Pemetaan template & alur pesan WhatsApp per halaman |
+| [docs/checklist-review-github.md](docs/checklist-review-github.md) | Checklist audit repo sebelum upload ke GitHub |
+
 ---
 
 ## Peta Folder & Modul
@@ -33,7 +48,7 @@ Tidak ada router terpusat untuk halaman fitur — setiap folder top-level punya 
 | [inc/lead_handler.php](inc/lead_handler.php) | Controller | Endpoint AJAX POST (JSON) untuk form leads — validasi CSRF + honeypot, sanitasi input, insert ke tabel `leads` |
 | [inc/components/*.php](inc/components/) | View partials | `hero.php`, `features.php`, `pricing_cards.php`, `faq.php`, `branches.php`, `locations_showcase.php`, `brands_slider.php`, `contact_form.php`, `app_section.php` — masing-masing include fragment yang mengharapkan variabel dari pemanggil |
 | [inc/init_db.php](inc/init_db.php) | CLI tool | **Bukan bagian request path.** Bootstrapper skema DB, dijalankan manual via `php inc/init_db.php` saat setup awal |
-| [inc/importer.php](inc/importer.php) | CLI tool | **Bukan bagian request path.** Migrator WordPress → skema baru (posts/categories/tags/Yoast SEO), dijalankan manual, lihat [Installation.md](Installation.md) |
+| [inc/importer.php](inc/importer.php) | CLI tool | **Bukan bagian request path.** Migrator WordPress → skema baru (posts/categories/tags/Yoast SEO), dijalankan manual, lihat [docs/Installation.md](docs/Installation.md) |
 
 ### Halaman fitur (folder-based routing)
 
@@ -110,6 +125,6 @@ Di [inc/config.php:105-130](inc/config.php:105), setiap request non-CLI di-cek d
 
 ## Catatan keamanan
 
-- Tidak ada `.env` — kredensial DB (`DB_USER`/`DB_PASS`) hardcoded di [inc/config.php](inc/config.php). Untuk deployment produksi, ganti nilainya sesuai panduan di [vps_installation_guide.md](vps_installation_guide.md).
+- Tidak ada `.env` — kredensial DB (`DB_USER`/`DB_PASS`) hardcoded di [inc/config.php](inc/config.php). Untuk deployment produksi, ganti nilainya sesuai panduan di [docs/vps_installation_guide.md](docs/vps_installation_guide.md).
 - Password admin default sekarang **digenerate acak** saat `inc/init_db.php` dijalankan (dicetak sekali ke terminal, tidak disimpan di tempat lain selain hash-nya di DB) — segera ganti lewat `/admin` setelah login pertama.
 - `admin.zip`, `perizinan-dan-perubahan-perusahaan.zip`, `test_zip/`, `scratch/`, `cache/`, dan file `*.bak` sengaja tidak ikut version control (lihat `.gitignore`) — semuanya backup/scratch artifact yang redundant dengan source yang sudah ter-track.

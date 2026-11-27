@@ -4,41 +4,55 @@
  */
 
 require_once __DIR__ . '/auth.php';
+require_admin_role('administrator');
 
 $error = '';
 $success = '';
+$allowed_setting_keys = ['site_title', 'contact_email', 'wa_number', 'wa_text'];
 
-// Handle Settings POST Update
+// Handle Settings POST Update (strict key allowlist — never touch internal API tokens or migration flags)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
     $token = $_POST['csrf_token'] ?? '';
     if (!verify_csrf_token($token)) {
         $error = 'Validasi CSRF token gagal.';
     } else {
-        unset($_POST['csrf_token']);
-        unset($_POST['save_settings']);
+        $payload = [
+            'site_title'    => trim((string)($_POST['site_title'] ?? '')),
+            'contact_email' => trim((string)($_POST['contact_email'] ?? '')),
+            'wa_number'     => admin_format_wa_phone((string)($_POST['wa_number'] ?? '')),
+            'wa_text'       => trim((string)($_POST['wa_text'] ?? '')),
+        ];
 
-        try {
-            foreach ($_POST as $key => $val) {
-                $check = Database::fetch("SELECT id FROM settings WHERE name = ?", [$key]);
-                if ($check) {
-                    Database::query("UPDATE settings SET value = ? WHERE name = ?", [$val, $key]);
-                } else {
-                    Database::insert("INSERT INTO settings (name, value) VALUES (?, ?)", [$key, $val]);
+        if ($payload['site_title'] === '' || $payload['contact_email'] === '' || $payload['wa_number'] === '' || $payload['wa_text'] === '') {
+            $error = 'Semua kolom pengaturan wajib diisi.';
+        } elseif (!filter_var($payload['contact_email'], FILTER_VALIDATE_EMAIL)) {
+            $error = 'Format kontak email tidak valid.';
+        } else {
+            try {
+                foreach ($allowed_setting_keys as $key) {
+                    $val = $payload[$key];
+                    $check = Database::fetch("SELECT id FROM settings WHERE name = ?", [$key]);
+                    if ($check) {
+                        Database::query("UPDATE settings SET value = ? WHERE name = ?", [$val, $key]);
+                    } else {
+                        Database::insert("INSERT INTO settings (name, value) VALUES (?, ?)", [$key, $val]);
+                    }
                 }
+                log_activity($_SESSION['admin_user_id'], 'update_settings', "Updated website global settings variables.");
+                clear_page_cache();
+                $success = 'Pengaturan berhasil diperbarui!';
+            } catch (Exception $e) {
+                $error = admin_friendly_error('Gagal menyimpan pengaturan.', $e);
             }
-            log_activity($_SESSION['admin_user_id'], 'update_settings', "Updated website global settings variables.");
-            clear_page_cache();
-            $success = 'Pengaturan berhasil diperbarui!';
-        } catch (Exception $e) {
-            $error = 'Gagal menyimpan pengaturan: ' . $e->getMessage();
         }
     }
 }
 
-// Fetch all Settings from Database
+// Fetch only editable UI settings from Database (never pull API tokens into view scope)
 $settings = [];
 try {
-    $settings_list = Database::fetchAll("SELECT * FROM settings");
+    $placeholders = implode(',', array_fill(0, count($allowed_setting_keys), '?'));
+    $settings_list = Database::fetchAll("SELECT name, value FROM settings WHERE name IN ({$placeholders})", $allowed_setting_keys);
     foreach ($settings_list as $s) {
         $settings[$s['name']] = $s['value'];
     }

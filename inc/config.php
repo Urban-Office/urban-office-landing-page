@@ -110,6 +110,7 @@ if (empty($_SESSION['csrf_token'])) {
 }
 
 // Redirect Map Interceptor (URL Preservation)
+// Never intercept /admin or /_api paths so a misconfigured redirect cannot lock out admins or break APIs.
 if (php_sapi_name() !== 'cli') {
     $req_uri = $_SERVER['REQUEST_URI'] ?? '';
     // Strip query parameters
@@ -123,15 +124,21 @@ if (php_sapi_name() !== 'cli') {
     
     $clean_path = '/' . ltrim($req_path, '/');
 
-    try {
-        require_once __DIR__ . '/database.php';
-        $redirect = Database::fetch("SELECT new_url, type FROM redirects WHERE old_url = ?", [$clean_path]);
-        if ($redirect) {
-            $dest = (strpos($redirect['new_url'], 'http') === 0) ? $redirect['new_url'] : BASE_URL . ltrim($redirect['new_url'], '/');
-            header("Location: " . $dest, true, $redirect['type']);
-            exit;
+    if (strpos($clean_path, '/admin') !== 0 && strpos($clean_path, '/_api') !== 0) {
+        try {
+            require_once __DIR__ . '/database.php';
+            $redirect = Database::fetch("SELECT new_url, type FROM redirects WHERE old_url = ?", [$clean_path]);
+            if ($redirect) {
+                $status_code = in_array((int)$redirect['type'], [301, 302], true) ? (int)$redirect['type'] : 301;
+                $raw_new = str_replace(["\r", "\n"], '', trim((string)$redirect['new_url']));
+                if ($raw_new !== '') {
+                    $dest = (preg_match('#^https?://#i', $raw_new)) ? $raw_new : BASE_URL . ltrim($raw_new, '/');
+                    header("Location: " . $dest, true, $status_code);
+                    exit;
+                }
+            }
+        } catch (Exception $e) {
+            // Silent fallback in case DB table is not set up yet
         }
-    } catch (Exception $e) {
-        // Silent fallback in case DB table is not set up yet
     }
 }

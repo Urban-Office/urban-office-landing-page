@@ -42,6 +42,8 @@ try {
         og_description VARCHAR(255) NULL,
         og_image VARCHAR(255) NULL,
         schema_faq JSON NULL,
+        audit_interval_days INT NOT NULL DEFAULT 30,
+        last_audited_at DATETIME NULL,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_page_slug (slug)
     ) ENGINE=InnoDB;");
@@ -201,9 +203,28 @@ try {
         details TEXT NULL,
         ip_address VARCHAR(45) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_activity_created (created_at),
+        INDEX idx_activity_login_ip (action, ip_address, created_at),
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     ) ENGINE=InnoDB;");
     echo "Activity Logs table verified.\n";
+
+    // Ensure indexes exist on legacy activity_logs tables (speeds up audit pagination & login rate-limit)
+    try {
+        foreach (['idx_activity_created' => '(created_at)', 'idx_activity_login_ip' => '(action, ip_address, created_at)'] as $idxName => $idxCols) {
+            $hasIdx = Database::fetch(
+                "SELECT COUNT(*) AS c FROM information_schema.STATISTICS
+                 WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'activity_logs' AND INDEX_NAME = ?",
+                [DB_NAME, $idxName]
+            );
+            if (!$hasIdx || (int)$hasIdx['c'] === 0) {
+                $db->exec("ALTER TABLE activity_logs ADD INDEX {$idxName} {$idxCols}");
+                echo "activity_logs.{$idxName} index added.\n";
+            }
+        }
+    } catch (Exception $e) {
+        echo "activity_logs index migration skipped: " . $e->getMessage() . "\n";
+    }
 
     // 12. Create Settings Table
     $db->exec("CREATE TABLE IF NOT EXISTS settings (
@@ -482,6 +503,52 @@ try {
         INDEX idx_ae_session_created (session_hash, created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
     echo "Verified table: analytics_events\n";
+
+    // 15. Page SEO Audit & Revision History (Next Audit schedule + Before/After tracking)
+    try {
+        foreach ([
+            'audit_interval_days' => 'INT NOT NULL DEFAULT 30 AFTER schema_faq',
+            'last_audited_at'     => 'DATETIME NULL AFTER audit_interval_days',
+        ] as $colName => $colDef) {
+            $hasCol = Database::fetch(
+                "SELECT COUNT(*) AS c FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'pages' AND COLUMN_NAME = ?",
+                [DB_NAME, $colName]
+            );
+            if (!$hasCol || (int)$hasCol['c'] === 0) {
+                $db->exec("ALTER TABLE pages ADD COLUMN {$colName} {$colDef}");
+                echo "pages.{$colName} column added.\n";
+            }
+        }
+    } catch (Exception $e) {
+        echo "pages audit column migration skipped: " . $e->getMessage() . "\n";
+    }
+
+    $db->exec("CREATE TABLE IF NOT EXISTS page_seo_audits (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        page_id INT NOT NULL,
+        event_type VARCHAR(20) NOT NULL DEFAULT 'audit_check',
+        user_id INT NULL,
+        prev_meta_title VARCHAR(255) NULL,
+        prev_meta_description VARCHAR(255) NULL,
+        new_meta_title VARCHAR(255) NULL,
+        new_meta_description VARCHAR(255) NULL,
+        gsc_period_days INT NOT NULL DEFAULT 28,
+        gsc_impressions INT NULL,
+        gsc_clicks INT NULL,
+        gsc_ctr DECIMAL(5,2) NULL,
+        gsc_position DECIMAL(6,2) NULL,
+        fp_organic_views INT NOT NULL DEFAULT 0,
+        fp_geo_views INT NOT NULL DEFAULT 0,
+        fp_total_views INT NOT NULL DEFAULT 0,
+        fp_conversions INT NOT NULL DEFAULT 0,
+        notes TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_psa_page_created (page_id, created_at DESC),
+        FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    echo "Verified table: page_seo_audits\n";
 
     echo "Database initialization completed successfully.\n";
 

@@ -44,6 +44,9 @@ $params = [];
 $period_label = '30 Hari Terakhir';
 
 if ($range === 'custom' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $custom_start) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $custom_end)) {
+    if (strtotime($custom_start) > strtotime($custom_end)) {
+        [$custom_start, $custom_end] = [$custom_end, $custom_start];
+    }
     $where_clauses[] = 'created_at >= ? AND created_at <= ?';
     $params[] = $custom_start . ' 00:00:00';
     $params[] = $custom_end . ' 23:59:59';
@@ -98,25 +101,25 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
         fputcsv($out, ['Waktu', 'Event', 'Channel', 'Source', 'Medium', 'Campaign', 'Halaman', 'Landing Page', 'Layanan', 'Cabang', 'WA Channel', 'Detail', 'Device']);
         foreach ($rows as $r) {
             fputcsv($out, [
-                $r['created_at'],
-                $r['event_name'],
-                $r['traffic_channel'],
-                $r['traffic_source'],
-                $r['traffic_medium'],
-                $r['traffic_campaign'],
-                $r['page_path'],
-                $r['landing_page'],
-                $r['service_name'],
-                $r['branch_slug'],
-                $r['wa_channel'],
-                $r['event_detail'],
-                $r['device_type'],
+                admin_csv_safe($r['created_at']),
+                admin_csv_safe($r['event_name']),
+                admin_csv_safe($r['traffic_channel']),
+                admin_csv_safe($r['traffic_source']),
+                admin_csv_safe($r['traffic_medium']),
+                admin_csv_safe($r['traffic_campaign']),
+                admin_csv_safe($r['page_path']),
+                admin_csv_safe($r['landing_page']),
+                admin_csv_safe($r['service_name']),
+                admin_csv_safe($r['branch_slug']),
+                admin_csv_safe($r['wa_channel']),
+                admin_csv_safe($r['event_detail']),
+                admin_csv_safe($r['device_type']),
             ]);
         }
         fclose($out);
         exit;
     } catch (Exception $e) {
-        $db_error = 'Ekspor CSV gagal: ' . $e->getMessage();
+        $db_error = admin_friendly_error('Ekspor CSV gagal.', $e);
     }
 }
 
@@ -358,7 +361,7 @@ try {
         $params
     );
 } catch (Exception $e) {
-    $db_error = 'Tabel analytics_events belum siap atau query gagal: ' . $e->getMessage();
+    $db_error = admin_friendly_error('Gagal memuat data analytics.', $e);
 }
 
 $total_channel_views = 0;

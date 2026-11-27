@@ -6,7 +6,7 @@
 
 ## 1. Baseline Google Ads (patokan "sebelum")
 - Akun: **Urban Account (846-570-9843)** di bawah MCC **urban office (226-975-8268)**.
-- Ditarik 2026-07-29 (30 hari). Disimpan di `google-ads-qs-baseline-2026-07-29.md`.
+- Ditarik 2026-07-29 (30 hari). Disimpan di [docs/google-ads-qs-baseline-2026-07-29.md](google-ads-qs-baseline-2026-07-29.md).
 - Temuan kunci: VO Jakarta keyword "virtual office" = **QS 5, Landing Page Experience Below Average** (Ad Relevance sudah bagus → masalah murni di halaman). Cluster **Private Office** & **Meeting Room** juga banyak LPE *Below Average* dengan volume besar.
 
 ---

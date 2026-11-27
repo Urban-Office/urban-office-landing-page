@@ -125,13 +125,345 @@ function is_admin(): bool {
 }
 
 /**
- * Enforces admin login
+ * Checks whether the logged-in admin has the specified role.
+ */
+function is_admin_role(string $role = 'administrator'): bool {
+    return is_admin() && (($_SESSION['admin_role'] ?? '') === $role);
+}
+
+/**
+ * Sends defensive HTTP security & no-cache headers for admin panel responses.
+ */
+function send_admin_security_headers(): void {
+    if (php_sapi_name() === 'cli' || headers_sent()) {
+        return;
+    }
+    header('X-Frame-Options: SAMEORIGIN');
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+}
+
+/**
+ * Enforces admin login and verifies the user account is still active in the database.
  */
 function check_admin_auth(): void {
-    if (!is_admin()) {
+    $is_json = defined('ADMIN_JSON_ENDPOINT') && ADMIN_JSON_ENDPOINT;
+    if (!is_admin() || empty($_SESSION['admin_user_id'])) {
+        if ($is_json) {
+            header('Content-Type: application/json; charset=UTF-8');
+            http_response_code(401);
+            echo json_encode(['uploaded' => false, 'error' => ['message' => 'Sesi login telah berakhir. Silakan login kembali.']]);
+            exit;
+        }
         header('Location: ' . BASE_URL . 'admin/index.php');
         exit;
     }
+
+    // Re-validate user status & role so deactivated or demoted accounts lose access immediately
+    try {
+        $u = Database::fetch("SELECT username, role, status FROM users WHERE id = ?", [(int)$_SESSION['admin_user_id']]);
+        if (!$u || (int)$u['status'] !== 1) {
+            $_SESSION = [];
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                session_destroy();
+            }
+            if ($is_json) {
+                header('Content-Type: application/json; charset=UTF-8');
+                http_response_code(401);
+                echo json_encode(['uploaded' => false, 'error' => ['message' => 'Akun tidak aktif. Silakan login kembali.']]);
+                exit;
+            }
+            header('Location: ' . BASE_URL . 'admin/index.php');
+            exit;
+        }
+        $_SESSION['admin_username'] = $u['username'];
+        $_SESSION['admin_role'] = $u['role'];
+    } catch (Exception $e) {
+        error_log("Admin session re-check failed: " . $e->getMessage());
+    }
+}
+
+/**
+ * Enforces a specific admin role (default: administrator).
+ */
+function require_admin_role(string $role = 'administrator'): void {
+    if (!is_admin_role($role)) {
+        if (defined('ADMIN_JSON_ENDPOINT') && ADMIN_JSON_ENDPOINT) {
+            header('Content-Type: application/json; charset=UTF-8');
+            http_response_code(403);
+            echo json_encode(['ok' => false, 'error' => 'Akses ditolak. Hanya Administrator yang diizinkan.']);
+            exit;
+        }
+        header('Location: ' . BASE_URL . 'admin/index.php?error=forbidden');
+        exit;
+    }
+}
+
+/**
+ * Generates a clean, URL-safe lowercase slug (alphanumeric + single hyphens).
+ */
+function admin_slugify(string $text, string $fallback = ''): string {
+    $text = trim($text);
+    if ($text !== '' && function_exists('iconv')) {
+        $trans = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+        if ($trans !== false) {
+            $text = $trans;
+        }
+    }
+    $slug = strtolower($text);
+    $slug = preg_replace('/[^a-z0-9]+/', '-', $slug);
+    $slug = trim((string)$slug, '-');
+    return $slug !== '' ? $slug : $fallback;
+}
+
+/**
+ * Neutralizes CSV Formula Injection (Excel/Sheets) for user-supplied fields.
+ */
+function admin_csv_safe($value): string {
+    $str = (string)($value ?? '');
+    if ($str !== '' && preg_match('/^[\t\r\n ]*[=+\-@]/', $str)) {
+        return "'" . $str;
+    }
+    return $str;
+}
+
+/**
+ * Safely deletes a file ONLY if its resolved realpath lies strictly inside one of the allowed directories.
+ */
+function admin_safe_unlink(string $rel_path, array $allowed_dirs): bool {
+    $rel_path = trim($rel_path);
+    if ($rel_path === '' || strpos($rel_path, "\0") !== false) {
+        return false;
+    }
+    if (preg_match('#^https?://#i', $rel_path)) {
+        return false;
+    }
+    $full = DIR_ROOT . ltrim(str_replace('\\', '/', $rel_path), '/');
+    $real_file = realpath($full);
+    if ($real_file === false || !is_file($real_file)) {
+        return false;
+    }
+    $norm_file = str_replace('\\', '/', $real_file);
+    foreach ($allowed_dirs as $dir) {
+        $real_dir = realpath($dir);
+        if ($real_dir === false) {
+            continue;
+        }
+        $norm_dir = rtrim(str_replace('\\', '/', $real_dir), '/') . '/';
+        if (stripos($norm_file, $norm_dir) === 0) {
+            return @unlink($real_file);
+        }
+    }
+    return false;
+}
+
+/**
+ * Validates an uploaded image file via upload error code, size cap, and finfo MIME inspection.
+ * Returns ['ok' => true, 'ext' => string, 'mime' => string] or ['ok' => false, 'error' => string].
+ */
+function admin_validate_image_upload(array $file, int $max_bytes = 5242880): array {
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        return ['ok' => false, 'error' => 'Gagal mengunggah file (Kode error: ' . intval($file['error'] ?? -1) . ').'];
+    }
+    if (($file['size'] ?? 0) <= 0 || ($file['size'] ?? 0) > $max_bytes) {
+        $mb = round($max_bytes / (1024 * 1024), 1);
+        return ['ok' => false, 'error' => "Ukuran file maksimal {$mb}MB."];
+    }
+    $tmp = $file['tmp_name'] ?? '';
+    if ($tmp === '' || !is_file($tmp)) {
+        return ['ok' => false, 'error' => 'File sementara tidak valid.'];
+    }
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime = $finfo ? finfo_file($finfo, $tmp) : '';
+    if ($finfo) {
+        finfo_close($finfo);
+    }
+    $allowed_mimes = [
+        'image/jpeg' => 'jpg',
+        'image/png'  => 'png',
+        'image/webp' => 'webp',
+        'image/gif'  => 'gif',
+    ];
+    if (!isset($allowed_mimes[$mime])) {
+        return ['ok' => false, 'error' => 'Format file tidak didukung. Gunakan JPG, PNG, WEBP, atau GIF yang valid.'];
+    }
+    return ['ok' => true, 'ext' => $allowed_mimes[$mime], 'mime' => $mime];
+}
+
+/**
+ * Normalizes Indonesian phone numbers (08... -> 628...) for WhatsApp links.
+ */
+function admin_format_wa_phone(string $phone): string {
+    $digits = preg_replace('/[^0-9]/', '', $phone);
+    if ($digits === '') {
+        return '';
+    }
+    if (strpos($digits, '0') === 0) {
+        return '62' . substr($digits, 1);
+    }
+    if (strpos($digits, '8') === 0) {
+        return '62' . $digits;
+    }
+    return $digits;
+}
+
+/**
+ * Logs technical exception details internally and returns a safe user-facing message.
+ */
+function admin_friendly_error(string $user_msg, Throwable $e): string {
+    error_log($user_msg . ' | ' . $e->getMessage());
+    return $user_msg . ' Silakan coba lagi atau periksa log server.';
+}
+
+/**
+ * Resolves the client IP safely, honoring Cloudflare's CF-Connecting-IP when valid,
+ * with fallback to REMOTE_ADDR.
+ */
+function admin_client_ip(): string {
+    $cf = trim((string)($_SERVER['HTTP_CF_CONNECTING_IP'] ?? ''));
+    if ($cf !== '' && filter_var($cf, FILTER_VALIDATE_IP)) {
+        return $cf;
+    }
+    $remote = trim((string)($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'));
+    return $remote !== '' ? substr($remote, 0, 45) : '0.0.0.0';
+}
+
+/**
+ * Ensures the SEO audit columns on `pages` and `page_seo_audits` table exist.
+ * Cached in session so DDL/information_schema checks run at most once per login session.
+ */
+function ensure_page_seo_audit_schema(): void {
+    static $checked = false;
+    if ($checked || !empty($_SESSION['seo_audit_schema_ok'])) {
+        return;
+    }
+    $checked = true;
+
+    try {
+        $db = Database::getConnection();
+        foreach ([
+            'audit_interval_days' => 'INT NOT NULL DEFAULT 30 AFTER schema_faq',
+            'last_audited_at'     => 'DATETIME NULL AFTER audit_interval_days',
+        ] as $col => $def) {
+            $row = Database::fetch(
+                "SELECT COUNT(*) AS c FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'pages' AND COLUMN_NAME = ?",
+                [DB_NAME, $col]
+            );
+            if (!$row || (int)$row['c'] === 0) {
+                $db->exec("ALTER TABLE pages ADD COLUMN {$col} {$def}");
+            }
+        }
+        $db->exec("CREATE TABLE IF NOT EXISTS page_seo_audits (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            page_id INT NOT NULL,
+            event_type VARCHAR(20) NOT NULL DEFAULT 'audit_check',
+            user_id INT NULL,
+            prev_meta_title VARCHAR(255) NULL,
+            prev_meta_description VARCHAR(255) NULL,
+            new_meta_title VARCHAR(255) NULL,
+            new_meta_description VARCHAR(255) NULL,
+            gsc_period_days INT NOT NULL DEFAULT 28,
+            gsc_impressions INT NULL,
+            gsc_clicks INT NULL,
+            gsc_ctr DECIMAL(5,2) NULL,
+            gsc_position DECIMAL(6,2) NULL,
+            fp_organic_views INT NOT NULL DEFAULT 0,
+            fp_geo_views INT NOT NULL DEFAULT 0,
+            fp_total_views INT NOT NULL DEFAULT 0,
+            fp_conversions INT NOT NULL DEFAULT 0,
+            notes TEXT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_psa_page_created (page_id, created_at DESC),
+            FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $_SESSION['seo_audit_schema_ok'] = true;
+        }
+    } catch (Exception $e) {
+        error_log("ensure_page_seo_audit_schema failed: " . $e->getMessage());
+    }
+}
+
+/**
+ * Returns possible analytics_events.page_path variants for a landing page slug.
+ */
+function seo_page_path_variants(string $slug): array {
+    $slug = trim($slug, '/');
+    if ($slug === '') {
+        return ['/', '/index.php'];
+    }
+    return ['/' . $slug . '/', '/' . $slug];
+}
+
+/**
+ * Computes Next Audit schedule & status for an SEO landing page.
+ * Reference date = max(updated_at, last_audited_at).
+ */
+function seo_compute_audit_schedule(?string $updated_at, ?string $last_audited_at, int $interval_days = 30, ?int $now_ts = null): array {
+    $interval_days = max(7, min(365, $interval_days > 0 ? $interval_days : 30));
+    $now_ts = $now_ts ?? time();
+    $today_start = strtotime(date('Y-m-d 00:00:00', $now_ts));
+
+    $upd_ts = $updated_at ? strtotime($updated_at) : false;
+    $aud_ts = $last_audited_at ? strtotime($last_audited_at) : false;
+
+    $ref_ts = $upd_ts ?: $today_start;
+    if ($aud_ts && $aud_ts > $ref_ts) {
+        $ref_ts = $aud_ts;
+    }
+
+    $ref_day_ts = strtotime(date('Y-m-d 00:00:00', $ref_ts));
+    $next_ts = $ref_day_ts + ($interval_days * 86400);
+    $days_left = (int) floor(($next_ts - $today_start) / 86400);
+    $days_since_update = $upd_ts ? max(0, (int) floor(($today_start - strtotime(date('Y-m-d 00:00:00', $upd_ts))) / 86400)) : 0;
+
+    if ($days_left < 0) {
+        $status = 'overdue';
+        $label = 'Terlewat ' . abs($days_left) . ' hari';
+        $badge = 'badge-danger';
+    } elseif ($days_left === 0) {
+        $status = 'due';
+        $label = 'Jadwal Hari Ini';
+        $badge = 'badge-warning';
+    } elseif ($days_left <= 3) {
+        $status = 'due';
+        $label = 'Siap Audit (H-' . $days_left . ')';
+        $badge = 'badge-warning';
+    } else {
+        $status = 'scheduled';
+        $label = $days_left . ' hari lagi';
+        $badge = 'badge-info';
+    }
+
+    return [
+        'interval_days'     => $interval_days,
+        'ref_ts'            => $ref_ts,
+        'next_ts'           => $next_ts,
+        'next_date'         => date('d M Y', $next_ts),
+        'days_left'         => $days_left,
+        'days_since_update' => $days_since_update,
+        'status'            => $status,
+        'label'             => $label,
+        'badge'             => $badge,
+    ];
+}
+
+/**
+ * Calculates percentage change between baseline (before) and new (after) values.
+ * Returns null if before is 0 and after is 0; returns 100.0 when growing from 0 to >0.
+ */
+function seo_delta_pct(float $before, float $after): ?float {
+    if ($before == 0.0) {
+        if ($after == 0.0) {
+            return null;
+        }
+        return $after > 0 ? 100.0 : -100.0;
+    }
+    return round((($after - $before) / abs($before)) * 100, 1);
 }
 
 /**
@@ -175,7 +507,7 @@ function minify_html(string $html): string {
  * Log activity to SQL audit database
  */
 function log_activity(?int $user_id, string $action, string $details): void {
-    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    $ip = admin_client_ip();
     try {
         Database::insert(
             "INSERT INTO activity_logs (user_id, action, details, ip_address) VALUES (?, ?, ?, ?)",

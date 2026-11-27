@@ -4,6 +4,7 @@
  */
 
 require_once __DIR__ . '/auth.php';
+require_admin_role('administrator');
 
 $error = '';
 $success = '';
@@ -14,12 +15,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
     if (!verify_csrf_token($token)) {
         $error = 'Validasi CSRF token gagal.';
     } else {
-        $old_url = '/' . ltrim(trim($_POST['old_url']), '/'); // Enforce leading slash
-        $new_url = trim($_POST['new_url']);
-        $type = intval($_POST['type']);
+        $raw_old = trim((string)($_POST['old_url'] ?? ''));
+        $old_url = $raw_old !== '' ? ('/' . ltrim(str_replace(["\r", "\n"], '', $raw_old), '/')) : '';
+        $new_url = str_replace(["\r", "\n"], '', trim((string)($_POST['new_url'] ?? '')));
+        $type = intval($_POST['type'] ?? 301);
+        if (!in_array($type, [301, 302], true)) {
+            $type = 301;
+        }
 
-        if (empty($old_url) || empty($new_url)) {
-            $error = 'Kedua kolom URL wajib diisi.';
+        if ($old_url === '' || $old_url === '/' || $new_url === '') {
+            $error = 'URL asal (selain root "/") dan URL tujuan wajib diisi.';
+        } elseif (strpos($old_url, '/admin') === 0 || strpos($old_url, '/_api') === 0) {
+            $error = 'Path /admin dan /_api tidak boleh dialihkan demi keamanan sistem.';
+        } elseif (!preg_match('#^(/|https?://)#i', $new_url)) {
+            $error = 'URL tujuan harus diawali garis miring (/) atau http(s)://.';
+        } elseif (rtrim($old_url, '/') === rtrim('/' . ltrim($new_url, '/'), '/') && strpos($new_url, 'http') !== 0) {
+            $error = 'URL asal dan URL tujuan tidak boleh sama (mencegah redirect loop).';
         } else {
             try {
                 // Check duplicate old URL
@@ -33,25 +44,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
                     $success = 'Pengalihan URL berhasil ditambahkan!';
                 }
             } catch (Exception $e) {
-                $error = 'Gagal menyimpan pengalihan: ' . $e->getMessage();
+                $error = admin_friendly_error('Gagal menyimpan pengalihan.', $e);
             }
         }
     }
 }
 
-// Handle Redirect Deletion
-if (isset($_GET['delete'])) {
-    $id = intval($_GET['delete']);
-    try {
-        $red = Database::fetch("SELECT old_url FROM redirects WHERE id = ?", [$id]);
-        if ($red) {
-            Database::query("DELETE FROM redirects WHERE id = ?", [$id]);
-            log_activity($_SESSION['admin_user_id'], 'delete_redirect', "Deleted redirect ID: $id (" . sanitize($red['old_url']) . ")");
-            clear_page_cache();
-            $success = 'Pengalihan URL berhasil dihapus!';
+// Handle Redirect Deletion (CSRF-protected POST)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_redirect'])) {
+    $token = $_POST['csrf_token'] ?? '';
+    if (!verify_csrf_token($token)) {
+        $error = 'Validasi CSRF token gagal.';
+    } else {
+        $id = intval($_POST['delete_id'] ?? 0);
+        try {
+            $red = Database::fetch("SELECT old_url FROM redirects WHERE id = ?", [$id]);
+            if ($red) {
+                Database::query("DELETE FROM redirects WHERE id = ?", [$id]);
+                log_activity($_SESSION['admin_user_id'], 'delete_redirect', "Deleted redirect ID: $id (" . $red['old_url'] . ")");
+                clear_page_cache();
+                $success = 'Pengalihan URL berhasil dihapus!';
+            }
+        } catch (Exception $e) {
+            $error = admin_friendly_error('Gagal menghapus pengalihan.', $e);
         }
-    } catch (Exception $e) {
-        $error = 'Gagal menghapus pengalihan: ' . $e->getMessage();
     }
 }
 
@@ -150,7 +166,11 @@ try {
                                         <td><span class="admin-code-pill"><?php echo sanitize($red['new_url']); ?></span></td>
                                         <td><span class="badge badge-info admin-num"><?php echo $red['type']; ?></span></td>
                                         <td>
-                                            <a href="?delete=<?php echo $red['id']; ?>" class="btn-admin btn-admin-danger btn-admin-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus redirect map ini?')">Delete</a>
+                                            <form method="POST" action="<?php echo BASE_URL; ?>admin/redirects.php" style="margin: 0; display: inline-flex;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus redirect map ini?')">
+                                                <?php echo csrf_field(); ?>
+                                                <input type="hidden" name="delete_id" value="<?php echo (int)$red['id']; ?>">
+                                                <button type="submit" name="delete_redirect" value="1" class="btn-admin btn-admin-danger btn-admin-sm">Delete</button>
+                                            </form>
                                         </td>
                                     </tr>
                                 <?php endforeach; else: ?>

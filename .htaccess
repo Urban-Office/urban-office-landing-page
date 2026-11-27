@@ -13,8 +13,9 @@ DirectoryIndex index.php index.html
 # Prevent Directory Browsing and disable MultiViews
 Options -Indexes -MultiViews
 
-# Block direct HTTP access to hidden internal/agent/VCS directories (.git, .agents, .github)
+# Block direct HTTP access to hidden internal/agent/VCS directories (.git, .agents, .github) and internal docs
 RewriteRule (^|/)\.(git|agents|github)(/|$) - [F,L]
+RewriteRule (^|/)docs(/|$) - [F,L]
 
 # 1. Dynamic Sitemap Routing
 # Rewrites /sitemap.xml to /sitemap.php dynamically

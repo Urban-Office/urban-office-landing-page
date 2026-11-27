@@ -8,37 +8,69 @@ require_once dirname(dirname(__FILE__)) . '/inc/config.php';
 require_once dirname(dirname(__FILE__)) . '/inc/database.php';
 require_once dirname(dirname(__FILE__)) . '/inc/functions.php';
 
+send_admin_security_headers();
+
 $error = '';
+$login_username = '';
+
+if (isset($_GET['error']) && $_GET['error'] === 'forbidden') {
+    $error = 'Akses ditolak. Halaman tersebut hanya tersedia untuk Administrator.';
+}
 
 // Handle Login POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     $token = $_POST['csrf_token'] ?? '';
+    $login_username = trim((string) ($_POST['username'] ?? ''));
     if (!verify_csrf_token($token)) {
         $error = 'Validasi token CSRF gagal. Silakan muat ulang halaman.';
     } else {
-        $username = trim((string) ($_POST['username'] ?? ''));
-        $password = trim((string) ($_POST['password'] ?? ''));
+        $username = $login_username;
+        $password = (string) ($_POST['password'] ?? '');
+        $ip = admin_client_ip();
+        $fail_detail = "Failed login attempt for username: " . $username;
 
         try {
-            $user = Database::fetch("SELECT * FROM users WHERE username = ? AND status = 1", [$username]);
-            if ($user && password_verify($password, $user['password'])) {
-                $_SESSION['admin_logged_in'] = true;
-                $_SESSION['admin_user_id'] = $user['id'];
-                $_SESSION['admin_username'] = $user['username'];
-                $_SESSION['admin_role'] = $user['role'];
-
-                log_activity($user['id'], 'login', "User $username logged in successfully.");
-                header('Location: ' . BASE_URL . 'admin/index.php');
-                exit;
+            // Brute-force protection: max 5 failed attempts per (IP + username) OR 20 per IP within 15 minutes
+            $recent_fails = Database::fetch(
+                "SELECT
+                    COUNT(*) AS ip_cnt,
+                    SUM(details = ?) AS user_cnt
+                 FROM activity_logs
+                 WHERE action = 'login_failed' AND ip_address = ? AND created_at >= (NOW() - INTERVAL 15 MINUTE)",
+                [$fail_detail, $ip]
+            );
+            if ($recent_fails && ((int)($recent_fails['user_cnt'] ?? 0) >= 5 || (int)($recent_fails['ip_cnt'] ?? 0) >= 20)) {
+                $error = 'Terlalu banyak percobaan login gagal. Silakan coba lagi dalam 15 menit.';
             } else {
-                $error = 'Username atau password salah.';
-                log_activity(null, 'login_failed', "Failed login attempt for username: " . sanitize($username));
+                $user = Database::fetch("SELECT * FROM users WHERE username = ? AND status = 1", [$username]);
+                if ($user && password_verify($password, $user['password'])) {
+                    // Prevent session fixation and rotate CSRF token on privilege change
+                    session_regenerate_id(true);
+                    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                    $_SESSION['admin_logged_in'] = true;
+                    $_SESSION['admin_user_id'] = (int)$user['id'];
+                    $_SESSION['admin_username'] = $user['username'];
+                    $_SESSION['admin_role'] = $user['role'];
+
+                    log_activity((int)$user['id'], 'login', "User $username logged in successfully.");
+                    header('Location: ' . BASE_URL . 'admin/index.php');
+                    exit;
+                } else {
+                    $error = 'Username atau password salah.';
+                    log_activity(null, 'login_failed', $fail_detail);
+                }
             }
         } catch (Exception $e) {
             error_log("Login error: " . $e->getMessage());
             $error = 'Terjadi kesalahan sistem. Silakan coba lagi.';
         }
     }
+}
+
+// Re-verify active session & auto-publish scheduled posts when logged in
+if (is_admin()) {
+    check_admin_auth();
+    auto_publish_scheduled_posts();
 }
 
 // Action: Clear Cache (CSRF-protected POST)
@@ -52,23 +84,6 @@ if (is_admin() && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_c
     } else {
         $error = 'Validasi CSRF gagal saat membersihkan cache.';
     }
-}
-
-/**
- * Normalize Indonesian phone numbers (e.g. 0812... -> 62812...) for WhatsApp deep links.
- */
-function admin_format_wa_phone(string $phone): string {
-    $digits = preg_replace('/[^0-9]/', '', $phone);
-    if ($digits === '') {
-        return '';
-    }
-    if (strpos($digits, '0') === 0) {
-        return '62' . substr($digits, 1);
-    }
-    if (strpos($digits, '8') === 0) {
-        return '62' . $digits;
-    }
-    return $digits;
 }
 
 // Render Dashboard if Admin is logged in
@@ -893,7 +908,7 @@ if (is_admin()):
                                         <span class="ov-activity-dot" style="background: <?php echo $act_color; ?>;" aria-hidden="true"></span>
                                         <div class="ov-activity-body">
                                             <div class="ov-activity-text">
-                                                <strong><?php echo sanitize($act['username'] ?: 'Sistem'); ?></strong> — <?php echo sanitize($act['details'] ?: $act['action']); ?>
+                                                <strong><?php echo sanitize($act['username'] ?: 'Sistem'); ?></strong> — <?php echo sanitize(html_entity_decode((string)($act['details'] ?: $act['action']), ENT_QUOTES, 'UTF-8')); ?>
                                             </div>
                                             <div class="ov-activity-meta">
                                                 <?php echo date('d M H:i', strtotime($act['created_at'])); ?> · <?php echo sanitize($act['action']); ?>
@@ -1027,7 +1042,7 @@ if (is_admin()):
 
             <div class="login-field">
                 <label class="form-label" for="login-username">Username</label>
-                <input type="text" id="login-username" name="username" class="form-control" placeholder="Masukkan username admin" autocomplete="username" required autofocus>
+                <input type="text" id="login-username" name="username" class="form-control" value="<?php echo sanitize($login_username); ?>" placeholder="Masukkan username admin" autocomplete="username" required autofocus>
             </div>
 
             <div class="login-field">

@@ -9,23 +9,6 @@ require_once __DIR__ . '/auth.php';
 $error = '';
 $success = '';
 
-/**
- * Normalize Indonesian phone numbers (08... -> 628...) for WhatsApp links.
- */
-function leads_format_wa_phone(string $phone): string {
-    $digits = preg_replace('/[^0-9]/', '', $phone);
-    if ($digits === '') {
-        return '';
-    }
-    if (strpos($digits, '0') === 0) {
-        return '62' . substr($digits, 1);
-    }
-    if (strpos($digits, '8') === 0) {
-        return '62' . $digits;
-    }
-    return $digits;
-}
-
 // Handle CSRF-protected POST status changes & deletion
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lead_action'], $_POST['lead_id'])) {
     $token = $_POST['csrf_token'] ?? '';
@@ -58,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lead_action'], $_POST
             header('Location: ' . BASE_URL . 'admin/leads.php?' . http_build_query($redirect_q));
             exit;
         } catch (Exception $e) {
-            $error = 'Gagal memproses aksi lead: ' . $e->getMessage();
+            $error = admin_friendly_error('Gagal memproses aksi lead.', $e);
         }
     }
 }
@@ -106,19 +89,19 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
         foreach ($leads_export as $l) {
             fputcsv($output, [
                 date('Y-m-d H:i:s', strtotime($l['created_at'])),
-                $l['name'],
-                $l['email'],
-                $l['phone'],
-                $l['service'],
-                $l['message'],
-                $l['ip_address'],
-                $l['status']
+                admin_csv_safe($l['name']),
+                admin_csv_safe($l['email']),
+                admin_csv_safe($l['phone']),
+                admin_csv_safe($l['service']),
+                admin_csv_safe($l['message']),
+                admin_csv_safe($l['ip_address']),
+                admin_csv_safe($l['status']),
             ]);
         }
         fclose($output);
         exit;
     } catch (Exception $e) {
-        $error = 'Ekspor CSV gagal: ' . $e->getMessage();
+        $error = admin_friendly_error('Ekspor CSV gagal.', $e);
     }
 }
 
@@ -278,7 +261,7 @@ $build_leads_url = static function (array $overrides = []) use ($filter, $search
                         </thead>
                         <tbody>
                             <?php if (!empty($leads)): foreach ($leads as $l):
-                                $wa_phone = leads_format_wa_phone((string) $l['phone']);
+                                $wa_phone = admin_format_wa_phone((string) $l['phone']);
                                 $wa_text = "Halo " . $l['name'] . ", terima kasih telah menghubungi Urban Office perihal " . $l['service'] . ".";
                                 $wa_url = $wa_phone !== '' ? ("https://api.whatsapp.com/send/?phone=" . $wa_phone . "&text=" . rawurlencode($wa_text)) : '';
                             ?>

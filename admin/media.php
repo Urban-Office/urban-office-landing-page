@@ -15,78 +15,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['media_file'])) {
         $error = 'Validasi CSRF token gagal.';
     } else {
         $file = $_FILES['media_file'];
+        $check = admin_validate_image_upload($file, 5 * 1024 * 1024);
 
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            $error = 'Gagal mengupload file (Error Code: ' . $file['error'] . ')';
+        if (!$check['ok']) {
+            $error = $check['error'];
         } else {
-            // Verify Mime Type
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime = finfo_file($finfo, $file['tmp_name']);
-            finfo_close($finfo);
+            $crypt_name = bin2hex(random_bytes(16)) . '.' . $check['ext'];
 
-            $allowed_mimes = [
-                'image/jpeg' => 'jpg',
-                'image/png'  => 'png',
-                'image/webp' => 'webp',
-                'image/gif'  => 'gif'
-            ];
+            if (!is_dir(DIR_UPLOADS)) {
+                mkdir(DIR_UPLOADS, 0755, true);
+            }
 
-            if (!array_key_exists($mime, $allowed_mimes)) {
-                $error = 'Format file tidak didukung. Gunakan JPG, PNG, WEBP, atau GIF.';
-            } else {
-                // Limit size (5MB)
-                $max_size = 5 * 1024 * 1024;
-                if ($file['size'] > $max_size) {
-                    $error = 'Ukuran file maksimal 5MB.';
-                } else {
-                    $ext = $allowed_mimes[$mime];
-                    $crypt_name = bin2hex(random_bytes(16)) . '.' . $ext;
-                    
-                    if (!is_dir(DIR_UPLOADS)) {
-                        mkdir(DIR_UPLOADS, 0755, true);
+            $dest_path = DIR_UPLOADS . $crypt_name;
+            $rel_path = 'uploads/' . $crypt_name;
+
+            if (move_uploaded_file($file['tmp_name'], $dest_path)) {
+                try {
+                    Database::insert(
+                        "INSERT INTO media (file_name, file_path, file_type, file_size, uploaded_by) VALUES (?, ?, ?, ?, ?)",
+                        [basename((string)$file['name']), $rel_path, $check['mime'], (int)$file['size'], (int)$_SESSION['admin_user_id']]
+                    );
+                    log_activity($_SESSION['admin_user_id'], 'upload_media', "Uploaded file: " . basename((string)$file['name']) . " -> $rel_path");
+                    $success = 'Media berhasil diupload!';
+                } catch (Exception $e) {
+                    if (file_exists($dest_path)) {
+                        unlink($dest_path);
                     }
-
-                    $dest_path = DIR_UPLOADS . $crypt_name;
-                    $rel_path = 'uploads/' . $crypt_name;
-
-                    if (move_uploaded_file($file['tmp_name'], $dest_path)) {
-                        try {
-                            Database::insert(
-                                "INSERT INTO media (file_name, file_path, file_type, file_size, uploaded_by) VALUES (?, ?, ?, ?, ?)",
-                                [$file['name'], $rel_path, $mime, $file['size'], $_SESSION['admin_user_id']]
-                            );
-                            log_activity($_SESSION['admin_user_id'], 'upload_media', "Uploaded file: " . sanitize($file['name']) . " -> $rel_path");
-                            $success = 'Media berhasil diupload!';
-                        } catch (Exception $e) {
-                            // Clean up file if DB insert failed
-                            if (file_exists($dest_path)) unlink($dest_path);
-                            $error = 'Gagal mendaftarkan file di database: ' . $e->getMessage();
-                        }
-                    } else {
-                        $error = 'Gagal memindahkan file ke direktori tujuan.';
-                    }
+                    $error = admin_friendly_error('Gagal mendaftarkan file di database.', $e);
                 }
+            } else {
+                $error = 'Gagal memindahkan file ke direktori tujuan.';
             }
         }
     }
 }
 
-// Handle Media Deletion
-if (isset($_GET['delete'])) {
-    $id = intval($_GET['delete']);
-    try {
-        $item = Database::fetch("SELECT file_path, file_name FROM media WHERE id = ?", [$id]);
-        if ($item) {
-            $full_path = DIR_ROOT . $item['file_path'];
-            if (file_exists($full_path) && is_file($full_path)) {
-                unlink($full_path);
+// Handle Media Deletion (CSRF-protected POST + realpath containment)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_media'])) {
+    $token = $_POST['csrf_token'] ?? '';
+    if (!verify_csrf_token($token)) {
+        $error = 'Validasi CSRF token gagal.';
+    } else {
+        $id = intval($_POST['delete_id'] ?? 0);
+        try {
+            $item = Database::fetch("SELECT file_path, file_name FROM media WHERE id = ?", [$id]);
+            if ($item) {
+                admin_safe_unlink((string)$item['file_path'], [DIR_UPLOADS, DIR_ROOT . 'assets/images/blog/']);
+                Database::query("DELETE FROM media WHERE id = ?", [$id]);
+                log_activity($_SESSION['admin_user_id'], 'delete_media', "Deleted file: " . $item['file_name']);
+                $success = 'Media berhasil dihapus!';
             }
-            Database::query("DELETE FROM media WHERE id = ?", [$id]);
-            log_activity($_SESSION['admin_user_id'], 'delete_media', "Deleted file: " . sanitize($item['file_name']));
-            $success = 'Media berhasil dihapus!';
+        } catch (Exception $e) {
+            $error = admin_friendly_error('Gagal menghapus file.', $e);
         }
-    } catch (Exception $e) {
-        $error = 'Gagal menghapus file: ' . $e->getMessage();
     }
 }
 
@@ -96,12 +77,12 @@ $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $offset = ($page - 1) * $limit;
 
 try {
-    $total_items = Database::fetch("SELECT COUNT(*) as total FROM media")['total'];
-    $total_pages = ceil($total_items / $limit);
+    $total_items = (int)(Database::fetch("SELECT COUNT(*) as total FROM media")['total'] ?? 0);
+    $total_pages = max(1, (int)ceil($total_items / $limit));
     
     $media_list = Database::fetchAll(
         "SELECT m.*, u.username FROM media m 
-         JOIN users u ON m.uploaded_by = u.id 
+         LEFT JOIN users u ON m.uploaded_by = u.id 
          ORDER BY m.created_at DESC LIMIT ? OFFSET ?",
         [$limit, $offset]
     );
@@ -176,7 +157,7 @@ try {
                 <h3>Upload File Baru</h3>
                 <form action="" method="POST" enctype="multipart/form-data" style="margin-top: 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                     <?php echo csrf_field(); ?>
-                    <input type="file" name="media_file" class="form-control" style="max-width: 420px; padding: 8px 12px;" required>
+                    <input type="file" name="media_file" accept="image/jpeg,image/png,image/webp,image/gif" class="form-control" style="max-width: 420px; padding: 8px 12px;" required>
                     <button type="submit" class="btn-admin btn-admin-primary" style="padding: 10px 20px;">Upload Image</button>
                 </form>
             </div>
@@ -188,12 +169,12 @@ try {
                 <?php if (!empty($media_list)): ?>
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-top: 18px;">
                         <?php foreach ($media_list as $media): 
-                            $rel_url = $media['file_path'];
-                            $full_url = BASE_URL . $rel_url;
+                            $rel_url = (string)$media['file_path'];
+                            $full_url = media_url($rel_url);
                         ?>
                             <div style="border: 1px solid var(--admin-border); border-radius: 10px; overflow: hidden; background-color: #f8fafc; display: flex; flex-direction: column; justify-content: space-between;">
                                 <div style="height: 140px; background-color: #e2e8f0; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                    <img src="<?php echo $full_url; ?>" alt="<?php echo sanitize($media['file_name']); ?>" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <img src="<?php echo sanitize($full_url); ?>" alt="<?php echo sanitize($media['file_name']); ?>" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;">
                                 </div>
                                 <div style="padding: 12px; font-size: 0.8rem;">
                                     <div style="font-weight: 600; color: var(--admin-ink); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; margin-bottom: 4px;" title="<?php echo sanitize($media['file_name']); ?>">
@@ -202,9 +183,13 @@ try {
                                     <div class="admin-num" style="color: var(--admin-subtle); margin-bottom: 10px;">
                                         Size: <?php echo round($media['file_size'] / 1024, 1); ?> KB
                                     </div>
-                                    <div style="display: flex; gap: 6px;">
-                                        <button type="button" class="btn-admin btn-admin-secondary btn-admin-sm" style="flex-grow:1;" onclick="copyToClipboard('<?php echo sanitize($rel_url); ?>', this)">Copy Path</button>
-                                        <a href="?delete=<?php echo $media['id']; ?>" class="btn-admin btn-admin-danger btn-admin-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus file ini dari server?')">Del</a>
+                                    <div style="display: flex; gap: 6px; align-items: center;">
+                                        <button type="button" class="btn-admin btn-admin-secondary btn-admin-sm" style="flex-grow:1;" data-copy="<?php echo sanitize($rel_url); ?>" onclick="copyToClipboard(this.dataset.copy, this)">Copy Path</button>
+                                        <form method="POST" action="<?php echo BASE_URL; ?>admin/media.php<?php echo $page > 1 ? '?page=' . $page : ''; ?>" style="margin: 0; display: inline-flex;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus file ini dari server?')">
+                                            <?php echo csrf_field(); ?>
+                                            <input type="hidden" name="delete_id" value="<?php echo (int)$media['id']; ?>">
+                                            <button type="submit" name="delete_media" value="1" class="btn-admin btn-admin-danger btn-admin-sm">Del</button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>

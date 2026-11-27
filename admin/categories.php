@@ -14,47 +14,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
     if (!verify_csrf_token($token)) {
         $error = 'Validasi CSRF token gagal.';
     } else {
-        $name = trim($_POST['name']);
-        $slug = trim($_POST['slug']);
+        $name = trim((string)($_POST['name'] ?? ''));
+        $raw_slug = trim((string)($_POST['slug'] ?? ''));
+        $slug = admin_slugify($raw_slug !== '' ? $raw_slug : $name);
 
-        if (empty($slug)) {
-            $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name)));
-        }
-
-        if (empty($name)) {
+        if ($name === '') {
             $error = 'Nama kategori wajib diisi.';
+        } elseif ($slug === '') {
+            $error = 'Slug kategori tidak valid.';
         } else {
             try {
-                // Check duplicate
-                $check = Database::fetch("SELECT id FROM categories WHERE slug = ?", [$slug]);
+                // Check duplicate slug or name
+                $check = Database::fetch("SELECT id FROM categories WHERE slug = ? OR name = ?", [$slug, $name]);
                 if ($check) {
-                    $error = 'Kategori dengan slug tersebut sudah ada.';
+                    $error = 'Kategori dengan nama atau slug tersebut sudah ada.';
                 } else {
                     Database::insert("INSERT INTO categories (name, slug) VALUES (?, ?)", [$name, $slug]);
-                    log_activity($_SESSION['admin_user_id'], 'create_category', "Created category: " . sanitize($name));
+                    log_activity($_SESSION['admin_user_id'], 'create_category', "Created category: $name");
                     clear_page_cache();
                     $success = 'Kategori berhasil ditambahkan!';
                 }
             } catch (Exception $e) {
-                $error = 'Gagal menyimpan kategori: ' . $e->getMessage();
+                $error = admin_friendly_error('Gagal menyimpan kategori.', $e);
             }
         }
     }
 }
 
-// Handle Category Deletion
-if (isset($_GET['delete'])) {
-    $id = intval($_GET['delete']);
-    try {
-        $cat = Database::fetch("SELECT name FROM categories WHERE id = ?", [$id]);
-        if ($cat) {
-            Database::query("DELETE FROM categories WHERE id = ?", [$id]);
-            log_activity($_SESSION['admin_user_id'], 'delete_category', "Deleted category ID: $id (" . sanitize($cat['name']) . ")");
-            clear_page_cache();
-            $success = 'Kategori berhasil dihapus!';
+// Handle Category Deletion (CSRF-protected POST)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_category'])) {
+    $token = $_POST['csrf_token'] ?? '';
+    if (!verify_csrf_token($token)) {
+        $error = 'Validasi CSRF token gagal.';
+    } else {
+        $id = intval($_POST['delete_id'] ?? 0);
+        try {
+            $cat = Database::fetch("SELECT name FROM categories WHERE id = ?", [$id]);
+            if ($cat) {
+                Database::query("DELETE FROM categories WHERE id = ?", [$id]);
+                log_activity($_SESSION['admin_user_id'], 'delete_category', "Deleted category ID: $id (" . $cat['name'] . ")");
+                clear_page_cache();
+                $success = 'Kategori berhasil dihapus!';
+            }
+        } catch (Exception $e) {
+            $error = admin_friendly_error('Gagal menghapus kategori.', $e);
         }
-    } catch (Exception $e) {
-        $error = 'Gagal menghapus kategori: ' . $e->getMessage();
     }
 }
 
@@ -146,7 +150,11 @@ try {
                                         <td><span class="admin-code-pill">/category/<?php echo sanitize($cat['slug']); ?>/</span></td>
                                         <td><span class="badge badge-info admin-num"><?php echo $cat['post_count']; ?></span></td>
                                         <td>
-                                            <a href="?delete=<?php echo $cat['id']; ?>" class="btn-admin btn-admin-danger btn-admin-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus kategori ini? Seluruh relasi artikel akan terputus.')">Delete</a>
+                                            <form method="POST" action="<?php echo BASE_URL; ?>admin/categories.php" style="margin: 0; display: inline-flex;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kategori ini? Seluruh relasi artikel akan terputus.')">
+                                                <?php echo csrf_field(); ?>
+                                                <input type="hidden" name="delete_id" value="<?php echo (int)$cat['id']; ?>">
+                                                <button type="submit" name="delete_category" value="1" class="btn-admin btn-admin-danger btn-admin-sm">Delete</button>
+                                            </form>
                                         </td>
                                     </tr>
                                 <?php endforeach; else: ?>

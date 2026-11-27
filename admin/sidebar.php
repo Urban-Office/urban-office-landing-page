@@ -139,6 +139,7 @@ try {
                         </span>
                     </a>
                 </li>
+                <?php if ($sidebar_role === 'administrator'): ?>
                 <li>
                     <a href="<?php echo BASE_URL; ?>admin/redirects.php" class="sidebar-link<?php echo $current_page === 'redirects.php' ? ' active' : ''; ?>">
                         <span class="sidebar-link-main">
@@ -147,9 +148,11 @@ try {
                         </span>
                     </a>
                 </li>
+                <?php endif; ?>
             </ul>
         </div>
 
+        <?php if ($sidebar_role === 'administrator'): ?>
         <!-- Sistem -->
         <div class="sidebar-group">
             <div class="sidebar-group-label">Sistem</div>
@@ -180,6 +183,7 @@ try {
                 </li>
             </ul>
         </div>
+        <?php endif; ?>
     </div>
 
     <div class="sidebar-footer">
@@ -190,10 +194,13 @@ try {
                 <div class="sidebar-user-role"><?php echo sanitize($sidebar_role); ?></div>
             </div>
         </div>
-        <a href="<?php echo BASE_URL; ?>admin/logout.php" class="sidebar-logout-btn" title="Keluar dari CMS">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-            <span>Keluar</span>
-        </a>
+        <form method="POST" action="<?php echo BASE_URL; ?>admin/logout.php" style="margin: 0; display: inline-flex;">
+            <?php echo csrf_field(); ?>
+            <button type="submit" class="sidebar-logout-btn" title="Keluar dari CMS" style="cursor: pointer; font-family: inherit;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                <span>Keluar</span>
+            </button>
+        </form>
     </div>
 </aside>
 

@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_status'])) {
                 exit;
             }
         } catch (Exception $e) {
-            $error = 'Gagal mengubah status: ' . $e->getMessage();
+            $error = admin_friendly_error('Gagal mengubah status pop-up.', $e);
         }
     }
 }
@@ -59,12 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_popup'])) {
         try {
             $item = Database::fetch("SELECT id, title, image_path FROM popups WHERE id = ?", [$delete_id]);
             if ($item) {
-                // Delete image file if inside assets/images/popups/
-                if (!empty($item['image_path']) && strpos($item['image_path'], 'assets/images/popups/') === 0) {
-                    $file_abs = DIR_ROOT . $item['image_path'];
-                    if (is_file($file_abs)) {
-                        @unlink($file_abs);
-                    }
+                // Safely delete image file only if resolved realpath is inside assets/images/popups/
+                if (!empty($item['image_path'])) {
+                    admin_safe_unlink((string)$item['image_path'], [DIR_ROOT . 'assets/images/popups/']);
                 }
                 Database::query("DELETE FROM popups WHERE id = ?", [$delete_id]);
                 log_activity($_SESSION['admin_user_id'], 'popup_delete', "Deleted popup #$delete_id ({$item['title']})");
@@ -73,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_popup'])) {
                 exit;
             }
         } catch (Exception $e) {
-            $error = 'Gagal menghapus pop-up: ' . $e->getMessage();
+            $error = admin_friendly_error('Gagal menghapus pop-up.', $e);
         }
     }
 }
@@ -86,40 +83,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_popup'])) {
     if (!verify_csrf_token($token)) {
         $error = 'Validasi CSRF token gagal.';
     } else {
-        $title          = trim($_POST['title'] ?? '');
-        $slug_input     = trim($_POST['slug'] ?? '');
-        $alt_text       = trim($_POST['alt_text'] ?? '');
-        $link_type      = trim($_POST['link_type'] ?? 'url');
+        $title          = trim((string)($_POST['title'] ?? ''));
+        $slug_input     = trim((string)($_POST['slug'] ?? ''));
+        $alt_text       = trim((string)($_POST['alt_text'] ?? ''));
+        $link_type      = trim((string)($_POST['link_type'] ?? 'url'));
         if (!in_array($link_type, ['url', 'whatsapp'], true)) {
             $link_type = 'url';
         }
-        $target_url     = trim($_POST['target_url'] ?? '');
-        $wa_number      = trim($_POST['wa_number'] ?? '085107620100');
-        $wa_message     = trim($_POST['wa_message'] ?? '');
+        $target_url     = trim((string)($_POST['target_url'] ?? ''));
+        $wa_number      = trim((string)($_POST['wa_number'] ?? '085107620100'));
+        $wa_message     = trim((string)($_POST['wa_message'] ?? ''));
 
         if ($link_type === 'whatsapp') {
-            $clean_phone = preg_replace('/[^0-9]/', '', $wa_number);
-            if (strpos($clean_phone, '0') === 0) {
-                $clean_phone = '62' . substr($clean_phone, 1);
-            }
-            if (empty($clean_phone)) {
+            $clean_phone = admin_format_wa_phone($wa_number);
+            if ($clean_phone === '') {
                 $clean_phone = '6285107620100';
             }
             $target_url = 'https://web.whatsapp.com/send?phone=' . $clean_phone . (!empty($wa_message) ? ('&text=' . rawurlencode($wa_message)) : '');
         } else {
-            if (empty($target_url)) {
+            if ($target_url === '') {
                 $target_url = 'https://my.urbanoffice.co.id/dashboard/home';
+            } elseif (!preg_match('#^(/|https?://)#i', $target_url)) {
+                $error = 'Target URL harus diawali http://, https://, atau garis miring (/).';
             }
         }
 
-        $display_target = trim($_POST['display_target'] ?? 'all');
-        $frequency      = trim($_POST['frequency'] ?? 'daily');
-        $frequency_days = max(1, intval($_POST['frequency_days'] ?? 1));
-        $delay_seconds  = max(2, intval($_POST['delay_seconds'] ?? 2));
+        $display_target = trim((string)($_POST['display_target'] ?? 'all'));
+        if (!in_array($display_target, ['all', 'home_only', 'specific'], true)) {
+            $display_target = 'all';
+        }
+        $frequency      = trim((string)($_POST['frequency'] ?? 'daily'));
+        if (!in_array($frequency, ['always', 'session', 'daily', 'custom'], true)) {
+            $frequency = 'daily';
+        }
+        $frequency_days = max(1, min(90, intval($_POST['frequency_days'] ?? 1)));
+        $delay_seconds  = max(2, min(30, intval($_POST['delay_seconds'] ?? 2)));
         $status         = isset($_POST['status']) ? 1 : 0;
-        $start_date     = !empty($_POST['start_date']) ? $_POST['start_date'] : null;
-        $end_date       = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
-        $existing_image = trim($_POST['existing_image'] ?? '');
+
+        $raw_start = trim((string)($_POST['start_date'] ?? ''));
+        $raw_end   = trim((string)($_POST['end_date'] ?? ''));
+        $start_ts  = $raw_start !== '' ? strtotime(str_replace('T', ' ', $raw_start)) : false;
+        $end_ts    = $raw_end !== '' ? strtotime(str_replace('T', ' ', $raw_end)) : false;
+        $start_date = $start_ts !== false ? date('Y-m-d H:i:s', $start_ts) : null;
+        $end_date   = $end_ts !== false ? date('Y-m-d H:i:s', $end_ts) : null;
+
+        if ($start_ts !== false && $end_ts !== false && $end_ts < $start_ts) {
+            $error = 'Jadwal selesai tayang tidak boleh lebih awal dari jadwal mulai tayang.';
+        }
+
+        $existing_image = trim((string)($_POST['existing_image'] ?? ''));
 
         // Resolve slug
         $slug = $slug_input !== '' ? make_slug($slug_input) : make_slug($title);
@@ -131,43 +143,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_popup'])) {
         $target_pages_json = null;
         if ($display_target === 'specific') {
             $sel_pages = isset($_POST['target_pages']) && is_array($_POST['target_pages']) ? $_POST['target_pages'] : [];
-            $target_pages_json = json_encode(array_values(array_filter($sel_pages)));
+            $target_pages_json = json_encode(array_values(array_filter($sel_pages, static fn($v) => is_string($v))));
         }
 
-        if (empty($title)) {
+        if ($error === '' && $title === '') {
             $error = 'Judul pop-up wajib diisi.';
-        } else {
+        }
+
+        if ($error === '') {
             // Check slug uniqueness
             $slug_check = Database::fetch("SELECT id FROM popups WHERE slug = ? AND id != ?", [$slug, $id]);
             if ($slug_check) {
                 $slug = $slug . '-' . time();
             }
 
-            // Image Upload Handling
+            // Image Upload Handling (MIME + size verified)
             $image_path = $existing_image;
-            if (isset($_FILES['image_file']) && $_FILES['image_file']['error'] === UPLOAD_ERR_OK) {
-                $fileTmp  = $_FILES['image_file']['tmp_name'];
-                $fileName = $_FILES['image_file']['name'];
-                $fileExt  = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-                $allowed  = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-
-                if (!in_array($fileExt, $allowed, true)) {
-                    $error = 'Format file gambar tidak didukung. Harap unggah format JPG, PNG, WEBP, atau GIF.';
+            if (isset($_FILES['image_file']) && ($_FILES['image_file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+                $img_check = admin_validate_image_upload($_FILES['image_file'], 5 * 1024 * 1024);
+                if (!$img_check['ok']) {
+                    $error = $img_check['error'];
                 } else {
                     $uploadDir = DIR_ROOT . 'assets/images/popups/';
                     if (!is_dir($uploadDir)) {
                         mkdir($uploadDir, 0755, true);
                     }
-                    $newFileName = 'popup_' . date('Ymd_His') . '_' . bin2hex(random_bytes(3)) . '.' . $fileExt;
+                    $newFileName = 'popup_' . date('Ymd_His') . '_' . bin2hex(random_bytes(8)) . '.' . $img_check['ext'];
                     $destPath    = $uploadDir . $newFileName;
 
-                    if (move_uploaded_file($fileTmp, $destPath)) {
-                        // Delete previous image if replaced
-                        if (!empty($existing_image) && strpos($existing_image, 'assets/images/popups/') === 0) {
-                            $old_abs = DIR_ROOT . $existing_image;
-                            if (is_file($old_abs)) {
-                                @unlink($old_abs);
-                            }
+                    if (move_uploaded_file($_FILES['image_file']['tmp_name'], $destPath)) {
+                        // Safely delete previous image only if inside assets/images/popups/
+                        if ($existing_image !== '') {
+                            admin_safe_unlink($existing_image, [$uploadDir]);
                         }
                         $image_path = 'assets/images/popups/' . $newFileName;
                     } else {
@@ -175,11 +182,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_popup'])) {
                     }
                 }
             } elseif (!empty($_POST['image_url_direct'])) {
-                $image_path = trim($_POST['image_url_direct']);
+                $direct_img = trim((string)$_POST['image_url_direct']);
+                if (strpos($direct_img, '..') !== false || preg_match('#^(javascript|data|vbscript):#i', $direct_img)) {
+                    $error = 'Path atau URL gambar tidak valid.';
+                } else {
+                    $image_path = $direct_img;
+                }
             }
 
-            if (empty($error)) {
-                if (empty($image_path)) {
+            if ($error === '') {
+                if ($image_path === '') {
                     $error = 'Gambar pop-up wajib diunggah atau disertakan.';
                 } else {
                     try {
@@ -219,7 +231,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_popup'])) {
                             exit;
                         }
                     } catch (Exception $e) {
-                        $error = 'Gagal menyimpan data pop-up: ' . $e->getMessage();
+                        $error = admin_friendly_error('Gagal menyimpan data pop-up.', $e);
                     }
                 }
             }
@@ -247,13 +259,12 @@ if ($action === 'edit' && $id > 0) {
     }
 }
 
-// Available pages categorized by workspace services and sections
+// Available pages categorized by workspace services and sections (synced with active public routes)
 $available_groups = [
     '🏢 Virtual Office (Per Cabang)' => [
         'virtual-office-surabaya'       => 'Virtual Office Surabaya (MERR)',
         'virtual-office-surabaya-timur' => 'Virtual Office Surabaya Timur (Klampis)',
         'virtual-office-surabaya-barat' => 'Virtual Office Surabaya Barat (Grand Sungkono Lagoon)',
-        'virtual-office-jakarta'        => 'Virtual Office Jakarta Selatan (Fatmawati)',
         'virtual-office-jakarta-timur'  => 'Virtual Office Jakarta Timur (Cakung)',
         'virtual-office-gresik'         => 'Virtual Office Gresik',
         'virtual-office-medan'          => 'Virtual Office Medan',
@@ -261,30 +272,28 @@ $available_groups = [
     ],
     '🏢 Private Office / Sewa Kantor (Per Kota)' => [
         'sewa-kantor-surabaya' => 'Private Office Surabaya',
-        'sewa-kantor-jakarta'  => 'Private Office Jakarta',
+        'sewa-kantor-jakarta'  => 'Private Office Jakarta Timur',
         'sewa-kantor-gresik'   => 'Private Office Gresik',
         'sewa-kantor-malang'   => 'Private Office Malang',
     ],
     '🤝 Ruang Meeting (Per Kota)' => [
-        'meeting-room-surabaya' => 'Ruang Meeting Surabaya',
-        'meeting-room-jakarta'  => 'Ruang Meeting Jakarta',
-        'meeting-room-gresik'   => 'Ruang Meeting Gresik',
-        'meeting-room-malang'   => 'Ruang Meeting Malang',
+        'meeting-room-surabaya'       => 'Ruang Meeting Surabaya',
+        'meeting-room-surabaya-barat' => 'Ruang Meeting Surabaya Barat',
+        'meeting-room-jakarta'        => 'Ruang Meeting Jakarta Timur',
+        'meeting-room-gresik'         => 'Ruang Meeting Gresik',
+        'meeting-room-malang'         => 'Ruang Meeting Malang',
     ],
     '💻 Coworking Space (Per Kota)' => [
-        'coworking-space-urban-office' => 'Coworking Space Surabaya (Utama)',
-        'coworking-space-surabaya'     => 'Coworking Space Surabaya',
-        'coworking-space-jakarta'      => 'Coworking Space Jakarta',
-        'coworking-space-malang'       => 'Coworking Space Malang',
+        'coworking-space-urban-office'   => 'Coworking Space Surabaya (Utama)',
+        'coworking-space-surabaya-timur' => 'Coworking Space Surabaya Timur (Klampis)',
+        'coworking-space-malang'         => 'Coworking Space Malang',
     ],
     '🎉 Event Space (Per Kota)' => [
         'event-space-55k-perjam-urbanoffice' => 'Event Space Surabaya (Utama)',
-        'event-space-surabaya'               => 'Event Space Surabaya',
-        'event-space-jakarta'                => 'Event Space Jakarta',
         'event-space-malang'                 => 'Event Space Malang',
     ],
     '👥 Sharing Room Office' => [
-        'sharing-room-office' => 'Sharing Room Office (Surabaya, Jakarta, Malang)',
+        'sharing-room-office' => 'Sharing Room Office',
     ],
     '⚖️ Jasa Pendirian Usaha & Legalitas' => [
         'pendirian-pt-include-virtual-office'      => 'Pendirian PT + Virtual Office',
@@ -515,8 +524,8 @@ if ($action === 'list') {
                                     ?>
                                         <tr>
                                             <td>
-                                                <a href="<?php echo $img_src; ?>" target="_blank" title="Klik untuk lihat ukuran penuh">
-                                                    <img src="<?php echo $img_src; ?>" alt="<?php echo sanitize($p['title']); ?>" class="popup-thumb" onerror="this.src='https://placehold.co/120x80?text=No+Image';">
+                                                <a href="<?php echo sanitize($img_src); ?>" target="_blank" rel="noopener" title="Klik untuk lihat ukuran penuh">
+                                                    <img src="<?php echo sanitize($img_src); ?>" alt="<?php echo sanitize($p['title']); ?>" class="popup-thumb" onerror="this.src='https://placehold.co/120x80?text=No+Image';">
                                                 </a>
                                             </td>
                                             <td>
@@ -534,10 +543,10 @@ if ($action === 'list') {
                                                             <i class="bi bi-link-45deg"></i> Web URL
                                                         </span>
                                                     <?php endif; ?>
-                                                    <a href="<?php echo $deep_link; ?>" target="_blank" class="btn-admin-sm btn-admin-secondary" style="display: inline-flex; align-items: center; gap: 4px; text-decoration: none; font-size: 0.75rem;">
+                                                    <a href="<?php echo sanitize($deep_link); ?>" target="_blank" rel="noopener" class="btn-admin-sm btn-admin-secondary" style="display: inline-flex; align-items: center; gap: 4px; text-decoration: none; font-size: 0.75rem;">
                                                         <i class="bi bi-box-arrow-up-right"></i> Test Deep-Link
                                                     </a>
-                                                    <button type="button" class="btn-admin-sm btn-admin-secondary" style="font-size: 0.75rem; cursor: pointer;" onclick="navigator.clipboard.writeText('<?php echo $deep_link; ?>'); alert('Link disalin: <?php echo $deep_link; ?>');">
+                                                    <button type="button" class="btn-admin-sm btn-admin-secondary" style="font-size: 0.75rem; cursor: pointer;" data-copy="<?php echo sanitize($deep_link); ?>" onclick="navigator.clipboard.writeText(this.dataset.copy).then(() => alert('Link disalin: ' + this.dataset.copy));">
                                                         <i class="bi bi-clipboard"></i> Salin URL
                                                     </button>
                                                 </div>
@@ -744,14 +753,14 @@ if ($action === 'list') {
                                 <h3>2. Gambar Banner Pop-up</h3>
                                 
                                 <div style="margin-top: 18px;">
-                                    <label class="form-label">Upload File Gambar Banner *</label>
-                                    <input type="file" name="image_file" id="image_file_input" class="form-control" accept="image/png,image/jpeg,image/webp,image/gif" <?php echo empty($form_image) ? 'required' : ''; ?>>
+                                    <label class="form-label">Upload File Gambar Banner</label>
+                                    <input type="file" name="image_file" id="image_file_input" class="form-control" accept="image/png,image/jpeg,image/webp,image/gif">
                                     <div class="form-help">Format didukung: WEBP, JPG, PNG, GIF (Maks. 5MB). Rekomendasi rasio: 4:5 atau 1:1 (vertikal/kotak) agar optimal di layar desktop & HP.</div>
                                 </div>
 
                                 <div style="margin-top: 14px;">
                                     <label class="form-label">Atau Masukkan Path / URL Gambar Langsung</label>
-                                    <input type="text" name="image_url_direct" class="form-control" value="<?php echo sanitize($form_image); ?>" placeholder="assets/images/popups/banner.webp">
+                                    <input type="text" name="image_url_direct" id="image_url_direct_input" class="form-control" value="<?php echo sanitize($form_image); ?>" placeholder="assets/images/popups/banner.webp">
                                 </div>
 
                                 <div style="margin-top: 18px;">
@@ -943,10 +952,12 @@ if ($action === 'list') {
                         });
                     }
 
-                    // Live Image Preview
+                    // Live Image Preview (file upload + direct URL)
                     const fileInput = document.getElementById('image_file_input');
+                    const urlDirectInput = document.getElementById('image_url_direct_input');
                     const imgPreview = document.getElementById('image_preview');
                     const placeholder = document.getElementById('preview_placeholder');
+                    const baseUrl = <?php echo json_encode(BASE_URL); ?>;
 
                     if (fileInput && imgPreview) {
                         fileInput.addEventListener('change', function() {
@@ -961,6 +972,31 @@ if ($action === 'list') {
                                 reader.readAsDataURL(file);
                             }
                         });
+                    }
+
+                    if (urlDirectInput && imgPreview) {
+                        urlDirectInput.addEventListener('input', function() {
+                            const val = this.value.trim();
+                            if (val && !/^(javascript|data|vbscript):/i.test(val)) {
+                                imgPreview.src = /^https?:\/\//i.test(val) ? val : (baseUrl + val.replace(/^\/+/, ''));
+                                imgPreview.style.display = 'block';
+                                if (placeholder) placeholder.style.display = 'none';
+                            } else if (!fileInput || !fileInput.files || !fileInput.files.length) {
+                                imgPreview.style.display = 'none';
+                                if (placeholder) placeholder.style.display = '';
+                            }
+                        });
+                        const popupForm = urlDirectInput.closest('form');
+                        if (popupForm) {
+                            popupForm.addEventListener('submit', function(e) {
+                                const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+                                const hasUrl = urlDirectInput.value.trim() !== '';
+                                if (!hasFile && !hasUrl) {
+                                    e.preventDefault();
+                                    alert('Silakan unggah file gambar banner atau masukkan URL/path gambar terlebih dahulu.');
+                                }
+                            });
+                        }
                     }
 
                     // Toggle Specific Pages checklist

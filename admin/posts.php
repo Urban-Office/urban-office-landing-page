@@ -15,55 +15,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['create']) || isset($
     if (!verify_csrf_token($token)) {
         $error = 'Validasi CSRF token gagal.';
     } else {
-        $title = trim($_POST['title']);
-        $slug = trim($_POST['slug']);
-        $excerpt = trim($_POST['excerpt']);
-        $content = $_POST['content']; // HTML Content (do not strip tags)
-        $featured_image = trim($_POST['featured_image']);
-        $meta_title = trim($_POST['meta_title']);
-        $meta_description = trim($_POST['meta_description']);
-        $status = $_POST['status'];
-        $published_at = !empty($_POST['published_at']) ? $_POST['published_at'] : date('Y-m-d H:i:s');
-        $selected_cats = isset($_POST['categories']) ? $_POST['categories'] : [];
-        $selected_tags = isset($_POST['tags']) ? $_POST['tags'] : [];
+        $title = trim((string)($_POST['title'] ?? ''));
+        $raw_slug = trim((string)($_POST['slug'] ?? ''));
+        $excerpt = trim((string)($_POST['excerpt'] ?? ''));
+        $content = (string)($_POST['content'] ?? ''); // HTML Content (rendered by trusted admin editor)
+        $featured_image = trim((string)($_POST['featured_image'] ?? ''));
+        $meta_title = trim((string)($_POST['meta_title'] ?? ''));
+        $meta_description = trim((string)($_POST['meta_description'] ?? ''));
+        $status = trim((string)($_POST['status'] ?? 'draft'));
+        if (!in_array($status, ['draft', 'published', 'scheduled'], true)) {
+            $status = 'draft';
+        }
+        $raw_pub = trim((string)($_POST['published_at'] ?? ''));
+        $raw_pub = str_replace('T', ' ', $raw_pub);
+        $pub_ts = $raw_pub !== '' ? strtotime($raw_pub) : false;
+        $published_at = $pub_ts !== false ? date('Y-m-d H:i:s', $pub_ts) : date('Y-m-d H:i:s');
+        $selected_cats = isset($_POST['categories']) && is_array($_POST['categories']) ? array_map('intval', $_POST['categories']) : [];
+        $selected_tags = isset($_POST['tags']) && is_array($_POST['tags']) ? array_map('intval', $_POST['tags']) : [];
 
         // Check if a featured image file is uploaded
-        if (isset($_FILES['featured_image_file']) && $_FILES['featured_image_file']['error'] === UPLOAD_ERR_OK) {
-            $fileTmpPath = $_FILES['featured_image_file']['tmp_name'];
-            $fileName = $_FILES['featured_image_file']['name'];
-            $fileSize = $_FILES['featured_image_file']['size'];
-            $fileType = $_FILES['featured_image_file']['type'];
-            
-            $fileNameCmps = explode(".", $fileName);
-            $fileExtension = strtolower(end($fileNameCmps));
-            
-            $allowedfileExtensions = ['jpg', 'gif', 'png', 'jpeg', 'webp'];
-            if (in_array($fileExtension, $allowedfileExtensions)) {
-                $uploadFileDir = dirname(dirname(__FILE__)) . '/assets/images/blog/';
+        if (isset($_FILES['featured_image_file']) && ($_FILES['featured_image_file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            $img_check = admin_validate_image_upload($_FILES['featured_image_file'], 5 * 1024 * 1024);
+            if (!$img_check['ok']) {
+                $error = $img_check['error'];
+            } else {
+                $uploadFileDir = DIR_ROOT . 'assets/images/blog/';
                 if (!is_dir($uploadFileDir)) {
                     mkdir($uploadFileDir, 0755, true);
                 }
-                
-                $newFileName = md5(time() . $fileName) . '.' . $fileExtension;
+                $newFileName = bin2hex(random_bytes(16)) . '.' . $img_check['ext'];
                 $dest_path = $uploadFileDir . $newFileName;
-                
-                if (move_uploaded_file($fileTmpPath, $dest_path)) {
-                    // Save relative path in DB
-                    $featured_image = 'assets/images/blog/' . $newFileName;
+                $rel_path = 'assets/images/blog/' . $newFileName;
+
+                if (move_uploaded_file($_FILES['featured_image_file']['tmp_name'], $dest_path)) {
+                    $featured_image = $rel_path;
+                    try {
+                        Database::insert(
+                            "INSERT INTO media (file_name, file_path, file_type, file_size, uploaded_by) VALUES (?, ?, ?, ?, ?)",
+                            [basename((string)$_FILES['featured_image_file']['name']), $rel_path, $img_check['mime'], (int)$_FILES['featured_image_file']['size'], (int)$_SESSION['admin_user_id']]
+                        );
+                    } catch (Exception $e) {
+                        error_log("Featured image media log failed: " . $e->getMessage());
+                    }
                 } else {
                     $error = 'Gagal memindahkan file unggahan gambar utama.';
                 }
-            } else {
-                $error = 'Format file gambar utama tidak didukung. Gunakan JPG, PNG, GIF, JPEG, atau WEBP.';
             }
         }
 
-        // Auto-generate slug if blank
-        if (empty($slug)) {
-            $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
-        }
+        // Normalize slug (both custom and auto-generated)
+        $slug = admin_slugify($raw_slug !== '' ? $raw_slug : $title, 'artikel-' . time());
 
-        if (empty($title) || empty($content)) {
+        if ($error !== '') {
+            // Preserve upload/validation error and halt DB write
+        } elseif ($title === '' || trim(strip_tags($content)) === '' && strpos($content, '<img') === false) {
             $error = 'Judul dan konten wajib diisi.';
         } else {
             try {
@@ -78,26 +83,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['create']) || isset($
                     $post_id = Database::insert(
                         "INSERT INTO posts (author_id, title, slug, excerpt, content, featured_image, meta_title, meta_description, status, published_at) 
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        [$_SESSION['admin_user_id'], $title, $slug, $excerpt, $content, $featured_image, $meta_title, $meta_description, $status, $published_at]
+                        [(int)$_SESSION['admin_user_id'], $title, $slug, $excerpt, $content, $featured_image, $meta_title, $meta_description, $status, $published_at]
                     );
 
                     // Insert Categories relationships
-                    foreach ($selected_cats as $cat_id) {
-                        Database::insert("INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)", [$post_id, $cat_id]);
+                    foreach (array_unique($selected_cats) as $cat_id) {
+                        if ($cat_id > 0) {
+                            Database::insert("INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)", [$post_id, $cat_id]);
+                        }
                     }
 
                     // Insert Tags relationships
-                    foreach ($selected_tags as $tag_id) {
-                        Database::insert("INSERT INTO post_tags (post_id, tag_id) VALUES (?, ?)", [$post_id, $tag_id]);
+                    foreach (array_unique($selected_tags) as $tag_id) {
+                        if ($tag_id > 0) {
+                            Database::insert("INSERT INTO post_tags (post_id, tag_id) VALUES (?, ?)", [$post_id, $tag_id]);
+                        }
                     }
 
-                    log_activity($_SESSION['admin_user_id'], 'create_post', "Created post: " . sanitize($title));
+                    log_activity($_SESSION['admin_user_id'], 'create_post', "Created post: $title");
                     clear_page_cache(); // Clear cache to reflect updates
                     header('Location: ' . BASE_URL . 'admin/posts.php?success=1');
                     exit;
 
                 } elseif (isset($_POST['update'])) {
-                    $id = intval($_POST['id']);
+                    $id = intval($_POST['id'] ?? 0);
                     
                     // Check duplicate slug excluding current post
                     $check = Database::fetch("SELECT id FROM posts WHERE slug = ? AND id != ?", [$slug, $id]);
@@ -117,39 +126,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['create']) || isset($
                     Database::query("DELETE FROM post_tags WHERE post_id = ?", [$id]);
 
                     // Insert updated relationships
-                    foreach ($selected_cats as $cat_id) {
-                        Database::insert("INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)", [$id, $cat_id]);
+                    foreach (array_unique($selected_cats) as $cat_id) {
+                        if ($cat_id > 0) {
+                            Database::insert("INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)", [$id, $cat_id]);
+                        }
                     }
-                    foreach ($selected_tags as $tag_id) {
-                        Database::insert("INSERT INTO post_tags (post_id, tag_id) VALUES (?, ?)", [$id, $tag_id]);
+                    foreach (array_unique($selected_tags) as $tag_id) {
+                        if ($tag_id > 0) {
+                            Database::insert("INSERT INTO post_tags (post_id, tag_id) VALUES (?, ?)", [$id, $tag_id]);
+                        }
                     }
 
-                    log_activity($_SESSION['admin_user_id'], 'update_post', "Updated post ID: $id (" . sanitize($title) . ")");
+                    log_activity($_SESSION['admin_user_id'], 'update_post', "Updated post ID: $id ($title)");
                     clear_page_cache(); // Clear cache
                     header('Location: ' . BASE_URL . 'admin/posts.php?success=2');
                     exit;
                 }
             } catch (Exception $e) {
-                $error = 'Gagal menyimpan artikel: ' . $e->getMessage();
+                $error = admin_friendly_error('Gagal menyimpan artikel.', $e);
             }
         }
     }
 }
 
-// Action: Delete Post
-if ($action === 'delete' && isset($_GET['id'])) {
-    $id = intval($_GET['id']);
-    try {
-        $post = Database::fetch("SELECT title FROM posts WHERE id = ?", [$id]);
-        if ($post) {
-            Database::query("DELETE FROM posts WHERE id = ?", [$id]);
-            log_activity($_SESSION['admin_user_id'], 'delete_post', "Deleted post ID: $id (" . sanitize($post['title']) . ")");
-            clear_page_cache();
-            header('Location: ' . BASE_URL . 'admin/posts.php?success=3');
-            exit;
+// Action: Delete Post (CSRF-protected POST)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_post'])) {
+    $token = $_POST['csrf_token'] ?? '';
+    if (!verify_csrf_token($token)) {
+        $error = 'Validasi CSRF token gagal.';
+    } else {
+        $id = intval($_POST['delete_id'] ?? 0);
+        try {
+            $post = Database::fetch("SELECT title FROM posts WHERE id = ?", [$id]);
+            if ($post) {
+                Database::query("DELETE FROM posts WHERE id = ?", [$id]);
+                log_activity($_SESSION['admin_user_id'], 'delete_post', "Deleted post ID: $id (" . $post['title'] . ")");
+                clear_page_cache();
+                header('Location: ' . BASE_URL . 'admin/posts.php?success=3');
+                exit;
+            }
+        } catch (Exception $e) {
+            $error = admin_friendly_error('Gagal menghapus artikel.', $e);
         }
-    } catch (Exception $e) {
-        $error = 'Gagal menghapus artikel: ' . $e->getMessage();
     }
 }
 
@@ -264,8 +282,10 @@ try {
             }
             $first_ym = $monthly_raw[0]['ym'];
             $last_ym  = max($monthly_raw[count($monthly_raw) - 1]['ym'], date('Y-m'));
-            $cursor = new DateTime($first_ym . '-01');
             $end_dt = new DateTime($last_ym . '-01');
+            $min_window = (clone $end_dt)->modify('-11 months');
+            $first_dt = new DateTime($first_ym . '-01');
+            $cursor = $first_dt > $min_window ? $first_dt : $min_window;
             $guard = 0;
             while ($cursor <= $end_dt && $guard < 12) {
                 $ym = $cursor->format('Y-m');
@@ -705,6 +725,24 @@ if (isset($_GET['success'])) {
     }
     </style>
     <script>
+      const ADMIN_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
+
+      function escapeHtmlAttr(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      function isSafeUrl(url) {
+        const trimmed = String(url || '').trim();
+        if (!trimmed) return false;
+        if (/^(javascript|data|vbscript):/i.test(trimmed)) return false;
+        return true;
+      }
+
       // ---- Custom CKEditor Upload Adapter ----
       function CustomUploadAdapterPlugin(editor) {
         editor.plugins.get('FileRepository').createUploadAdapter = (loader) => {
@@ -722,11 +760,19 @@ if (isset($_GET['success'])) {
           return this.loader.file.then(file => new Promise((resolve, reject) => {
             this.xhr = new XMLHttpRequest();
             this.xhr.open('POST', this.url, true);
+            this.xhr.setRequestHeader('X-CSRF-Token', ADMIN_CSRF_TOKEN);
             const data = new FormData();
+            data.append('csrf_token', ADMIN_CSRF_TOKEN);
             data.append('upload', file);
             this.xhr.onreadystatechange = () => {
               if (this.xhr.readyState !== 4) return;
-              const resp = JSON.parse(this.xhr.responseText || '{}');
+              let resp = {};
+              try {
+                resp = JSON.parse(this.xhr.responseText || '{}');
+              } catch (e) {
+                reject('Upload gagal: respons server tidak valid.');
+                return;
+              }
               if (resp.uploaded && resp.url) {
                 resolve({ default: resp.url });
               } else {
@@ -787,24 +833,15 @@ if (isset($_GET['success'])) {
                 ckEditorInstance = editor;
               })
               .catch(error => {
-                console.warn('Failed to initialize CKEditor:', error);
-                if (dbg) {
-                  dbg.style.display = 'block';
-                  dbg.innerHTML += '❌ CKEditor Init Error: ' + (error.stack || error.message || error) + '\n';
-                }
+                console.error('Failed to initialize CKEditor:', error);
               });
           } else {
             console.error('CKEDITOR global is not defined. Please verify that the CDN or local script loaded successfully.');
-            if (dbg) {
-              dbg.style.display = 'block';
-              dbg.innerHTML += '❌ CKEDITOR global is not defined. Please verify that the CDN at https://cdn.ckeditor.com or the local script in assets/js/ckeditor.js was copied and loaded successfully. (Check browser console for network blocks/404)\n';
-            }
           }
         }
       });
 
       // ---- Image Insert Dialog Logic ----
-      const imgOverlay = document.getElementById ? null : null; // init after DOM
       document.addEventListener('DOMContentLoaded', function() {
         const overlay = document.getElementById('img-insert-overlay');
         const btnOpen = document.getElementById('btn-insert-image');
@@ -844,16 +881,21 @@ if (isset($_GET['success'])) {
         btnInsert.addEventListener('click', () => {
           if (!ckEditorInstance) { alert('Editor belum siap.'); return; }
           const activeTab = overlay.querySelector('.img-tab-panel.active');
-          const align = document.getElementById('img-align').value;
-          const width = document.getElementById('img-width').value;
+          const align = ['none', 'left', 'right'].includes(document.getElementById('img-align').value) ? document.getElementById('img-align').value : 'none';
+          const rawWidth = parseInt(document.getElementById('img-width').value, 10);
+          const width = (!isNaN(rawWidth) && rawWidth >= 50 && rawWidth <= 1200) ? rawWidth : '';
           const alt = document.getElementById('img-alt').value.trim();
           const linkUrl = document.getElementById('img-link-url') ? document.getElementById('img-link-url').value.trim() : '';
           
           // Enforce alt text for SEO compliance
           if (!alt) {
-            alert('⚠ Teks Alt (Alt Text) wajib diisi untuk SEO!\n\nAlt text membantu Google memahami isi gambar dan meningkatkan aksesibilitas.');
+            alert('Teks Alt (Alt Text) wajib diisi untuk SEO dan aksesibilitas.');
             document.getElementById('img-alt').focus();
             document.getElementById('img-alt').style.borderColor = '#ef4444';
+            return;
+          }
+          if (linkUrl && !isSafeUrl(linkUrl)) {
+            alert('URL tautan gambar tidak valid.');
             return;
           }
           document.getElementById('img-alt').style.borderColor = '#e2e8f0';
@@ -862,36 +904,43 @@ if (isset($_GET['success'])) {
 
           if (activeTab && activeTab.id === 'img-tab-url') {
             const url = document.getElementById('img-url-input').value.trim();
-            if (!url) { alert('Masukkan URL gambar.'); return; }
+            if (!url || !isSafeUrl(url)) { alert('Masukkan URL gambar yang valid.'); return; }
             
-            let html = `<img src="${url}" alt="${alt}" style="${styleAttr}">`;
+            let html = `<img src="${escapeHtmlAttr(url)}" alt="${escapeHtmlAttr(alt)}" style="${styleAttr}">`;
             if (linkUrl) {
-              html = `<a href="${linkUrl}">${html}</a>`;
+              html = `<a href="${escapeHtmlAttr(linkUrl)}">${html}</a>`;
             }
             
             try {
               const viewFrag = ckEditorInstance.data.processor.toView(html);
               const modelFrag = ckEditorInstance.data.toModel(viewFrag);
               ckEditorInstance.model.insertContent(modelFrag);
-            } catch(e) {}
+            } catch(e) {
+              console.error('Insert image failed:', e);
+            }
             overlay.classList.remove('open');
           } else {
             // File upload tab - upload via XHR then insert
             const file = fileInput ? fileInput.files[0] : null;
             if (!file) { alert('Pilih file gambar terlebih dahulu.'); return; }
             const formData = new FormData();
+            formData.append('csrf_token', ADMIN_CSRF_TOKEN);
             formData.append('upload', file);
             btnInsert.textContent = 'Mengunggah...';
             btnInsert.disabled = true;
-            fetch('<?php echo BASE_URL; ?>admin/upload.php', { method: 'POST', body: formData })
+            fetch('<?php echo BASE_URL; ?>admin/upload.php', {
+              method: 'POST',
+              headers: { 'X-CSRF-Token': ADMIN_CSRF_TOKEN },
+              body: formData
+            })
               .then(r => r.json())
               .then(resp => {
                 btnInsert.textContent = 'Sisipkan Gambar';
                 btnInsert.disabled = false;
                 if (resp.uploaded && resp.url) {
-                  let html = `<img src="${resp.url}" alt="${alt}" style="${styleAttr}">`;
+                  let html = `<img src="${escapeHtmlAttr(resp.url)}" alt="${escapeHtmlAttr(alt)}" style="${styleAttr}">`;
                   if (linkUrl) {
-                    html = `<a href="${linkUrl}">${html}</a>`;
+                    html = `<a href="${escapeHtmlAttr(linkUrl)}">${html}</a>`;
                   }
                   const viewFrag = ckEditorInstance.data.processor.toView(html);
                   const modelFrag = ckEditorInstance.data.toModel(viewFrag);
@@ -901,7 +950,7 @@ if (isset($_GET['success'])) {
                   alert('Upload gagal: ' + (resp.error?.message || 'Unknown error'));
                 }
               })
-              .catch(err => {
+              .catch(() => {
                 btnInsert.textContent = 'Sisipkan Gambar';
                 btnInsert.disabled = false;
                 alert('Gagal mengunggah gambar.');
@@ -927,7 +976,6 @@ if (isset($_GET['success'])) {
             if (file) {
               const reader = new FileReader();
               reader.onload = e => {
-                // Always re-query to avoid stale DOM reference
                 let previewImg = document.getElementById('featured-image-preview-img');
                 const previewContainer = document.getElementById('featured-image-preview');
                 let placeholder = previewContainer ? previewContainer.querySelector('.image-preview-placeholder') : null;
@@ -948,38 +996,6 @@ if (isset($_GET['success'])) {
               reader.readAsDataURL(file);
             }
           });
-        }
-
-        // Featured image URL live preview
-        const featUrlInput = document.getElementById('featured-image-input');
-        if (featUrlInput) {
-          const updateFeatPreview = () => {
-            const val = featUrlInput.value.trim();
-            let previewImg = document.getElementById('featured-image-preview-img');
-            const previewContainer = document.getElementById('featured-image-preview');
-            let placeholder = previewContainer ? previewContainer.querySelector('.image-preview-placeholder') : null;
-
-            if (val) {
-              const src = val.startsWith('http') ? val : '<?php echo BASE_URL; ?>' + val;
-              if (!previewImg && previewContainer) {
-                previewImg = document.createElement('img');
-                previewImg.id = 'featured-image-preview-img';
-                previewImg.alt = 'Preview';
-                previewImg.style.cssText = 'display:block; width:100%; border-radius:6px; margin-top:8px;';
-                previewContainer.appendChild(previewImg);
-              }
-              if (previewImg) {
-                previewImg.src = src;
-                previewImg.style.display = 'block';
-              }
-              if (placeholder) placeholder.style.display = 'none';
-            } else {
-              if (previewImg) previewImg.style.display = 'none';
-              if (placeholder) placeholder.style.display = 'flex';
-            }
-          };
-          featUrlInput.addEventListener('input', updateFeatPreview);
-          updateFeatPreview();
         }
       });
     </script>
@@ -1111,7 +1127,7 @@ if (isset($_GET['success'])) {
                                             🖼️ Sisipkan Gambar
                                         </button>
                                     </div>
-                                    <textarea id="content-editor" name="content"><?php echo $post_data['content'] ?? ''; ?></textarea>
+                                    <textarea id="content-editor" name="content"><?php echo htmlspecialchars($post_data['content'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
                                 </div>
 
 
@@ -1505,8 +1521,14 @@ if (isset($_GET['success'])) {
                                         </td>
                                         <td class="admin-num" style="font-size: 0.8rem; color: var(--admin-subtle); white-space: nowrap;"><?php echo $post['published_at'] ? date('d M Y H:i', strtotime($post['published_at'])) : '—'; ?></td>
                                         <td style="white-space: nowrap;">
-                                            <a href="?action=edit&id=<?php echo $post['id']; ?>" class="btn-admin btn-admin-secondary btn-admin-sm">Edit</a>
-                                            <a href="?action=delete&id=<?php echo $post['id']; ?>" class="btn-admin btn-admin-danger btn-admin-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus artikel ini?')">Delete</a>
+                                            <div style="display: inline-flex; gap: 6px; align-items: center;">
+                                                <a href="?action=edit&id=<?php echo (int)$post['id']; ?>" class="btn-admin btn-admin-secondary btn-admin-sm">Edit</a>
+                                                <form method="POST" action="<?php echo BASE_URL; ?>admin/posts.php" style="margin: 0; display: inline-flex;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus artikel ini?')">
+                                                    <?php echo csrf_field(); ?>
+                                                    <input type="hidden" name="delete_id" value="<?php echo (int)$post['id']; ?>">
+                                                    <button type="submit" name="delete_post" value="1" class="btn-admin btn-admin-danger btn-admin-sm">Delete</button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; else: ?>
@@ -1867,19 +1889,23 @@ if (isset($_GET['success'])) {
         if (metaTitleInput) metaTitleInput.addEventListener('input', updateSerpPreview);
         if (metaDescInput) metaDescInput.addEventListener('input', updateSerpPreview);
         if (imgInput) imgInput.addEventListener('input', updateSerpPreview);
+        const featFileEl = document.getElementById('featured-image-file-input');
+        if (featFileEl) featFileEl.addEventListener('change', updateSerpPreview);
         const excerptInput = document.querySelector('textarea[name="excerpt"]');
         if (excerptInput) excerptInput.addEventListener('input', updateSerpPreview);
         updateSerpPreview();
 
         // 5. SEO Score Checklist
         function updateSeoScore() {
+            const hasFeatFile = featFileEl && featFileEl.files && featFileEl.files.length > 0;
+            const effectiveSlug = (slugInput && slugInput.value.trim()) ? slugInput.value.trim() : (titleInput ? titleInput.value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') : '');
             const checks = [
                 { id: 'seo-chk-title', pass: titleInput && titleInput.value.trim().length >= 10 && titleInput.value.trim().length <= 70 },
-                { id: 'seo-chk-slug', pass: slugInput && slugInput.value.trim().length > 0 && slugInput.value.trim().indexOf(' ') === -1 },
+                { id: 'seo-chk-slug', pass: effectiveSlug.length > 0 && effectiveSlug.indexOf(' ') === -1 },
                 { id: 'seo-chk-excerpt', pass: excerptInput && excerptInput.value.trim().length >= 50 },
                 { id: 'seo-chk-metatitle', pass: metaTitleInput && metaTitleInput.value.length >= 30 && metaTitleInput.value.length <= 60 },
                 { id: 'seo-chk-metadesc', pass: metaDescInput && metaDescInput.value.length >= 120 && metaDescInput.value.length <= 160 },
-                { id: 'seo-chk-image', pass: imgInput && imgInput.value.trim().length > 0 }
+                { id: 'seo-chk-image', pass: (imgInput && imgInput.value.trim().length > 0) || hasFeatFile }
             ];
             let passed = 0;
             checks.forEach(c => {
@@ -1890,9 +1916,9 @@ if (isset($_GET['success'])) {
                 }
                 if (c.pass) passed++;
             });
-            // Word count check (async)
+            // Word count check
             const wcEl = document.getElementById('word-count');
-            const wc = wcEl ? parseInt(wcEl.textContent) || 0 : 0;
+            const wc = wcEl ? parseInt(wcEl.textContent, 10) || 0 : 0;
             const wcCheck = document.getElementById('seo-chk-words');
             if (wcCheck) {
                 const wcPass = wc >= 300;
@@ -1925,7 +1951,6 @@ if (isset($_GET['success'])) {
         function updateWordCount() {
             let text = '';
             if (ckEditorInstance) {
-                // Get text from CKEditor model
                 try {
                     const data = ckEditorInstance.getData();
                     text = data.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim();
@@ -1939,29 +1964,20 @@ if (isset($_GET['success'])) {
             if (wordCountEl) wordCountEl.textContent = words;
             if (wordWarning) wordWarning.style.display = words < 300 ? 'inline' : 'none';
             if (wordGood) wordGood.style.display = words >= 300 ? 'inline' : 'none';
+            updateSeoScore();
         }
 
-        // Update word count periodically (CKEditor may load async)
+        // Update word count & SEO score live once CKEditor initializes
         const wordCountInterval = setInterval(() => {
             if (ckEditorInstance) {
                 ckEditorInstance.model.document.on('change:data', () => updateWordCount());
                 updateWordCount();
                 clearInterval(wordCountInterval);
             }
-        }, 1000);
-        // Also do initial count from textarea
+        }, 500);
         updateWordCount();
-
-        // Re-run SEO score after word count updates
-        const seoScoreInterval = setInterval(() => {
-            if (ckEditorInstance) {
-                updateSeoScore();
-                clearInterval(seoScoreInterval);
-            }
-        }, 2000);
     });
     </script>
-</body>
 
 <!-- ===== Image Insert Dialog Modal ===== -->
 <div class="img-insert-overlay" id="img-insert-overlay">
@@ -2026,5 +2042,5 @@ if (isset($_GET['success'])) {
         </div>
     </div>
 </div>
-
+</body>
 </html>
