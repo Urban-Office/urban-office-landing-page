@@ -650,6 +650,9 @@ $sort_by  = isset($_GET['sort']) ? trim((string)$_GET['sort']) : 'next_audit';
 if (!in_array($sort_by, ['next_audit', 'updated_desc', 'views_desc', 'title_asc'], true)) {
     $sort_by = 'next_audit';
 }
+$per_page_raw = isset($_GET['per_page']) ? trim((string)$_GET['per_page']) : '10';
+$per_page = in_array($per_page_raw, ['10', '20', '50', 'all'], true) ? ($per_page_raw === 'all' ? 'all' : (int)$per_page_raw) : 10;
+$curr_page = max(1, intval($_GET['page'] ?? 1));
 
 // Global GA4 Chart filter parameters
 $g_range   = isset($_GET['g_range']) ? trim((string)$_GET['g_range']) : '28d';
@@ -834,17 +837,37 @@ if ($action === 'list') {
     }
 }
 
-$build_pages_url = static function (array $overrides = []) use ($filter_status, $search_q, $sort_by, $g_range, $g_channel, $g_page_id, $g_start, $g_end): string {
+$total_filtered = count($pages_rows);
+$total_pages    = ($per_page === 'all' || $total_filtered === 0) ? 1 : (int)ceil($total_filtered / $per_page);
+if ($curr_page > $total_pages) {
+    $curr_page = $total_pages;
+}
+$offset        = ($per_page === 'all') ? 0 : (($curr_page - 1) * $per_page);
+$visible_pages = ($per_page === 'all') ? $pages_rows : array_slice($pages_rows, $offset, $per_page);
+$range_from    = $total_filtered > 0 ? ($offset + 1) : 0;
+$range_to      = $total_filtered > 0 ? min($total_filtered, $offset + count($visible_pages)) : 0;
+
+$build_pages_url = static function (array $overrides = []) use ($filter_status, $search_q, $sort_by, $per_page, $curr_page, $g_range, $g_channel, $g_page_id, $g_start, $g_end): string {
+    $reset_page = !array_key_exists('page', $overrides)
+        && (array_key_exists('filter', $overrides) || array_key_exists('q', $overrides) || array_key_exists('sort', $overrides) || array_key_exists('per_page', $overrides));
     $q = array_merge([
         'filter'    => $filter_status,
         'q'         => $search_q,
         'sort'      => $sort_by === 'next_audit' ? '' : $sort_by,
+        'per_page'  => $per_page === 10 ? '' : (string)$per_page,
+        'page'      => ($reset_page || $curr_page <= 1) ? '' : $curr_page,
         'g_range'   => $g_range === '28d' ? '' : $g_range,
         'g_channel' => $g_channel,
         'g_page'    => $g_page_id > 0 ? $g_page_id : '',
         'g_start'   => $g_range === 'custom' ? $g_start : '',
         'g_end'     => $g_range === 'custom' ? $g_end : '',
     ], $overrides);
+    if (isset($q['page']) && (int)$q['page'] <= 1) {
+        $q['page'] = '';
+    }
+    if (isset($q['per_page']) && (string)$q['per_page'] === '10') {
+        $q['per_page'] = '';
+    }
     $q = array_filter($q, static fn($v) => $v !== '' && $v !== null);
     return BASE_URL . 'admin/pages.php' . (!empty($q) ? ('?' . http_build_query($q)) : '');
 };
@@ -1283,6 +1306,55 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
             position: relative;
             height: 270px;
             width: 100%;
+        }
+        .seo-slug-pill {
+            max-width: 240px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        .seo-table-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid var(--admin-border);
+        }
+        .seo-page-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+            color: var(--admin-muted);
+        }
+        .seo-perpage-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--admin-surface-muted);
+            border: 1px solid var(--admin-border);
+            border-radius: 7px;
+            padding: 2px;
+        }
+        .seo-perpage-btn {
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 0.74rem;
+            font-weight: 600;
+            text-decoration: none;
+            color: var(--admin-muted);
+            transition: background-color 140ms ease, color 140ms ease;
+        }
+        .seo-perpage-btn:hover { color: var(--admin-ink); }
+        .seo-perpage-btn.active {
+            background: var(--admin-surface);
+            color: var(--admin-primary);
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
         }
         .sr-only {
             position: absolute;
@@ -2125,6 +2197,7 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                             <?php if ($filter_status !== ''): ?><input type="hidden" name="filter" value="<?php echo sanitize($filter_status); ?>"><?php endif; ?>
                             <?php if ($search_q !== ''): ?><input type="hidden" name="q" value="<?php echo sanitize($search_q); ?>"><?php endif; ?>
                             <?php if ($sort_by !== 'next_audit'): ?><input type="hidden" name="sort" value="<?php echo sanitize($sort_by); ?>"><?php endif; ?>
+                            <?php if ($per_page !== 10): ?><input type="hidden" name="per_page" value="<?php echo sanitize((string)$per_page); ?>"><?php endif; ?>
                             <input type="hidden" name="g_range" id="global-range-input" value="<?php echo sanitize($g_range); ?>">
 
                             <select name="g_page" class="seo-filter-input" style="max-width: 210px;" aria-label="Filter Halaman Landing Page">
@@ -2243,6 +2316,7 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
 
                     <form method="GET" action="<?php echo BASE_URL; ?>admin/pages.php" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                         <?php if ($filter_status !== ''): ?><input type="hidden" name="filter" value="<?php echo sanitize($filter_status); ?>"><?php endif; ?>
+                        <?php if ($per_page !== 10): ?><input type="hidden" name="per_page" value="<?php echo sanitize((string)$per_page); ?>"><?php endif; ?>
                         <?php if ($g_range !== '28d'): ?><input type="hidden" name="g_range" value="<?php echo sanitize($g_range); ?>"><?php endif; ?>
                         <?php if ($g_channel !== ''): ?><input type="hidden" name="g_channel" value="<?php echo sanitize($g_channel); ?>"><?php endif; ?>
                         <?php if ($g_page_id > 0): ?><input type="hidden" name="g_page" value="<?php echo (int)$g_page_id; ?>"><?php endif; ?>
@@ -2263,7 +2337,7 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                 </div>
 
                 <!-- Pages Table -->
-                <div class="admin-card">
+                <div class="admin-card" id="seo-pages-table">
                     <div class="table-responsive">
                         <table class="admin-table">
                             <thead>
@@ -2276,7 +2350,7 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php if (!empty($pages_rows)): foreach ($pages_rows as $page):
+                                <?php if (!empty($visible_pages)): foreach ($visible_pages as $page):
                                     $mt_len = mb_strlen((string)($page['meta_title'] ?? ''), 'UTF-8');
                                     $md_len = mb_strlen((string)($page['meta_description'] ?? ''), 'UTF-8');
                                     $mt_cls = ($mt_len >= 40 && $mt_len <= 65) ? 'seo-chip-ok' : (($mt_len === 0 || $mt_len > 70) ? 'seo-chip-bad' : 'seo-chip-warn');
@@ -2290,7 +2364,7 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                                         <td>
                                             <strong style="color:var(--admin-ink);"><?php echo sanitize($page['title']); ?></strong>
                                             <div style="margin-top:3px;">
-                                                <span class="admin-code-pill"><?php echo sanitize($slug_lbl); ?></span>
+                                                <span class="admin-code-pill seo-slug-pill" title="<?php echo sanitize($slug_lbl); ?>"><?php echo sanitize($slug_lbl); ?></span>
                                             </div>
                                             <div class="seo-health-chips">
                                                 <span class="seo-chip <?php echo $mt_cls; ?>" title="Panjang Meta Title (ideal 50–60)">Title: <?php echo $mt_len; ?>c</span>
@@ -2330,7 +2404,7 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                                         </td>
                                         <td style="white-space: nowrap; text-align: right;">
                                             <div style="display:inline-flex; gap:6px; align-items:center;">
-                                                <a href="?action=audit&amp;id=<?php echo (int)$page['id']; ?>" class="btn-admin btn-admin-primary btn-admin-sm">Audit &amp; Bandingkan</a>
+                                                <a href="?action=audit&amp;id=<?php echo (int)$page['id']; ?>" class="btn-admin btn-admin-primary btn-admin-sm" title="Audit &amp; Bandingkan Performa SEO">Audit</a>
                                                 <a href="?action=edit&amp;id=<?php echo (int)$page['id']; ?>" class="btn-admin btn-admin-secondary btn-admin-sm">Edit</a>
                                                 <a href="<?php echo sanitize($view_url); ?>" target="_blank" rel="noopener" class="btn-admin btn-admin-secondary btn-admin-sm" title="Buka halaman di tab baru">View</a>
                                             </div>
@@ -2346,6 +2420,50 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                             </tbody>
                         </table>
                     </div>
+
+                    <?php if ($total_filtered > 0): ?>
+                        <div class="seo-table-footer">
+                            <div class="seo-page-info">
+                                <span>
+                                    Menampilkan <strong class="admin-num"><?php echo $range_from; ?>–<?php echo $range_to; ?></strong>
+                                    dari <strong class="admin-num"><?php echo $total_filtered; ?></strong> halaman
+                                </span>
+                                <div class="seo-perpage-group" role="group" aria-label="Jumlah baris per halaman">
+                                    <?php foreach ([10 => '10', 20 => '20', 50 => '50', 'all' => 'Semua'] as $pp_val => $pp_lbl): ?>
+                                        <a href="<?php echo sanitize($build_pages_url(['per_page' => (string)$pp_val])); ?>#seo-pages-table"
+                                           class="seo-perpage-btn<?php echo $per_page === $pp_val ? ' active' : ''; ?>"><?php echo $pp_lbl; ?></a>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+
+                            <?php if ($total_pages > 1): ?>
+                                <nav class="admin-pagination" style="margin-top:0;" aria-label="Navigasi halaman SEO">
+                                    <?php if ($curr_page > 1): ?>
+                                        <a href="<?php echo sanitize($build_pages_url(['page' => $curr_page - 1])); ?>#seo-pages-table" class="btn-admin btn-admin-secondary btn-admin-sm">&larr; Prev</a>
+                                    <?php endif; ?>
+                                    <?php
+                                    $win_start = max(1, $curr_page - 2);
+                                    $win_end   = min($total_pages, $curr_page + 2);
+                                    if ($win_start > 1): ?>
+                                        <a href="<?php echo sanitize($build_pages_url(['page' => 1])); ?>#seo-pages-table" class="btn-admin btn-admin-secondary btn-admin-sm">1</a>
+                                        <?php if ($win_start > 2): ?><span style="padding:4px 4px; color:var(--admin-subtle); font-size:0.8rem;">&hellip;</span><?php endif; ?>
+                                    <?php endif;
+                                    for ($p = $win_start; $p <= $win_end; $p++): ?>
+                                        <a href="<?php echo sanitize($build_pages_url(['page' => $p])); ?>#seo-pages-table"
+                                           class="btn-admin <?php echo $p === $curr_page ? 'btn-admin-primary' : 'btn-admin-secondary'; ?> btn-admin-sm"
+                                           <?php echo $p === $curr_page ? 'aria-current="page"' : ''; ?>><?php echo $p; ?></a>
+                                    <?php endfor;
+                                    if ($win_end < $total_pages): ?>
+                                        <?php if ($win_end < $total_pages - 1): ?><span style="padding:4px 4px; color:var(--admin-subtle); font-size:0.8rem;">&hellip;</span><?php endif; ?>
+                                        <a href="<?php echo sanitize($build_pages_url(['page' => $total_pages])); ?>#seo-pages-table" class="btn-admin btn-admin-secondary btn-admin-sm"><?php echo $total_pages; ?></a>
+                                    <?php endif; ?>
+                                    <?php if ($curr_page < $total_pages): ?>
+                                        <a href="<?php echo sanitize($build_pages_url(['page' => $curr_page + 1])); ?>#seo-pages-table" class="btn-admin btn-admin-secondary btn-admin-sm">Next &rarr;</a>
+                                    <?php endif; ?>
+                                </nav>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             <?php endif; ?>
         </main>
