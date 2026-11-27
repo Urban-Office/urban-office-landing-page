@@ -47,11 +47,17 @@ function seo_build_channel_clause(string $channel_filter, array &$params): strin
  */
 function seo_fetch_page_fp_metrics(string $slug, string $start_dt, string $end_dt, string $channel_filter = ''): array {
     $empty = [
-        'total_views'   => 0,
-        'organic_views' => 0,
-        'geo_views'     => 0,
-        'sessions'      => 0,
-        'conversions'   => 0,
+        'total_views'      => 0,
+        'organic_views'    => 0,
+        'geo_views'        => 0,
+        'google_ads_views' => 0,
+        'meta_ads_views'   => 0,
+        'paid_ads_views'   => 0,
+        'social_views'     => 0,
+        'referral_views'   => 0,
+        'direct_views'     => 0,
+        'sessions'         => 0,
+        'conversions'      => 0,
     ];
     try {
         $paths = seo_page_path_variants($slug);
@@ -63,6 +69,12 @@ function seo_fetch_page_fp_metrics(string $slug, string $start_dt, string $end_d
                 SUM(event_name = 'page_view') AS total_views,
                 SUM(event_name = 'page_view' AND traffic_channel = 'seo_organic') AS organic_views,
                 SUM(event_name = 'page_view' AND traffic_channel = 'geo_ai') AS geo_views,
+                SUM(event_name = 'page_view' AND traffic_channel = 'google_ads') AS google_ads_views,
+                SUM(event_name = 'page_view' AND traffic_channel = 'meta_ads') AS meta_ads_views,
+                SUM(event_name = 'page_view' AND traffic_channel = 'paid_ads') AS paid_ads_views,
+                SUM(event_name = 'page_view' AND traffic_channel = 'social_organic') AS social_views,
+                SUM(event_name = 'page_view' AND traffic_channel = 'referral') AS referral_views,
+                SUM(event_name = 'page_view' AND traffic_channel = 'direct') AS direct_views,
                 COUNT(DISTINCT session_hash) AS sessions,
                 SUM(event_name IN ('booking_cta_click', 'lead_form_submit') OR (event_name = 'whatsapp_click' AND (wa_channel = 'sales' OR wa_channel IS NULL OR wa_channel = ''))) AS conversions
              FROM analytics_events
@@ -1652,6 +1664,30 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                                         <td class="admin-num" style="text-align:right;"><strong><?php echo number_format($a['total_views']); ?></strong></td>
                                         <td style="text-align:right;"><?php echo seo_render_delta_badge(seo_delta_pct($b['total_views'], $a['total_views'])); ?></td>
                                     </tr>
+                                    <?php
+                                    $extra_channel_rows = [
+                                        'google_ads'     => ['key' => 'google_ads_views', 'label' => 'Google Ads'],
+                                        'meta_ads'       => ['key' => 'meta_ads_views',   'label' => 'Meta Ads'],
+                                        'paid_ads'       => ['key' => 'paid_ads_views',   'label' => 'Paid Ads Lain'],
+                                        'social_organic' => ['key' => 'social_views',     'label' => 'Social Organic'],
+                                        'referral'       => ['key' => 'referral_views',   'label' => 'Referral'],
+                                        'direct'         => ['key' => 'direct_views',     'label' => 'Direct / Langsung'],
+                                    ];
+                                    foreach ($extra_channel_rows as $ch_slug => $ch_meta):
+                                        if ($audit_channel !== '' && $audit_channel !== $ch_slug) {
+                                            continue;
+                                        }
+                                        $bv = (int)($b[$ch_meta['key']] ?? 0);
+                                        $av = (int)($a[$ch_meta['key']] ?? 0);
+                                        $row_color = ($bv > 0 || $av > 0) ? 'var(--admin-ink-2)' : 'var(--admin-subtle)';
+                                    ?>
+                                    <tr>
+                                        <td style="padding-left:24px; color:<?php echo $row_color; ?>;">↳ <?php echo sanitize($ch_meta['label']); ?></td>
+                                        <td class="admin-num" style="text-align:right; color:<?php echo $row_color; ?>;"><?php echo number_format($bv); ?></td>
+                                        <td class="admin-num" style="text-align:right; color:<?php echo $row_color; ?>;"><?php echo number_format($av); ?></td>
+                                        <td style="text-align:right;"><?php echo seo_render_delta_badge(seo_delta_pct($bv, $av)); ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
                                     <tr>
                                         <td><strong>Sesi Unik</strong></td>
                                         <td class="admin-num" style="text-align:right;"><?php echo number_format($b['sessions']); ?></td>
