@@ -581,18 +581,8 @@ if (($action === 'edit' || $action === 'audit') && isset($_GET['id'])) {
         $pivot_ts = strtotime($pivot_dt) ?: time();
         $pivot_day_str = date('Y-m-d', $pivot_ts);
         $today_day_str = date('Y-m-d');
-        $today_end_ts = strtotime($today_day_str . ' 23:59:59');
         $page_paths = seo_page_path_variants((string)$page_data['slug']);
-
-        // Auto-switch to All Time on Day 0/1 after an SEO update when user didn't pick a fixed window,
-        // so historical pre-update data stays immediately visible instead of a 1-day empty comparison.
-        $elapsed_raw = max(1, (int)floor(($today_end_ts - strtotime($pivot_day_str . ' 00:00:00')) / 86400));
         $auto_all_fallback = false;
-        if (!$is_audit_custom && !$is_audit_all && !$has_explicit_win && $elapsed_raw <= 1) {
-            $is_audit_all = true;
-            $compare_win_raw = 'all';
-            $auto_all_fallback = true;
-        }
 
         if ($is_audit_custom) {
             $span = max(1, (int)round((strtotime($audit_custom_end) - strtotime($audit_custom_start)) / 86400) + 1);
@@ -626,15 +616,13 @@ if (($action === 'edit' || $action === 'audit') && isset($_GET['id'])) {
             $effective_days   = max(1, (int)round((strtotime($after_end_day) - strtotime($before_start_day)) / 86400) + 1);
             $is_partial       = false;
         } else {
-            $elapsed_days = $elapsed_raw;
-            $effective_days = min($compare_window, $elapsed_days);
-            $is_partial = $elapsed_days < $compare_window;
-
-            $after_start_day  = $pivot_day_str;
-            $after_end_ts     = min($today_end_ts, strtotime($pivot_day_str . ' 00:00:00') + ($effective_days * 86400) - 1);
-            $after_end_day    = date('Y-m-d', $after_end_ts);
-            $before_end_day   = date('Y-m-d', strtotime($pivot_day_str . ' 00:00:00') - 86400);
-            $before_start_day = date('Y-m-d', strtotime($pivot_day_str . ' 00:00:00') - ($effective_days * 86400));
+            // Standard GA4/GSC rolling period comparison: last N days vs previous N days (apple-to-apple)
+            $after_end_day    = $today_day_str;
+            $after_start_day  = date('Y-m-d', strtotime($today_day_str) - (($compare_window - 1) * 86400));
+            $before_end_day   = date('Y-m-d', strtotime($after_start_day) - 86400);
+            $before_start_day = date('Y-m-d', strtotime($after_start_day) - ($compare_window * 86400));
+            $effective_days   = $compare_window;
+            $is_partial       = false;
         }
 
         $after_start  = $after_start_day . ' 00:00:00';
@@ -1622,15 +1610,19 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                         </button>
                     </div>
 
+                    <?php
+                    $lbl_curr_period = !empty($fp_compare['is_all']) ? 'Sesudah Update' : 'Periode Ini';
+                    $lbl_prev_period = !empty($fp_compare['is_all']) ? 'Sebelum Update' : 'Periode Sebelumnya';
+                    ?>
                     <div class="ga-toolbar-sub">
                         <div class="ga-legend" id="auditChartLegend">
                             <span class="ga-legend-item">
                                 <span class="ga-line-solid"></span>
-                                <span>Sesudah (<span class="admin-num"><?php echo sanitize($fp_compare['after_range']); ?></span>)</span>
+                                <span><?php echo $lbl_curr_period; ?> (<span class="admin-num"><?php echo sanitize($fp_compare['after_range']); ?></span>)</span>
                             </span>
                             <span class="ga-legend-item" id="auditPrevLegend">
                                 <span class="ga-line-dashed"></span>
-                                <span>Sebelum (<span class="admin-num"><?php echo sanitize($fp_compare['before_range']); ?></span>)</span>
+                                <span><?php echo $lbl_prev_period; ?> (<span class="admin-num"><?php echo sanitize($fp_compare['before_range']); ?></span>)</span>
                             </span>
                         </div>
                         <div class="ga-controls-right">
@@ -1665,7 +1657,7 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                                 <h2>Ringkasan Performa Website (Before vs After)</h2>
                                 <p class="seo-card-sub">
                                     Filter aktif: <strong><?php echo sanitize($seo_channels[$audit_channel] ?? 'Semua Channel'); ?></strong> ·
-                                    <?php echo $fp_compare['is_custom'] ? 'Rentang Custom' : (!empty($fp_compare['is_all']) ? 'Semua Data (All Time)' : ($fp_compare['effective_days'] . ' Hari Setara')); ?>
+                                    <?php echo $fp_compare['is_custom'] ? 'Rentang Custom' : (!empty($fp_compare['is_all']) ? 'Semua Data (All Time)' : ($fp_compare['effective_days'] . ' Hari Terakhir vs ' . $fp_compare['effective_days'] . ' Hari Sebelumnya')); ?>
                                 </p>
                             </div>
                         </div>
@@ -1693,8 +1685,8 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                         <?php endif; ?>
 
                         <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:14px; font-size:0.78rem; color:var(--admin-muted);">
-                            <span><strong>Sebelum:</strong> <span class="admin-num"><?php echo sanitize($fp_compare['before_range']); ?></span></span>
-                            <span><strong>Sesudah:</strong> <span class="admin-num"><?php echo sanitize($fp_compare['after_range']); ?></span></span>
+                            <span><strong><?php echo $lbl_prev_period; ?>:</strong> <span class="admin-num"><?php echo sanitize($fp_compare['before_range']); ?></span></span>
+                            <span><strong><?php echo $lbl_curr_period; ?>:</strong> <span class="admin-num"><?php echo sanitize($fp_compare['after_range']); ?></span></span>
                         </div>
 
                         <div class="table-responsive">
@@ -1702,8 +1694,8 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                                 <thead>
                                     <tr>
                                         <th>Metrik Halaman</th>
-                                        <th style="text-align:right;">Sebelum</th>
-                                        <th style="text-align:right;">Sesudah</th>
+                                        <th style="text-align:right;"><?php echo !empty($fp_compare['is_all']) ? 'Sebelum' : 'Periode Sblm'; ?></th>
+                                        <th style="text-align:right;"><?php echo !empty($fp_compare['is_all']) ? 'Sesudah' : 'Periode Ini'; ?></th>
                                         <th style="text-align:right;">Perubahan</th>
                                     </tr>
                                 </thead>
