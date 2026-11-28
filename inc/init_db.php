@@ -603,6 +603,38 @@ try {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
     echo "Verified table: page_seo_audits\n";
 
+    // 16. Google Search Console (GSC) Daily Metrics & Top Queries per Page
+    $db->exec("CREATE TABLE IF NOT EXISTS page_gsc_daily (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        page_id INT NOT NULL,
+        stat_date DATE NOT NULL,
+        impressions INT NOT NULL DEFAULT 0,
+        clicks INT NOT NULL DEFAULT 0,
+        ctr DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+        position DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_pgd_page_date (page_id, stat_date),
+        INDEX idx_pgd_date (stat_date),
+        FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    echo "Verified table: page_gsc_daily\n";
+
+    $db->exec("CREATE TABLE IF NOT EXISTS page_gsc_queries (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        page_id INT NOT NULL,
+        query_text VARCHAR(255) NOT NULL,
+        impressions INT NOT NULL DEFAULT 0,
+        clicks INT NOT NULL DEFAULT 0,
+        ctr DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+        position DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+        period_days INT NOT NULL DEFAULT 28,
+        synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_pgq_page_query (page_id, query_text(180)),
+        INDEX idx_pgq_page_impr (page_id, impressions DESC),
+        FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    echo "Verified table: page_gsc_queries\n";
+
     echo "Database initialization completed successfully.\n";
 
 } catch (Exception $e) {

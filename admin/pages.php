@@ -9,7 +9,11 @@
  */
 
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../inc/gsc_client.php';
 ensure_page_seo_audit_schema();
+
+$gsc_api_ready = gsc_is_configured();
+$gsc_sync_info = gsc_get_last_sync_info();
 
 $action = isset($_GET['action']) ? trim((string)$_GET['action']) : 'list';
 if (!in_array($action, ['list', 'new', 'edit', 'audit'], true)) {
@@ -304,6 +308,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
                     $fp_end   = date('Y-m-d 23:59:59');
                     $fp = seo_fetch_page_fp_metrics((string)$old_page['slug'], $fp_start, $fp_end);
 
+                    // Auto-populate GSC baseline from synced page_gsc_daily when manual inputs are empty
+                    if (!$has_gsc) {
+                        $auto_gsc = gsc_get_page_period_metrics($id, date('Y-m-d', strtotime('-' . ($gsc_period - 1) . ' days')), date('Y-m-d'));
+                        if ($auto_gsc) {
+                            $gsc_impr = $auto_gsc['gsc_impressions'];
+                            $gsc_clk  = $auto_gsc['gsc_clicks'];
+                            $gsc_ctr  = $auto_gsc['gsc_ctr'];
+                            $gsc_pos  = $auto_gsc['gsc_position'];
+                        }
+                    }
+
                     Database::insert(
                         "INSERT INTO page_seo_audits
                             (page_id, event_type, user_id, prev_meta_title, prev_meta_description, new_meta_title, new_meta_description,
@@ -376,6 +391,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['log_audit'])) {
                 $fp_start = date('Y-m-d 00:00:00', strtotime('-' . ($gsc_period - 1) . ' days'));
                 $fp_end   = date('Y-m-d 23:59:59');
                 $fp = seo_fetch_page_fp_metrics((string)$page['slug'], $fp_start, $fp_end);
+
+                // Auto-populate GSC snapshot from synced page_gsc_daily when manual inputs are omitted
+                if ($gsc_impr === null && $gsc_clk === null && $gsc_ctr === null && $gsc_pos === null) {
+                    $auto_gsc = gsc_get_page_period_metrics($id, date('Y-m-d', strtotime('-' . ($gsc_period - 1) . ' days')), date('Y-m-d'));
+                    if ($auto_gsc) {
+                        $gsc_impr = $auto_gsc['gsc_impressions'];
+                        $gsc_clk  = $auto_gsc['gsc_clicks'];
+                        $gsc_ctr  = $auto_gsc['gsc_ctr'];
+                        $gsc_pos  = $auto_gsc['gsc_position'];
+                    }
+                }
 
                 Database::insert(
                     "INSERT INTO page_seo_audits
@@ -481,11 +507,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
     }
 }
 
+// ============================================================================
+// POST HANDLER 5: Sync Google Search Console (GSC) API Data
+// ============================================================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sync_gsc'])) {
+    $token = $_POST['csrf_token'] ?? '';
+    if (!verify_csrf_token($token)) {
+        $error = 'Validasi CSRF token gagal.';
+    } elseif (!$gsc_api_ready) {
+        $error = 'Credential GSC API belum dikonfigurasi di inc/config.php.';
+    } else {
+        $return_id = intval($_POST['return_id'] ?? 0);
+        try {
+            require_once __DIR__ . '/../inc/sync_gsc.php';
+            $cnt_row = Database::fetch("SELECT COUNT(*) AS c FROM page_gsc_daily");
+            $sync_days = (!$cnt_row || (int)$cnt_row['c'] === 0) ? 90 : 30;
+            $sync_res = seo_sync_gsc_data($sync_days, true);
+            log_activity($_SESSION['admin_user_id'], 'gsc_sync', 'Synced GSC API: ' . ($sync_res['summary'] ?? 'OK'));
+            $redir = $return_id > 0
+                ? (BASE_URL . 'admin/pages.php?action=audit&id=' . $return_id . '&success=4')
+                : (BASE_URL . 'admin/pages.php?success=4');
+            header('Location: ' . $redir);
+            exit;
+        } catch (Throwable $e) {
+            $error = 'Sinkronisasi GSC gagal: ' . $e->getMessage();
+        }
+    }
+}
+
 // Flash feedback
 if (isset($_GET['success'])) {
     if ($_GET['success'] == 1) $success = 'Metadata SEO berhasil diperbarui & histori perubahan otomatis dicatat!';
     if ($_GET['success'] == 2) $success = 'Snapshot Audit & GSC berhasil disimpan! Jadwal Next Audit diperbarui.';
     if ($_GET['success'] == 3) $success = 'Catatan riwayat audit berhasil dihapus.';
+    if ($_GET['success'] == 4) {
+        $success = 'Sinkronisasi Google Search Console (GSC) berhasil!'
+            . (!empty($gsc_sync_info['summary']) ? ' (' . $gsc_sync_info['summary'] . ')' : '');
+    }
 }
 if (isset($_GET['created']) && $_GET['created'] == 1) {
     $success = 'Halaman baru berhasil ditambahkan! Silakan lengkapi Open Graph & FAQ Schema-nya.';
@@ -500,6 +558,8 @@ $audit_history = [];
 $gsc_before = null;
 $gsc_after = null;
 $gsc_chart_series = [];
+$gsc_source_mode = 'manual'; // 'api' | 'manual'
+$gsc_top_queries = [];
 $fp_compare = null;
 $audit_chart_payload = null;
 $page_schedule = null;
@@ -635,6 +695,25 @@ if (($action === 'edit' || $action === 'audit') && isset($_GET['id'])) {
 
         $series_before = seo_fetch_daily_series($page_paths, $before_start_day, $before_end_day, $audit_channel);
         $series_after  = seo_fetch_daily_series($page_paths, $after_start_day, $after_end_day, $audit_channel);
+
+        // Prefer automated GSC API daily data from page_gsc_daily when available
+        $gsc_api_before  = gsc_get_page_period_metrics($id, $before_start_day, $before_end_day);
+        $gsc_api_after   = gsc_get_page_period_metrics($id, $after_start_day, $after_end_day);
+        $gsc_api_series  = gsc_get_page_daily_series($id, $before_start_day, $after_end_day);
+        $gsc_top_queries = gsc_get_page_top_queries($id, 10);
+
+        if (!empty($gsc_api_series) || $gsc_api_after !== null || $gsc_api_before !== null) {
+            $gsc_source_mode = 'api';
+            $zero_gsc = [
+                'gsc_impressions' => 0,
+                'gsc_clicks'      => 0,
+                'gsc_ctr'         => 0.0,
+                'gsc_position'    => null,
+            ];
+            $gsc_before = $gsc_api_before ?: $zero_gsc;
+            $gsc_after  = $gsc_api_after ?: $zero_gsc;
+            $gsc_chart_series = $gsc_api_series;
+        }
 
         $fp_compare = [
             'pivot_dt'          => $pivot_dt,
@@ -826,6 +905,37 @@ if ($action === 'list') {
             error_log("Batch analytics for pages list skipped: " . $e->getMessage());
         }
 
+        // Single batch query for 28-day automated GSC API metrics across all pages
+        $gsc_28d_map = [];
+        try {
+            $gsc_since_28d = date('Y-m-d', strtotime('-27 days'));
+            $gsc_rows_28d = Database::fetchAll(
+                "SELECT page_id,
+                        SUM(impressions) AS impr,
+                        SUM(clicks) AS clicks,
+                        CASE
+                            WHEN SUM(impressions) > 0 THEN ROUND(SUM(position * impressions) / SUM(impressions), 2)
+                            ELSE ROUND(AVG(position), 2)
+                        END AS avg_pos
+                 FROM page_gsc_daily
+                 WHERE stat_date >= ?
+                 GROUP BY page_id",
+                [$gsc_since_28d]
+            );
+            foreach ($gsc_rows_28d as $gr) {
+                $impr = (int)$gr['impr'];
+                $clk  = (int)$gr['clicks'];
+                $gsc_28d_map[(int)$gr['page_id']] = [
+                    'impr'   => $impr,
+                    'clicks' => $clk,
+                    'ctr'    => $impr > 0 ? round(($clk / $impr) * 100, 2) : 0.0,
+                    'pos'    => $gr['avg_pos'] !== null ? (float)$gr['avg_pos'] : null,
+                ];
+            }
+        } catch (Exception $e) {
+            error_log("Batch GSC 28d for pages list skipped: " . $e->getMessage());
+        }
+
         foreach ($raw_pages as $rp) {
             $sched = seo_compute_audit_schedule(
                 $rp['updated_at'] ?? null,
@@ -834,6 +944,16 @@ if ($action === 'list') {
             );
             $norm_slug = $rp['slug'] === '' ? '/' : ('/' . trim((string)$rp['slug'], '/'));
             $fp = $fp_map[$norm_slug] ?? ['total_views' => 0, 'seo_geo_views' => 0, 'conversions' => 0];
+            $pid_int = (int)$rp['id'];
+            if (isset($gsc_28d_map[$pid_int])) {
+                $rp['latest_impr']   = $gsc_28d_map[$pid_int]['impr'];
+                $rp['latest_clicks'] = $gsc_28d_map[$pid_int]['clicks'];
+                $rp['latest_ctr']    = $gsc_28d_map[$pid_int]['ctr'];
+                $rp['latest_pos']    = $gsc_28d_map[$pid_int]['pos'];
+                $rp['_gsc_auto']     = true;
+            } else {
+                $rp['_gsc_auto']     = false;
+            }
             $has_gsc = ($rp['latest_impr'] !== null || $rp['latest_clicks'] !== null);
 
             $list_kpi['total']++;
@@ -1474,7 +1594,18 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                         <?php endif; ?>
                     </p>
                 </div>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    <?php if ($gsc_api_ready && ($action === 'list' || ($action === 'audit' && $page_data))): ?>
+                        <form method="POST" action="<?php echo BASE_URL; ?>admin/pages.php" style="margin:0; display:inline-flex; align-items:center; gap:8px;">
+                            <?php echo csrf_field(); ?>
+                            <?php if ($action === 'audit' && $page_data): ?>
+                                <input type="hidden" name="return_id" value="<?php echo (int)$page_data['id']; ?>">
+                            <?php endif; ?>
+                            <button type="submit" name="sync_gsc" value="1" class="btn-admin btn-admin-secondary" title="<?php echo !empty($gsc_sync_info['last_sync_at']) ? ('Terakhir sync: ' . sanitize($gsc_sync_info['last_sync_at'])) : 'Tarik data harian & keyword dari Google Search Console'; ?>">
+                                Sync GSC Sekarang
+                            </button>
+                        </form>
+                    <?php endif; ?>
                     <?php if ($action === 'audit' && $page_data): ?>
                         <a href="?action=edit&id=<?php echo (int)$page_data['id']; ?>" class="btn-admin btn-admin-primary">Edit SEO Meta</a>
                         <a href="<?php echo sanitize(BASE_URL . ($page_data['slug'] !== '' ? ($page_data['slug'] . '/') : '')); ?>" target="_blank" rel="noopener" class="btn-admin btn-admin-secondary">Lihat Halaman</a>
@@ -1644,7 +1775,11 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                         <canvas id="seoAuditChart" role="img" aria-label="Grafik perbandingan performa SEO sebelum dan sesudah update"></canvas>
                     </div>
                     <div id="auditGscEmpty" class="admin-empty" style="display:none; padding:32px 16px;">
-                        Catat minimal <strong>2 snapshot GSC</strong> pada form di bawah untuk melihat grafik tren Impressions, Clicks, CTR, dan Posisi Google.
+                        <?php if ($gsc_api_ready): ?>
+                            Belum cukup data harian GSC untuk rentang ini. Klik <strong>Sync GSC Sekarang</strong> di kanan atas untuk menarik data otomatis dari Google Search Console.
+                        <?php else: ?>
+                            Catat minimal <strong>2 snapshot GSC</strong> pada form di bawah untuk melihat grafik tren Impressions, Clicks, CTR, dan Posisi Google.
+                        <?php endif; ?>
                     </div>
                 </section>
 
@@ -1777,12 +1912,24 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                         <section class="admin-card" style="margin-bottom: 0;">
                             <div class="seo-card-head">
                                 <div>
-                                    <h2>Perbandingan Google Search Console (GSC)</h2>
+                                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                        <h2>Perbandingan Google Search Console (GSC)</h2>
+                                        <?php if ($gsc_source_mode === 'api'): ?>
+                                            <span class="badge badge-success">GSC API Otomatis</span>
+                                        <?php endif; ?>
+                                    </div>
                                     <p class="seo-card-sub">
-                                        <?php if ($gsc_before && $gsc_after): ?>
+                                        <?php if ($gsc_source_mode === 'api'): ?>
+                                            <?php echo $lbl_prev_period; ?> (<span class="admin-num"><?php echo sanitize($fp_compare['before_range']); ?></span>) vs <?php echo $lbl_curr_period; ?> (<span class="admin-num"><?php echo sanitize($fp_compare['after_range']); ?></span>)
+                                            <?php if (!empty($gsc_sync_info['last_sync_at'])): ?>
+                                                · Sync: <span class="admin-num"><?php echo date('d M H:i', strtotime($gsc_sync_info['last_sync_at'])); ?></span>
+                                            <?php endif; ?>
+                                        <?php elseif ($gsc_before && $gsc_after): ?>
                                             Snapshot <span class="admin-num"><?php echo date('d M Y', strtotime($gsc_before['created_at'])); ?></span> vs <span class="admin-num"><?php echo date('d M Y', strtotime($gsc_after['created_at'])); ?></span>
                                         <?php elseif ($gsc_before): ?>
                                             Baseline tercatat pada <span class="admin-num"><?php echo date('d M Y', strtotime($gsc_before['created_at'])); ?></span> — catat snapshot berikutnya pada Next Audit untuk melihat delta
+                                        <?php elseif ($gsc_api_ready): ?>
+                                            GSC API siap — klik <strong>Sync GSC Sekarang</strong> di kanan atas untuk menarik data otomatis
                                         <?php else: ?>
                                             Belum ada data GSC dicatat — isi form di bawah untuk menyimpan baseline pertama
                                         <?php endif; ?>
@@ -1849,25 +1996,23 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                         <section class="admin-card" style="margin-bottom: 0;">
                             <div class="seo-card-head">
                                 <div>
-                                    <h3>Catat Snapshot Audit &amp; GSC Baru</h3>
-                                    <p class="seo-card-sub">Menyimpan snapshot ini otomatis memperbarui jadwal <strong>Next Audit</strong>.</p>
+                                    <h3><?php echo $gsc_api_ready ? 'Selesaikan Audit &amp; Reset Jadwal' : 'Catat Snapshot Audit &amp; GSC Baru'; ?></h3>
+                                    <p class="seo-card-sub">
+                                        <?php if ($gsc_api_ready): ?>
+                                            Angka Website &amp; GSC API 28 hari terakhir otomatis dikunci ke riwayat audit, dan jadwal <strong>Next Audit</strong> diperbarui.
+                                        <?php else: ?>
+                                            Menyimpan snapshot ini otomatis memperbarui jadwal <strong>Next Audit</strong>.
+                                        <?php endif; ?>
+                                    </p>
                                 </div>
                             </div>
                             <form method="POST" action="<?php echo BASE_URL; ?>admin/pages.php?action=audit&amp;id=<?php echo (int)$page_data['id']; ?>">
                                 <?php echo csrf_field(); ?>
                                 <input type="hidden" name="page_id" value="<?php echo (int)$page_data['id']; ?>">
 
-                                <div class="seo-form-grid-2" style="margin-bottom: 12px;">
-                                    <div>
-                                        <label class="form-label" for="aud-period">Rentang Data GSC</label>
-                                        <select id="aud-period" name="gsc_period_days" class="form-control">
-                                            <option value="28" selected>28 Hari Terakhir (Standar GSC)</option>
-                                            <option value="14">14 Hari Terakhir</option>
-                                            <option value="30">30 Hari Terakhir</option>
-                                            <option value="90">90 Hari Terakhir</option>
-                                        </select>
-                                    </div>
-                                    <div>
+                                <?php if ($gsc_api_ready): ?>
+                                    <input type="hidden" name="gsc_period_days" value="28">
+                                    <div style="margin-bottom: 12px;">
                                         <label class="form-label" for="aud-interval">Siklus Next Audit</label>
                                         <select id="aud-interval" name="audit_interval_days" class="form-control">
                                             <?php $cur_int = (int)($page_data['audit_interval_days'] ?? 30); ?>
@@ -1877,29 +2022,51 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                                             <option value="90" <?php echo $cur_int === 90 ? 'selected' : ''; ?>>90 Hari (Halaman Stabil)</option>
                                         </select>
                                     </div>
-                                </div>
+                                <?php else: ?>
+                                    <div class="seo-form-grid-2" style="margin-bottom: 12px;">
+                                        <div>
+                                            <label class="form-label" for="aud-period">Rentang Data GSC</label>
+                                            <select id="aud-period" name="gsc_period_days" class="form-control">
+                                                <option value="28" selected>28 Hari Terakhir (Standar GSC)</option>
+                                                <option value="14">14 Hari Terakhir</option>
+                                                <option value="30">30 Hari Terakhir</option>
+                                                <option value="90">90 Hari Terakhir</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="form-label" for="aud-interval">Siklus Next Audit</label>
+                                            <select id="aud-interval" name="audit_interval_days" class="form-control">
+                                                <?php $cur_int = (int)($page_data['audit_interval_days'] ?? 30); ?>
+                                                <option value="14" <?php echo $cur_int === 14 ? 'selected' : ''; ?>>14 Hari (Cepat / Eksperimen)</option>
+                                                <option value="30" <?php echo $cur_int === 30 ? 'selected' : ''; ?>>30 Hari (Standar SEO)</option>
+                                                <option value="60" <?php echo $cur_int === 60 ? 'selected' : ''; ?>>60 Hari</option>
+                                                <option value="90" <?php echo $cur_int === 90 ? 'selected' : ''; ?>>90 Hari (Halaman Stabil)</option>
+                                            </select>
+                                        </div>
+                                    </div>
 
-                                <div class="seo-form-grid-2" style="margin-bottom: 12px;">
-                                    <div>
-                                        <label class="form-label" for="aud-impr">GSC Impressions</label>
-                                        <input type="number" id="aud-impr" name="gsc_impressions" min="0" class="form-control" placeholder="cth: 1250">
+                                    <div class="seo-form-grid-2" style="margin-bottom: 12px;">
+                                        <div>
+                                            <label class="form-label" for="aud-impr">GSC Impressions</label>
+                                            <input type="number" id="aud-impr" name="gsc_impressions" min="0" class="form-control" placeholder="cth: 1250">
+                                        </div>
+                                        <div>
+                                            <label class="form-label" for="aud-clk">GSC Clicks</label>
+                                            <input type="number" id="aud-clk" name="gsc_clicks" min="0" class="form-control" placeholder="cth: 84">
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label class="form-label" for="aud-clk">GSC Clicks</label>
-                                        <input type="number" id="aud-clk" name="gsc_clicks" min="0" class="form-control" placeholder="cth: 84">
-                                    </div>
-                                </div>
 
-                                <div class="seo-form-grid-2" style="margin-bottom: 12px;">
-                                    <div>
-                                        <label class="form-label" for="aud-ctr">GSC CTR (%) — auto-hitung</label>
-                                        <input type="number" id="aud-ctr" name="gsc_ctr" step="0.01" min="0" max="100" class="form-control" placeholder="Otomatis dari Clicks/Impr">
+                                    <div class="seo-form-grid-2" style="margin-bottom: 12px;">
+                                        <div>
+                                            <label class="form-label" for="aud-ctr">GSC CTR (%) — auto-hitung</label>
+                                            <input type="number" id="aud-ctr" name="gsc_ctr" step="0.01" min="0" max="100" class="form-control" placeholder="Otomatis dari Clicks/Impr">
+                                        </div>
+                                        <div>
+                                            <label class="form-label" for="aud-pos">GSC Avg Position</label>
+                                            <input type="number" id="aud-pos" name="gsc_position" step="0.1" min="1" class="form-control" placeholder="cth: 6.4">
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label class="form-label" for="aud-pos">GSC Avg Position</label>
-                                        <input type="number" id="aud-pos" name="gsc_position" step="0.1" min="1" class="form-control" placeholder="cth: 6.4">
-                                    </div>
-                                </div>
+                                <?php endif; ?>
 
                                 <div style="margin-bottom: 14px;">
                                     <label class="form-label" for="aud-notes">Catatan Evaluasi / Action Item</label>
@@ -1907,12 +2074,48 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                                 </div>
 
                                 <button type="submit" name="log_audit" value="1" class="btn-admin btn-admin-primary" style="width: 100%; padding: 10px;">
-                                    Simpan Snapshot Audit &amp; Reset Jadwal
+                                    <?php echo $gsc_api_ready ? 'Tandai Audit Selesai &amp; Reset Jadwal' : 'Simpan Snapshot Audit &amp; Reset Jadwal'; ?>
                                 </button>
                             </form>
                         </section>
                     </div>
                 </div>
+
+                <?php if (!empty($gsc_top_queries)): ?>
+                <!-- Top 10 Google Search Queries for this Page -->
+                <section class="admin-card" aria-label="Top Keyword Google Search Console">
+                    <div class="seo-card-head">
+                        <div>
+                            <h2>Top <?php echo count($gsc_top_queries); ?> Keyword Google (GSC 28 Hari Terakhir)</h2>
+                            <p class="seo-card-sub">Kata kunci pencarian yang memunculkan halaman ini di Google Search — berguna untuk optimasi Meta Title, H2, dan FAQ.</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Keyword / Query</th>
+                                    <th style="text-align:right;">Clicks</th>
+                                    <th style="text-align:right;">Impressions</th>
+                                    <th style="text-align:right;">CTR</th>
+                                    <th style="text-align:right;">Avg Position</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($gsc_top_queries as $gq): ?>
+                                <tr>
+                                    <td><strong><?php echo sanitize($gq['query_text']); ?></strong></td>
+                                    <td class="admin-num" style="text-align:right;"><strong><?php echo number_format((int)$gq['clicks']); ?></strong></td>
+                                    <td class="admin-num" style="text-align:right;"><?php echo number_format((int)$gq['impressions']); ?></td>
+                                    <td class="admin-num" style="text-align:right;"><?php echo number_format((float)$gq['ctr'], 2); ?>%</td>
+                                    <td class="admin-num" style="text-align:right;">#<?php echo number_format((float)$gq['position'], 1); ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                <?php endif; ?>
 
                 <!-- Timeline: Meta Revision Diffs + Audit Snapshots -->
                 <section class="admin-card">
@@ -2856,26 +3059,27 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                     if (gscEmpty) gscEmpty.style.display = 'none';
 
                     var gLabels = gsc.map(function (d) { return d.label; });
+                    var gPtRad  = gsc.length > 35 ? 0 : 3.5;
                     var datasets, scales;
                     if (mode === 'gsc_impr') {
                         if (legendEl) legendEl.innerHTML = '<span class="ga-legend-item"><span class="ga-line-solid" style="background:#2563eb;height:10px;width:10px;"></span>Impressions</span><span class="ga-legend-item"><span class="ga-line-solid" style="background:#059669;"></span>Clicks</span>';
                         datasets = [
-                            { type: 'bar', label: 'Impressions', data: gsc.map(function (d) { return d.impressions; }), yAxisID: 'yLeft', backgroundColor: 'rgba(37, 99, 235, 0.25)', borderColor: '#2563eb', borderWidth: 1.5, borderRadius: 5, maxBarThickness: 38 },
-                            { type: 'line', label: 'Clicks', data: gsc.map(function (d) { return d.clicks; }), yAxisID: 'yRight', borderColor: '#059669', backgroundColor: '#059669', borderWidth: 2.5, tension: 0.3, pointRadius: 4.5, pointBackgroundColor: '#fff', pointBorderWidth: 2 }
+                            { type: 'bar', label: 'Impressions', data: gsc.map(function (d) { return d.impressions; }), yAxisID: 'yLeft', backgroundColor: 'rgba(37, 99, 235, 0.25)', borderColor: '#2563eb', borderWidth: 1.5, borderRadius: 4, maxBarThickness: 28 },
+                            { type: 'line', label: 'Clicks', data: gsc.map(function (d) { return d.clicks; }), yAxisID: 'yRight', borderColor: '#059669', backgroundColor: '#059669', borderWidth: 2.5, tension: 0.3, pointRadius: gPtRad, pointHoverRadius: 5, pointBackgroundColor: '#fff', pointBorderWidth: 2 }
                         ];
                         scales = {
-                            x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 11 } } },
+                            x: { grid: { display: false }, ticks: { color: '#64748b', maxRotation: 0, autoSkip: true, maxTicksLimit: 12, font: { size: 11 } } },
                             yLeft: { type: 'linear', position: 'left', beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { color: '#1d4ed8', precision: 0, font: { family: "'Fira Code', monospace", size: 11 } } },
                             yRight: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { color: '#047857', precision: 0, font: { family: "'Fira Code', monospace", size: 11 } } }
                         };
                     } else {
                         if (legendEl) legendEl.innerHTML = '<span class="ga-legend-item"><span class="ga-line-solid" style="background:#7c3aed;"></span>CTR (%)</span><span class="ga-legend-item"><span class="ga-line-solid" style="background:#ea580c;"></span>Avg Position (atas = lebih baik)</span>';
                         datasets = [
-                            { type: 'line', label: 'CTR (%)', data: gsc.map(function (d) { return d.ctr; }), yAxisID: 'yLeft', borderColor: '#7c3aed', backgroundColor: 'rgba(124, 58, 237, 0.12)', fill: true, borderWidth: 2.5, tension: 0.3, pointRadius: 4.5, pointBackgroundColor: '#fff', pointBorderWidth: 2 },
-                            { type: 'line', label: 'Avg Position', data: gsc.map(function (d) { return d.position; }), yAxisID: 'yRight', borderColor: '#ea580c', borderDash: [5, 3], borderWidth: 2.5, tension: 0.3, pointRadius: 4.5, pointBackgroundColor: '#fff', pointBorderWidth: 2 }
+                            { type: 'line', label: 'CTR (%)', data: gsc.map(function (d) { return d.ctr; }), yAxisID: 'yLeft', borderColor: '#7c3aed', backgroundColor: 'rgba(124, 58, 237, 0.12)', fill: true, borderWidth: 2.5, tension: 0.3, pointRadius: gPtRad, pointHoverRadius: 5, pointBackgroundColor: '#fff', pointBorderWidth: 2 },
+                            { type: 'line', label: 'Avg Position', data: gsc.map(function (d) { return d.position; }), yAxisID: 'yRight', borderColor: '#ea580c', borderDash: [5, 3], borderWidth: 2.5, tension: 0.3, pointRadius: gPtRad, pointHoverRadius: 5, pointBackgroundColor: '#fff', pointBorderWidth: 2 }
                         ];
                         scales = {
-                            x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 11 } } },
+                            x: { grid: { display: false }, ticks: { color: '#64748b', maxRotation: 0, autoSkip: true, maxTicksLimit: 12, font: { size: 11 } } },
                             yLeft: { type: 'linear', position: 'left', beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { color: '#6d28d9', font: { family: "'Fira Code', monospace", size: 11 } } },
                             yRight: { type: 'linear', position: 'right', reverse: true, grid: { drawOnChartArea: false }, ticks: { color: '#c2410c', font: { family: "'Fira Code', monospace", size: 11 } } }
                         };

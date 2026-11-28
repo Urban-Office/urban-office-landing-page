@@ -336,7 +336,7 @@ function admin_client_ip(): string {
  */
 function ensure_page_seo_audit_schema(): void {
     static $checked = false;
-    if ($checked || !empty($_SESSION['seo_audit_schema_ok'])) {
+    if ($checked || !empty($_SESSION['seo_audit_schema_v2_ok'])) {
         return;
     }
     $checked = true;
@@ -380,8 +380,35 @@ function ensure_page_seo_audit_schema(): void {
             FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $db->exec("CREATE TABLE IF NOT EXISTS page_gsc_daily (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            page_id INT NOT NULL,
+            stat_date DATE NOT NULL,
+            impressions INT NOT NULL DEFAULT 0,
+            clicks INT NOT NULL DEFAULT 0,
+            ctr DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+            position DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY uq_pgd_page_date (page_id, stat_date),
+            INDEX idx_pgd_date (stat_date),
+            FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        $db->exec("CREATE TABLE IF NOT EXISTS page_gsc_queries (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            page_id INT NOT NULL,
+            query_text VARCHAR(255) NOT NULL,
+            impressions INT NOT NULL DEFAULT 0,
+            clicks INT NOT NULL DEFAULT 0,
+            ctr DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+            position DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+            period_days INT NOT NULL DEFAULT 28,
+            synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY uq_pgq_page_query (page_id, query_text(180)),
+            INDEX idx_pgq_page_impr (page_id, impressions DESC),
+            FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
         if (session_status() === PHP_SESSION_ACTIVE) {
-            $_SESSION['seo_audit_schema_ok'] = true;
+            $_SESSION['seo_audit_schema_v2_ok'] = true;
         }
     } catch (Exception $e) {
         error_log("ensure_page_seo_audit_schema failed: " . $e->getMessage());

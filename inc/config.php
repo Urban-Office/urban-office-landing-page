@@ -52,6 +52,13 @@ define('APP_BASE_URL', 'https://my.urbanoffice.co.id');
 define('APP_HOME_URL', APP_BASE_URL . '/dashboard/home');
 define('APP_BOOKING_URL', APP_BASE_URL . '/dashboard/bookingform');
 
+// Google Search Console (GSC) API — isi credential di inc/config.php server/lokal (JANGAN commit secret ke Git)
+if (!defined('GSC_OAUTH_CLIENT_ID'))      define('GSC_OAUTH_CLIENT_ID', '');
+if (!defined('GSC_OAUTH_CLIENT_SECRET'))  define('GSC_OAUTH_CLIENT_SECRET', '');
+if (!defined('GSC_OAUTH_REFRESH_TOKEN'))  define('GSC_OAUTH_REFRESH_TOKEN', '');
+if (!defined('GSC_SERVICE_ACCOUNT_JSON')) define('GSC_SERVICE_ACCOUNT_JSON', '');
+if (!defined('GSC_SITE_URL'))             define('GSC_SITE_URL', 'sc-domain:urbanoffice.co.id');
+
 // Database Credentials
 define('DB_HOST', 'localhost');
 define('DB_PORT', '3306');
