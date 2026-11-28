@@ -504,7 +504,8 @@ $fp_compare = null;
 $audit_chart_payload = null;
 $page_schedule = null;
 
-$compare_win_raw = isset($_GET['win']) ? trim((string)$_GET['win']) : '28';
+$has_explicit_win = isset($_GET['win']) && trim((string)$_GET['win']) !== '';
+$compare_win_raw = $has_explicit_win ? trim((string)$_GET['win']) : '28';
 $audit_channel   = isset($_GET['channel']) ? trim((string)$_GET['channel']) : '';
 if (!isset($seo_channels[$audit_channel])) {
     $audit_channel = '';
@@ -515,6 +516,7 @@ $is_audit_custom = ($compare_win_raw === 'custom' && preg_match('/^\d{4}-\d{2}-\
 if ($is_audit_custom && strtotime($audit_custom_start) > strtotime($audit_custom_end)) {
     [$audit_custom_start, $audit_custom_end] = [$audit_custom_end, $audit_custom_start];
 }
+$is_audit_all = ($compare_win_raw === 'all');
 $compare_window = in_array($compare_win_raw, ['14', '28', '30'], true) ? (int)$compare_win_raw : 28;
 
 if (($action === 'edit' || $action === 'audit') && isset($_GET['id'])) {
@@ -578,7 +580,19 @@ if (($action === 'edit' || $action === 'audit') && isset($_GET['id'])) {
         }
         $pivot_ts = strtotime($pivot_dt) ?: time();
         $pivot_day_str = date('Y-m-d', $pivot_ts);
-        $today_end_ts = strtotime(date('Y-m-d 23:59:59'));
+        $today_day_str = date('Y-m-d');
+        $today_end_ts = strtotime($today_day_str . ' 23:59:59');
+        $page_paths = seo_page_path_variants((string)$page_data['slug']);
+
+        // Auto-switch to All Time on Day 0/1 after an SEO update when user didn't pick a fixed window,
+        // so historical pre-update data stays immediately visible instead of a 1-day empty comparison.
+        $elapsed_raw = max(1, (int)floor(($today_end_ts - strtotime($pivot_day_str . ' 00:00:00')) / 86400));
+        $auto_all_fallback = false;
+        if (!$is_audit_custom && !$is_audit_all && !$has_explicit_win && $elapsed_raw <= 1) {
+            $is_audit_all = true;
+            $compare_win_raw = 'all';
+            $auto_all_fallback = true;
+        }
 
         if ($is_audit_custom) {
             $span = max(1, (int)round((strtotime($audit_custom_end) - strtotime($audit_custom_start)) / 86400) + 1);
@@ -588,8 +602,31 @@ if (($action === 'edit' || $action === 'audit') && isset($_GET['id'])) {
             $before_start_day = date('Y-m-d', strtotime($audit_custom_start) - ($span * 86400));
             $effective_days   = $span;
             $is_partial       = false;
+        } elseif ($is_audit_all) {
+            $earliest_day = null;
+            try {
+                $ph_min = implode(',', array_fill(0, count($page_paths), '?'));
+                $min_row = Database::fetch("SELECT MIN(DATE(created_at)) AS first_day FROM analytics_events WHERE page_path IN ({$ph_min})", $page_paths);
+                if (!empty($min_row['first_day'])) {
+                    $earliest_day = $min_row['first_day'];
+                } else {
+                    $glob_min = Database::fetch("SELECT MIN(DATE(created_at)) AS first_day FROM analytics_events");
+                    if (!empty($glob_min['first_day'])) {
+                        $earliest_day = $glob_min['first_day'];
+                    }
+                }
+            } catch (Exception $e) {
+                $earliest_day = null;
+            }
+            $after_start_day  = $pivot_day_str;
+            $after_end_day    = $today_day_str;
+            $before_end_day   = date('Y-m-d', strtotime($pivot_day_str . ' 00:00:00') - 86400);
+            $fallback_start   = date('Y-m-d', strtotime($before_end_day) - (27 * 86400));
+            $before_start_day = ($earliest_day && strtotime($earliest_day) <= strtotime($before_end_day)) ? $earliest_day : $fallback_start;
+            $effective_days   = max(1, (int)round((strtotime($after_end_day) - strtotime($before_start_day)) / 86400) + 1);
+            $is_partial       = false;
         } else {
-            $elapsed_days = max(1, (int)floor(($today_end_ts - strtotime($pivot_day_str . ' 00:00:00')) / 86400));
+            $elapsed_days = $elapsed_raw;
             $effective_days = min($compare_window, $elapsed_days);
             $is_partial = $elapsed_days < $compare_window;
 
@@ -608,23 +645,24 @@ if (($action === 'edit' || $action === 'audit') && isset($_GET['id'])) {
         $fp_before = seo_fetch_page_fp_metrics((string)$page_data['slug'], $before_start, $before_end, $audit_channel);
         $fp_after  = seo_fetch_page_fp_metrics((string)$page_data['slug'], $after_start, $after_end, $audit_channel);
 
-        $page_paths = seo_page_path_variants((string)$page_data['slug']);
         $series_before = seo_fetch_daily_series($page_paths, $before_start_day, $before_end_day, $audit_channel);
         $series_after  = seo_fetch_daily_series($page_paths, $after_start_day, $after_end_day, $audit_channel);
 
         $fp_compare = [
-            'pivot_dt'       => $pivot_dt,
-            'pivot_label'    => date('d M', $pivot_ts),
-            'pivot_date'     => $pivot_day_str,
-            'is_custom'      => $is_audit_custom,
-            'requested_days' => $compare_window,
-            'effective_days' => $effective_days,
-            'is_partial'     => $is_partial,
-            'mature_date'    => date('d M Y', strtotime($pivot_day_str) + ($compare_window * 86400)),
-            'before_range'   => date('d M Y', strtotime($before_start_day)) . ' – ' . date('d M Y', strtotime($before_end_day)),
-            'after_range'    => date('d M Y', strtotime($after_start_day)) . ' – ' . date('d M Y', strtotime($after_end_day)),
-            'before'         => $fp_before,
-            'after'          => $fp_after,
+            'pivot_dt'          => $pivot_dt,
+            'pivot_label'       => date('d M', $pivot_ts),
+            'pivot_date'        => $pivot_day_str,
+            'is_custom'         => $is_audit_custom,
+            'is_all'            => $is_audit_all,
+            'auto_all_fallback' => $auto_all_fallback,
+            'requested_days'    => $compare_window,
+            'effective_days'    => $effective_days,
+            'is_partial'        => $is_partial,
+            'mature_date'       => date('d M Y', strtotime($pivot_day_str) + ($compare_window * 86400)),
+            'before_range'      => date('d M Y', strtotime($before_start_day)) . ' – ' . date('d M Y', strtotime($before_end_day)),
+            'after_range'       => date('d M Y', strtotime($after_start_day)) . ' – ' . date('d M Y', strtotime($after_end_day)),
+            'before'            => $fp_before,
+            'after'             => $fp_after,
         ];
 
         $audit_chart_payload = [
@@ -634,6 +672,7 @@ if (($action === 'edit' || $action === 'audit') && isset($_GET['id'])) {
             'pivotLabel'  => 'Update SEO (' . date('d M', $pivot_ts) . ')',
             'beforeRange' => $fp_compare['before_range'],
             'afterRange'  => $fp_compare['after_range'],
+            'defaultMode' => $is_audit_all ? 'timeline' : 'overlay',
             'gsc'         => $gsc_chart_series,
         ];
     }
@@ -668,7 +707,7 @@ $curr_page = max(1, intval($_GET['page'] ?? 1));
 
 // Global GA4 Chart filter parameters
 $g_range   = isset($_GET['g_range']) ? trim((string)$_GET['g_range']) : '28d';
-if (!in_array($g_range, ['7d', '14d', '28d', '90d', 'custom'], true)) {
+if (!in_array($g_range, ['7d', '14d', '28d', '90d', 'all', 'custom'], true)) {
     $g_range = '28d';
 }
 $g_channel = isset($_GET['g_channel']) ? trim((string)$_GET['g_channel']) : '';
@@ -686,6 +725,20 @@ if ($g_range === 'custom' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $g_start) && pr
     $g_curr_end   = $g_end;
     $g_span_days  = max(1, (int)round((strtotime($g_curr_end) - strtotime($g_curr_start)) / 86400) + 1);
     $g_period_lbl = date('d M Y', strtotime($g_curr_start)) . ' – ' . date('d M Y', strtotime($g_curr_end));
+} elseif ($g_range === 'all') {
+    $g_curr_end = date('Y-m-d');
+    $g_min_day  = null;
+    try {
+        $g_min_row = Database::fetch("SELECT MIN(DATE(created_at)) AS first_day FROM analytics_events");
+        if (!empty($g_min_row['first_day'])) {
+            $g_min_day = $g_min_row['first_day'];
+        }
+    } catch (Exception $e) {
+        $g_min_day = null;
+    }
+    $g_curr_start = ($g_min_day && strtotime($g_min_day) <= strtotime($g_curr_end)) ? $g_min_day : date('Y-m-d', strtotime('-27 days'));
+    $g_span_days  = max(1, (int)round((strtotime($g_curr_end) - strtotime($g_curr_start)) / 86400) + 1);
+    $g_period_lbl = 'Semua Data';
 } else {
     if ($g_range === 'custom') $g_range = '28d';
     $g_span_days  = ($g_range === '7d') ? 7 : (($g_range === '14d') ? 14 : (($g_range === '90d') ? 90 : 28));
@@ -1505,15 +1558,18 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                 <section class="admin-card" aria-label="Grafik GA4 Before vs After Halaman">
                     <div class="ga-filter-row">
                         <div class="admin-pill-group" role="navigation" aria-label="Rentang grafik audit">
-                            <?php foreach (['14' => '14 Hari', '28' => '28 Hari', '30' => '30 Hari'] as $wk => $wlbl): ?>
-                                <a href="<?php echo sanitize($build_audit_url(['win' => $wk, 'a_start' => '', 'a_end' => ''])); ?>" class="admin-pill<?php echo (!$fp_compare['is_custom'] && (string)$compare_window === $wk) ? ' active' : ''; ?>"><?php echo $wlbl; ?></a>
+                            <?php foreach (['14' => '14 Hari', '28' => '28 Hari', '30' => '30 Hari', 'all' => 'Semua Data'] as $wk => $wlbl):
+                                $wk_str = (string)$wk;
+                                $is_pill_active = (!$fp_compare['is_custom'] && (($wk_str === 'all' && !empty($fp_compare['is_all'])) || ($wk_str !== 'all' && empty($fp_compare['is_all']) && (string)$compare_window === $wk_str)));
+                            ?>
+                                <a href="<?php echo sanitize($build_audit_url(['win' => $wk_str, 'a_start' => '', 'a_end' => ''])); ?>" class="admin-pill<?php echo $is_pill_active ? ' active' : ''; ?>"><?php echo $wlbl; ?></a>
                             <?php endforeach; ?>
                         </div>
 
                         <form method="GET" action="<?php echo BASE_URL; ?>admin/pages.php" class="ga-filter-form">
                             <input type="hidden" name="action" value="audit">
                             <input type="hidden" name="id" value="<?php echo (int)$page_data['id']; ?>">
-                            <input type="hidden" name="win" id="audit-win-input" value="<?php echo $fp_compare['is_custom'] ? 'custom' : (int)$compare_window; ?>">
+                            <input type="hidden" name="win" id="audit-win-input" value="<?php echo $fp_compare['is_custom'] ? 'custom' : (!empty($fp_compare['is_all']) ? 'all' : (int)$compare_window); ?>">
 
                             <select name="channel" class="seo-filter-input" aria-label="Filter Channel Traffic">
                                 <?php foreach ($seo_channels as $ck => $clbl): ?>
@@ -1582,9 +1638,10 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                                 <input type="checkbox" id="auditCompareChk" checked>
                                 <span>Bandingkan Sebelum</span>
                             </label>
+                            <?php $def_chart_mode = !empty($fp_compare['is_all']) ? 'timeline' : 'overlay'; ?>
                             <div class="ga-seg-group" role="group" aria-label="Mode Grafik Audit">
-                                <button type="button" class="ga-seg-btn active" data-audit-mode="overlay" aria-pressed="true">Compare Overlay</button>
-                                <button type="button" class="ga-seg-btn" data-audit-mode="timeline" aria-pressed="false">Timeline Kontinu</button>
+                                <button type="button" class="ga-seg-btn<?php echo $def_chart_mode === 'overlay' ? ' active' : ''; ?>" data-audit-mode="overlay" aria-pressed="<?php echo $def_chart_mode === 'overlay' ? 'true' : 'false'; ?>">Compare Overlay</button>
+                                <button type="button" class="ga-seg-btn<?php echo $def_chart_mode === 'timeline' ? ' active' : ''; ?>" data-audit-mode="timeline" aria-pressed="<?php echo $def_chart_mode === 'timeline' ? 'true' : 'false'; ?>">Timeline Kontinu</button>
                                 <button type="button" class="ga-seg-btn" data-audit-mode="gsc_impr" aria-pressed="false">GSC Impr/Klik</button>
                                 <button type="button" class="ga-seg-btn" data-audit-mode="gsc_rank" aria-pressed="false">GSC CTR/Posisi</button>
                             </div>
@@ -1608,12 +1665,23 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
                                 <h2>Ringkasan Performa Website (Before vs After)</h2>
                                 <p class="seo-card-sub">
                                     Filter aktif: <strong><?php echo sanitize($seo_channels[$audit_channel] ?? 'Semua Channel'); ?></strong> ·
-                                    <?php echo $fp_compare['is_custom'] ? 'Rentang Custom' : ($fp_compare['effective_days'] . ' Hari Setara'); ?>
+                                    <?php echo $fp_compare['is_custom'] ? 'Rentang Custom' : (!empty($fp_compare['is_all']) ? 'Semua Data (All Time)' : ($fp_compare['effective_days'] . ' Hari Setara')); ?>
                                 </p>
                             </div>
                         </div>
 
-                        <?php if ($fp_compare['is_partial']): ?>
+                        <?php if (!empty($fp_compare['is_all'])): ?>
+                            <div class="admin-alert admin-alert-info" style="margin-bottom: 14px; font-size: 0.82rem;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                <span>
+                                    <?php if (!empty($fp_compare['auto_all_fallback'])): ?>
+                                        Update SEO baru dilakukan hari ini, sehingga sistem otomatis menampilkan mode <strong>Semua Data (All Time)</strong> agar seluruh histori sebelum update tetap terlihat.
+                                    <?php else: ?>
+                                        Mode <strong>Semua Data (All Time)</strong> menampilkan seluruh histori tercatat sebelum update SEO dibandingkan dengan data sejak update terakhir.
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                        <?php elseif ($fp_compare['is_partial']): ?>
                             <div class="admin-alert admin-alert-info" style="margin-bottom: 14px; font-size: 0.82rem;">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                                 <span>
@@ -2224,7 +2292,7 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
 
                     <div class="ga-filter-row">
                         <div class="admin-pill-group" role="navigation" aria-label="Rentang waktu grafik global">
-                            <?php foreach (['7d' => '7 Hari', '14d' => '14 Hari', '28d' => '28 Hari', '90d' => '90 Hari'] as $rk => $rlbl): ?>
+                            <?php foreach (['7d' => '7 Hari', '14d' => '14 Hari', '28d' => '28 Hari', '90d' => '90 Hari', 'all' => 'Semua Data'] as $rk => $rlbl): ?>
                                 <a href="<?php echo sanitize($build_pages_url(['g_range' => $rk, 'g_start' => '', 'g_end' => ''])); ?>" class="admin-pill<?php echo $g_range === $rk ? ' active' : ''; ?>"><?php echo $rlbl; ?></a>
                             <?php endforeach; ?>
                         </div>
@@ -2768,7 +2836,7 @@ function seo_render_delta_badge(?float $pct, bool $lower_is_better = false, stri
             if (!canvas) return;
             var payload = <?php echo json_encode($audit_chart_payload, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
             var metric = 'seo_geo_views';
-            var mode = 'overlay'; // overlay | timeline | gsc_impr | gsc_rank
+            var mode = payload.defaultMode || 'overlay'; // overlay | timeline | gsc_impr | gsc_rank
             var showCompare = true;
             var inst = null;
 
