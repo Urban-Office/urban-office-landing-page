@@ -11,12 +11,12 @@ $bundle_locations = [
     [
         'title' => 'MERR (Surabaya Timur)',
         'address' => 'Jl. Dr. Ir. H. Soekarno No.470, Kedung Baruk, Kec. Rungkut, Surabaya, Jawa Timur 60298',
-        'image' => BASE_URL . 'assets/images/branch/urban office - merr.jpeg'
+        'image' => BASE_URL . 'assets/images/branch/urban office - merr.webp'
     ],
     [
         'title' => 'Klampis (Surabaya Timur)',
         'address' => 'Ruko Klampis Megah, Jl. Klampis Jaya blok B-20, Klampis Ngasem, Kec. Sukolilo, Surabaya, Jawa Timur 60117',
-        'image' => BASE_URL . 'assets/images/branch/klampis.png'
+        'image' => BASE_URL . 'assets/images/branch/klampis.webp'
     ],
     [
         'title' => 'Grand Sungkono (Surabaya Barat)',
@@ -26,17 +26,17 @@ $bundle_locations = [
     [
         'title' => 'Gorebiz (Jakarta Timur)',
         'address' => 'Jl. Raya Bekasi.KM.17, RT.4/RW.3, Jatinegara, Kec. Cakung, Kota Jakarta Timur, Daerah Khusus Ibukota Jakarta 13930 Timur, RT.1/RW.3, Jatinegara Kaum, Kec. Pulo Gadung, Kota Jakarta Timur, Daerah Khusus Ibukota Jakarta 13930',
-        'image' => BASE_URL . 'assets/images/branch/gorebiz.png'
+        'image' => BASE_URL . 'assets/images/branch/gorebiz.webp'
     ],
     [
         'title' => 'PTGM Tower (Gresik)',
         'address' => 'Jl. Dr. Wahidin Sudirohusodo No.708, Kembangan, Kec. Kebomas, Kabupaten Gresik, Jawa Timur 61161',
-        'image' => BASE_URL . 'assets/images/branch/ptgm.png'
+        'image' => BASE_URL . 'assets/images/branch/ptgm.webp'
     ],
     [
         'title' => 'Medan',
         'address' => 'Jl. Sutrisno No.258, Medan',
-        'image' => BASE_URL . 'assets/images/branch/medan.png'
+        'image' => BASE_URL . 'assets/images/branch/medan.webp'
     ]
 ];
 ?>
@@ -55,7 +55,7 @@ $bundle_locations = [
             ?>
                 <div class="loc-card">
                     <div class="loc-img-wrap">
-                        <img src="<?php echo $loc['image']; ?>" alt="<?php echo htmlspecialchars($loc['title']); ?>" loading="lazy">
+                        <img src="<?php echo sanitize(encode_asset_url($loc['image'])); ?>" alt="<?php echo htmlspecialchars($loc['title']); ?>" width="400" height="240" loading="lazy" decoding="async">
                     </div>
                     <div class="loc-body">
                         <h4><?php echo htmlspecialchars($loc['title']); ?></h4>

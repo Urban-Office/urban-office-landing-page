@@ -126,6 +126,50 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
     ];
     include dirname(dirname(__FILE__)) . '/inc/components/pricing_cards.php';
     ?>
+    <div class="container" style="padding-bottom: 60px;">
+        <div class="seo-compare-wrap" style="margin-top: -20px;">
+            <div class="seo-compare-head">
+                <h3>Perbandingan Tipe Private Office <?php echo sanitize($po_city_label); ?></h3>
+                <p>Seluruh unit siap pakai (fully furnished) di <?php echo sanitize($po_branch_name); ?> termasuk WiFi fiber 100 Mbps, resepsionis, listrik, AC &amp; bebas IPL.</p>
+            </div>
+            <div class="seo-compare-scroll">
+                <table class="seo-compare-table">
+                    <thead>
+                        <tr>
+                            <th>Tipe Ruangan</th>
+                            <th>Kapasitas</th>
+                            <th>Luas Ruang</th>
+                            <th>Sewa Bulanan</th>
+                            <th>Sewa Tahunan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Private Office Small</strong></td>
+                            <td>2 orang</td>
+                            <td>6 m&sup2;</td>
+                            <td>Rp 4.000.000 / bln</td>
+                            <td>Rp 48.000.000 / thn</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Private Office Medium</strong></td>
+                            <td>4–5 orang</td>
+                            <td>10 – 12 m&sup2;</td>
+                            <td>Rp 5.500.000 / bln</td>
+                            <td>Rp 66.000.000 / thn</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Private Office Corporate</strong></td>
+                            <td>5–6 orang</td>
+                            <td>14 – 16 m&sup2;</td>
+                            <td>Rp 6.000.000 / bln</td>
+                            <td>Rp 72.000.000 / thn</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Per-city local content: real branch address, map & advantages (unique per city, from
@@ -256,7 +300,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
                     <div class="gallery-item-card">
                         <!-- Image Container with Pax Badge -->
                         <div class="gallery-img-container">
-                            <img src="<?php echo sanitize(encode_asset_url(BASE_URL . $item['img'])); ?>" alt="<?php echo sanitize($item['alt']); ?>" loading="lazy" decoding="async" draggable="false">
+                            <img src="<?php echo sanitize(encode_asset_url(BASE_URL . $item['img'])); ?>" alt="<?php echo sanitize($item['alt']); ?>" width="400" height="260" loading="lazy" decoding="async" draggable="false">
                             <span class="gallery-pax-badge">
                                 <?php echo sanitize($item['pax']); ?>
                             </span>

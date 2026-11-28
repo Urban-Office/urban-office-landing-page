@@ -53,14 +53,14 @@ $locations_db = [
             'Lounge Area & Pantry Modern untuk bersantai'
         ],
         'gallery' => [
-            BASE_URL . 'assets/images/privateoffice/resepsionis.jpeg',
-            BASE_URL . 'assets/images/coworkingspace/Foto Coworking Space.jpeg',
-            BASE_URL . 'assets/images/privateoffice/offie 301 people.png',
-            BASE_URL . 'assets/images/meetingroom/Meeting 18 pax.png',
+            BASE_URL . 'assets/images/privateoffice/resepsionis.webp',
+            BASE_URL . 'assets/images/coworkingspace/Foto Coworking Space.webp',
+            BASE_URL . 'assets/images/privateoffice/offie 301 people.webp',
+            BASE_URL . 'assets/images/meetingroom/Meeting 18 pax.webp',
         ],
         'seo' => [
-            'title' => 'Sewa Virtual Office & Private Office MERR Surabaya Timur - Urban Office',
-            'description' => 'Sewa Virtual Office & Private Office murah di MERR Surabaya Timur. Fasilitas lengkap: Alamat Kantor Prestisius, Meeting Room, Internet Cepat, & Free Flow Drinks.',
+            'title' => 'Virtual Office & Kantor MERR Surabaya | Urban Office',
+            'description' => 'Sewa Virtual Office & Private Office di MERR Surabaya Timur. Alamat bisnis prestisius, meeting room, WiFi 100 Mbps & free drinks.',
             'keywords' => 'virtual office merr, sewa kantor surabaya timur, coworking space merr, meeting room rungkut'
         ],
         'pricing' => [
@@ -297,11 +297,11 @@ $locations_db = [
         'gallery' => [
             BASE_URL . 'assets/images/coworkingspace/Foto Coworking Space Klampis(2).webp',
             BASE_URL . 'assets/images/sharingroom/sharing-room-desk.webp',
-            BASE_URL . 'assets/images/meetingroom/meeting klampis.jpeg',
+            BASE_URL . 'assets/images/meetingroom/meeting klampis.webp',
         ],
         'seo' => [
-            'title' => 'Sewa Kantor & Virtual Office Klampis Surabaya - Urban Office',
-            'description' => 'Sewa kantor murah & Virtual Office di Ruko Klampis Megah, Surabaya. Lengkap dengan Meeting Room, lingkungan bisnis strategis, dan akses mudah.',
+            'title' => 'Virtual Office Klampis Surabaya | Urban Office',
+            'description' => 'Sewa kantor & Virtual Office di Ruko Klampis Megah Surabaya. Tersedia Meeting Room, coworking tenang & lokasi bisnis strategis.',
             'keywords' => 'virtual office klampis, sewa kantor klampis jaya, coworking space klampis'
         ],
         'pricing' => [
@@ -430,13 +430,13 @@ $locations_db = [
             'Akses cepat menuju gerbang tol satelit (hanya 5 menit)'
         ],
         'gallery' => [
-            BASE_URL . 'assets/images/privateoffice/resepsionis GSL.jpeg',
-            BASE_URL . 'assets/images/privateoffice/colab area GSL.jpeg',
+            BASE_URL . 'assets/images/privateoffice/resepsionis GSL.webp',
+            BASE_URL . 'assets/images/privateoffice/colab area GSL.webp',
             BASE_URL . 'assets/images/meetingroom/Big Meeting.webp',
         ],
         'seo' => [
-            'title' => 'Virtual Office & Kantor Sungkono Surabaya Barat - Urban Office',
-            'description' => 'Sewa Virtual Office prestisius & Serviced Office di Grand Sungkono Lagoon, Surabaya Barat. Alamat bergengsi dekat Gerbang Tol Satelit.',
+            'title' => 'Virtual Office Sungkono Surabaya Barat|Urban Office',
+            'description' => 'Sewa Virtual Office & Serviced Office di Grand Sungkono Lagoon Surabaya Barat. Alamat bergengsi dekat Gerbang Tol Satelit.',
             'keywords' => 'virtual office surabaya barat, grand sungkono lagoon office, sewa kantor sungkono'
         ],
         'pricing' => [
@@ -767,15 +767,15 @@ $locations_db = [
             'Dekat kawasan industri Pulogadung (lokasi strategis untuk distribusi)'
         ],
         'gallery' => [
-            BASE_URL . 'assets/images/privateoffice/ruang tamu & resepsionis.jpeg',
+            BASE_URL . 'assets/images/privateoffice/ruang tamu & resepsionis.webp',
             BASE_URL . 'assets/images/privateoffice/serviced-office-pantry.webp',
-            BASE_URL . 'assets/images/privateoffice/office 5 orang jaktim.jpeg',
-            BASE_URL . 'assets/images/meetingroom/Meeting 8 orang jaktim.jpeg',
+            BASE_URL . 'assets/images/privateoffice/office 5 orang jaktim.webp',
+            BASE_URL . 'assets/images/meetingroom/Meeting 8 orang jaktim.webp',
         ],
         'seo' => [
-            'title' => 'Virtual Office Jakarta Timur Murah PT/CV - Urban Office',
-            'description' => 'Sewa Virtual Office murah di Cakung Jatinegara Jakarta Timur. Alamat kantor prestisius di kawasan bisnis komersial Jakarta Timur.',
-            'keywords' => 'virtual office jakarta timur, sewa kantor cakung, virtual office murah resignation'
+            'title' => 'Virtual Office Jakarta Timur Murah PT/CV | Urban Office',
+            'description' => 'Sewa Virtual Office resmi di Cakung, Jakarta Timur mulai 12Rb/hari. Domisili PT/CV, nomor 021 & gratis kuota meeting room.',
+            'keywords' => 'virtual office jakarta timur, sewa kantor cakung, virtual office murah jakarta'
         ],
         'pricing' => [
             [
@@ -900,11 +900,11 @@ $locations_db = [
         'gallery' => [
             BASE_URL . 'assets/images/privateoffice/serviced-office-receptionist.webp',
             BASE_URL . 'assets/images/sharingroom/sharing-room-lounge.webp',
-            BASE_URL . 'assets/images/meetingroom/Big Meeting (2).jpeg',
+            BASE_URL . 'assets/images/meetingroom/Big Meeting (2).webp',
         ],
         'seo' => [
-            'title' => 'Virtual Office Gresik PTGM Tower Kebomas - Urban Office',
-            'description' => 'Sewa Virtual Office & Serviced Office premium di Kebomas Gresik. Strategis dekat Kantor Pemkab Gresik dan akses tol Surabaya-Gresik.',
+            'title' => 'Virtual Office Gresik PTGM Tower | Urban Office',
+            'description' => 'Sewa Virtual Office & Serviced Office di PTGM Tower Kebomas Gresik. Dekat Pemkab Gresik & akses Tol Surabaya-Gresik.',
             'keywords' => 'virtual office gresik, sewa kantor kebomas, ptgm tower gresik'
         ],
         'pricing' => [
@@ -1032,11 +1032,11 @@ $locations_db = [
             BASE_URL . 'assets/images/branch/urban office medan.webp',
             BASE_URL . 'assets/images/sharingroom/sharing-room-lounge.webp',
             BASE_URL . 'assets/images/privateoffice/private-office-corporate.webp',
-            BASE_URL . 'assets/images/meetingroom/Big Meeting.jpeg',
+            BASE_URL . 'assets/images/meetingroom/Big Meeting.webp',
         ],
         'seo' => [
-            'title' => 'Virtual Office Medan Sutrisno Murah - Urban Office',
-            'description' => 'Sewa Virtual Office & Serviced Office murah di Medan Area. Alamat bisnis prestisius, penanganan surat profesional, dan lokasi strategis di pusat bisnis Medan.',
+            'title' => 'Virtual Office Medan Jl. Sutrisno | Urban Office',
+            'description' => 'Sewa Virtual Office di Medan Area Jl. Sutrisno. Alamat bisnis prestisius, penanganan surat WA & lokasi strategis pusat Medan.',
             'keywords' => 'virtual office medan, sewa kantor medan area, virtual office murah medan'
         ],
         'pricing' => [
@@ -1130,14 +1130,14 @@ $locations_db = [
             'Free flow minuman teh/kopi'
         ],
         'gallery' => [
-            BASE_URL . 'assets/images/privateoffice/resepsion malang.jpeg',
+            BASE_URL . 'assets/images/privateoffice/resepsion malang.webp',
             BASE_URL . 'assets/images/privateoffice/open space malang.jpeg',
-            BASE_URL . 'assets/images/privateoffice/office malang.jpeg',
-            BASE_URL . 'assets/images/privateoffice/office meeting 8 - 12 orang malang.jpeg',
+            BASE_URL . 'assets/images/privateoffice/office malang.webp',
+            BASE_URL . 'assets/images/privateoffice/office meeting 8 - 12 orang malang.webp',
         ],
         'seo' => [
-            'title' => 'Virtual Office & Coworking Space Malang - Urban Office',
-            'description' => 'Sewa Virtual Office, Coworking Space, & Private Office di Blimbing Malang. Fasilitas lengkap dan lokasi strategis.',
+            'title' => 'Virtual Office & Coworking Malang | Urban Office',
+            'description' => 'Sewa Virtual Office, Coworking Space & Private Office di Blimbing Malang. Fasilitas lengkap, WiFi cepat & lokasi strategis.',
             'keywords' => 'virtual office malang, coworking space blimbing malang, sewa kantor malang'
         ],
         'pricing' => [

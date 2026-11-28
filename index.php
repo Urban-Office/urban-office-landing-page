@@ -351,6 +351,64 @@ require_once __DIR__ . '/inc/header.php';
                     </div>
                 </div>
             </div>
+
+            <!-- Structured Summary Table for Quick Price Comparison & GEO Extraction -->
+            <div class="seo-compare-wrap">
+                <div class="seo-compare-head">
+                    <h3>Ringkasan Perbandingan Layanan &amp; Harga Urban Office</h3>
+                    <p>Bandingkan tarif awal seluruh layanan ruang kerja di Surabaya, Jakarta Timur, Malang, Gresik &amp; Medan.</p>
+                </div>
+                <div class="seo-compare-scroll">
+                    <table class="seo-compare-table">
+                        <thead>
+                            <tr>
+                                <th>Layanan</th>
+                                <th>Harga Mulai</th>
+                                <th>Kapasitas / Benefit Utama</th>
+                                <th>Cakupan Cabang</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Virtual Office</strong></td>
+                                <td>Rp 6.000 – 12.000 / hari</td>
+                                <td>Alamat resmi PT/CV, NIB, NPWP, notifikasi surat WA &amp; kuota meeting</td>
+                                <td>Surabaya, Jakarta Timur, Gresik, Malang, Medan</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Private Office</strong></td>
+                                <td>Rp 4.000.000 / bulan</td>
+                                <td>Kantor privat 2–6 pax fully furnished, bebas listrik, AC, IPL &amp; WiFi 100 Mbps</td>
+                                <td>Surabaya, Jakarta Timur, Gresik, Malang</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Meeting Room</strong></td>
+                                <td>Rp 125.000 / jam</td>
+                                <td>Ruang rapat 6–18 pax, proyektor/Smart TV LED, whiteboard &amp; coffee break</td>
+                                <td>Surabaya, Jakarta Timur, Gresik, Malang</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Coworking Space</strong></td>
+                                <td>Rp 10.000 / jam</td>
+                                <td>Meja kerja ergonomis per jam, harian (45Rb), atau bulanan (750Rb)</td>
+                                <td>Surabaya, Malang</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Event Space</strong></td>
+                                <td>Rp 45.000 / pax</td>
+                                <td>Aula seminar &amp; workshop 30–80 pax dengan audio visual &amp; proyektor HD</td>
+                                <td>Surabaya, Malang</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Sharing Room Office</strong></td>
+                                <td>Rp 1.000.000 / bulan</td>
+                                <td>Dedicated desk pribadi di ruang kerja bersama ber-AC &amp; bebas IPL</td>
+                                <td>Surabaya</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </section>
 

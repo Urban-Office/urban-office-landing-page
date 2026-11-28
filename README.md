@@ -27,6 +27,7 @@ Dokumen pendukung, panduan setup, baseline audit, dan PRD dikumpulkan di folder 
 | [docs/google-ads-qs-baseline-2026-07-29.md](docs/google-ads-qs-baseline-2026-07-29.md) | Baseline Quality Score & LPE Google Ads (29 Jul 2026) |
 | [docs/REKAP_TEMPLATE_WHATSAPP.md](docs/REKAP_TEMPLATE_WHATSAPP.md) | Pemetaan template & alur pesan WhatsApp per halaman |
 | [docs/checklist-review-github.md](docs/checklist-review-github.md) | Checklist audit repo sebelum upload ke GitHub |
+| [docs/NEXT-DEVELOPMENT.md](docs/NEXT-DEVELOPMENT.md) | Backlog pengembangan berikutnya (Integrasi GSC API gratis, dll.) |
 
 ---
 

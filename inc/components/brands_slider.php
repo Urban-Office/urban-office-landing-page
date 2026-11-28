@@ -23,17 +23,17 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'brands_slider.php') {
             <button class="brands-nav brands-prev" onclick="prevBrandSlide()">&#10094;</button>
             <div class="brands-slider-wrap">
                 <div class="brands-slider" id="brands-slider">
-                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/hydrococo.png" alt="Hydro Coco"></div>
-                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/allianz.png" alt="Allianz"></div>
-                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/brighton.png" alt="Brighton Real Estate"></div>
-                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/shell.webp" alt="Shell"></div>
-                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/wikabeton.png" alt="Wika Beton"></div>
-                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/mitra_adi_perkasa.png" alt="Map Mitra Adi Perkasa"></div>
-                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/lg.webp" alt="LG Electronics"></div>
-                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/mitsubishi.png" alt="Mitsubishi"></div>
-                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/sociolla.png" alt="Sociolla"></div>
-                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/kalbe.png" alt="Kalbe"></div>
-                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/garam_idfood.png" alt="Garam member ID FOOD"></div>
+                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/hydrococo.webp" alt="Hydro Coco" width="300" height="151" loading="lazy" decoding="async"></div>
+                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/allianz.webp" alt="Allianz" width="300" height="151" loading="lazy" decoding="async"></div>
+                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/brighton.webp" alt="Brighton Real Estate" width="300" height="151" loading="lazy" decoding="async"></div>
+                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/shell.webp" alt="Shell" width="300" height="151" loading="lazy" decoding="async"></div>
+                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/wikabeton.webp" alt="Wika Beton" width="300" height="151" loading="lazy" decoding="async"></div>
+                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/mitra_adi_perkasa.webp" alt="Map Mitra Adi Perkasa" width="300" height="151" loading="lazy" decoding="async"></div>
+                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/lg.webp" alt="LG Electronics" width="300" height="151" loading="lazy" decoding="async"></div>
+                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/mitsubishi.webp" alt="Mitsubishi" width="909" height="274" loading="lazy" decoding="async"></div>
+                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/sociolla.webp" alt="Sociolla" width="300" height="151" loading="lazy" decoding="async"></div>
+                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/kalbe.webp" alt="Kalbe" width="300" height="151" loading="lazy" decoding="async"></div>
+                    <div class="brand-slide"><img src="<?php echo BASE_URL; ?>assets/images/brands/garam_idfood.webp" alt="Garam member ID FOOD" width="300" height="151" loading="lazy" decoding="async"></div>
                 </div>
             </div>
             <button class="brands-nav brands-next" onclick="nextBrandSlide()">&#10095;</button>
@@ -45,10 +45,10 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'brands_slider.php') {
         <div class="our-group-wrap">
             <h3 class="featured-title">Our Group</h3>
             <div class="our-group-logos-grid">
-                <div class="our-group-logo"><img src="<?php echo BASE_URL; ?>assets/images/ourgroup/flaz%20tax%20logo.png" alt="Flaz Tax"></div>
-                <div class="our-group-logo"><img src="<?php echo BASE_URL; ?>assets/images/ourgroup/frezcup%20logo.jpg" alt="Frezcup"></div>
-                <div class="our-group-logo"><img src="<?php echo BASE_URL; ?>assets/images/ourgroup/logograhavisi.png" alt="Graha Visi"></div>
-                <div class="our-group-logo"><img src="<?php echo BASE_URL; ?>assets/images/ourgroup/pt_integre_mahakarya_estetika_logo.jpg" alt="PT Integre Mahakarya Estetika"></div>
+                <div class="our-group-logo"><img src="<?php echo BASE_URL; ?>assets/images/ourgroup/flaz%20tax%20logo.png" alt="Flaz Tax" width="225" height="225" loading="lazy" decoding="async"></div>
+                <div class="our-group-logo"><img src="<?php echo BASE_URL; ?>assets/images/ourgroup/frezcup%20logo.webp" alt="Frezcup" width="225" height="225" loading="lazy" decoding="async"></div>
+                <div class="our-group-logo"><img src="<?php echo BASE_URL; ?>assets/images/ourgroup/logograhavisi.webp" alt="Graha Visi" width="888" height="325" loading="lazy" decoding="async"></div>
+                <div class="our-group-logo"><img src="<?php echo BASE_URL; ?>assets/images/ourgroup/pt_integre_mahakarya_estetika_logo.webp" alt="PT Integre Mahakarya Estetika" width="200" height="200" loading="lazy" decoding="async"></div>
             </div>
         </div>
 
@@ -56,11 +56,11 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'brands_slider.php') {
         <div class="featured-on-wrap">
             <h3 class="featured-title">Featured On</h3>
             <div class="featured-logos-grid">
-                <div class="featured-logo"><img src="<?php echo BASE_URL; ?>assets/images/media/detikcom.png" alt="detik.com"></div>
-                <div class="featured-logo"><img src="<?php echo BASE_URL; ?>assets/images/media/traveloka.png" alt="traveloka"></div>
-                <div class="featured-logo"><img src="<?php echo BASE_URL; ?>assets/images/media/kitalulus.png" alt="kita lulus"></div>
-                <div class="featured-logo"><img src="<?php echo BASE_URL; ?>assets/images/media/glints.png" alt="glints"></div>
-                <div class="featured-logo"><img src="<?php echo BASE_URL; ?>assets/images/media/nibble.png" alt="nibble"></div>
+                <div class="featured-logo"><img src="<?php echo BASE_URL; ?>assets/images/media/detikcom.webp" alt="detik.com" width="189" height="47" loading="lazy" decoding="async"></div>
+                <div class="featured-logo"><img src="<?php echo BASE_URL; ?>assets/images/media/traveloka.webp" alt="traveloka" width="197" height="44" loading="lazy" decoding="async"></div>
+                <div class="featured-logo"><img src="<?php echo BASE_URL; ?>assets/images/media/kitalulus.webp" alt="kita lulus" width="173" height="42" loading="lazy" decoding="async"></div>
+                <div class="featured-logo"><img src="<?php echo BASE_URL; ?>assets/images/media/glints.webp" alt="glints" width="143" height="68" loading="lazy" decoding="async"></div>
+                <div class="featured-logo"><img src="<?php echo BASE_URL; ?>assets/images/media/nibble.webp" alt="nibble" width="148" height="45" loading="lazy" decoding="async"></div>
             </div>
         </div>
     </div>

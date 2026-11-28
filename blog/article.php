@@ -165,7 +165,7 @@ try {
         
         <!-- Official Single Featured Hero Image under Author Meta -->
         <div style="border-radius: var(--radius-md); overflow: hidden; margin-bottom: 40px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); background: #ffffff;">
-            <img src="<?php echo $image_path; ?>" alt="<?php echo sanitize($post['title']); ?>" style="width: 100%; height: auto; display: block; border-radius: 12px;">
+            <img src="<?php echo $image_path; ?>" alt="<?php echo sanitize($post['title']); ?>" width="1200" height="630" fetchpriority="high" decoding="async" style="width: 100%; height: auto; display: block; border-radius: 12px;">
         </div>
 
         <!-- HTML Body Content -->
@@ -220,7 +220,7 @@ try {
                 ?>
                     <div class="related-card-item" style="width: 100%; padding: 0 !important; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid hsl(var(--clr-border)); border-radius: 12px; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
                         <div class="related-card-img" style="width: 100%; aspect-ratio: 2 / 1; overflow: hidden; background-color: #f8fafc; margin: 0; padding: 0;">
-                            <img src="<?php echo $rel_image; ?>" alt="<?php echo sanitize($rel['title']); ?>" style="width: 100%; height: 100%; object-fit: cover; display: block; margin: 0; padding: 0;">
+                            <img src="<?php echo $rel_image; ?>" alt="<?php echo sanitize($rel['title']); ?>" width="600" height="300" loading="lazy" decoding="async" style="width: 100%; height: 100%; object-fit: cover; display: block; margin: 0; padding: 0;">
                         </div>
                         <div class="related-card-content" style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
                             <div>

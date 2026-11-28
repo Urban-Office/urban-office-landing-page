@@ -68,26 +68,17 @@ $card_desc = $card_desc ?? ($hero_card_content[$current_slug]['desc'] ?? $defaul
     <div class="container hero-container-grid">
         <div class="hero-content">
             <?php if (!empty($hero_tag)): ?>
-                <span class="badge"><?php echo sanitize($hero_tag); ?></span>
+                <span class="badge hero-el-badge"><?php echo sanitize($hero_tag); ?></span>
             <?php endif; ?>
-            <h1 style="margin-bottom: 20px; line-height: 1.25;"><?php echo sanitize($hero_title); ?></h1>
+            <h1 class="hero-el-title" style="margin-bottom: 20px; line-height: 1.25;"><?php echo sanitize($hero_title); ?></h1>
             <?php if (!empty($hero_subheading)): ?>
-                <p class="hero-subheading"><i class="bi bi-geo-alt-fill"></i> <?php echo sanitize($hero_subheading); ?></p>
+                <p class="hero-subheading hero-el-sub"><i class="bi bi-geo-alt-fill"></i> <?php echo sanitize($hero_subheading); ?></p>
             <?php endif; ?>
 
-            <!-- Mobile Hero Image Representation -->
-            <div class="hero-img-wrap-mobile">
-                <img src="<?php echo $hero_img_src; ?>" alt="Urban Office Workspace" width="1600" height="1000" fetchpriority="high" decoding="async">
-                <div class="hero-floating-card">
-                    <p class="floating-card-title"><?php echo sanitize($card_title); ?></p>
-                    <p class="floating-card-desc"><?php echo sanitize($card_desc); ?></p>
-                </div>
-            </div>
-
-            <p style="font-size: 16px; color: #444444; margin-bottom: 30px;"><?php echo $hero_desc; ?></p>
+            <p class="hero-el-desc" style="font-size: 16px; color: #444444; margin-bottom: 30px;"><?php echo $hero_desc; ?></p>
             
             <?php if (!empty($hero_cta_text) && !empty($hero_cta_url)): ?>
-                <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                <div class="hero-el-ctas" style="display: flex; gap: 16px; flex-wrap: wrap;">
                     <a href="<?php echo sanitize($hero_cta_url); ?>" class="btn btn-primary"><?php echo sanitize($hero_cta_text); ?></a>
                     <?php if (!empty($hero_cta2_text) && !empty($hero_cta2_url)): ?>
                         <a href="<?php echo sanitize($hero_cta2_url); ?>" class="<?php echo !empty($hero_cta2_class) ? sanitize($hero_cta2_class) : 'btn btn-outline'; ?>" target="_blank">
@@ -98,9 +89,9 @@ $card_desc = $card_desc ?? ($hero_card_content[$current_slug]['desc'] ?? $defaul
             <?php endif; ?>
         </div>
         
-        <!-- Desktop Hero Image Representation -->
-        <div class="hero-img-wrap-desktop">
-            <img src="<?php echo $hero_img_src; ?>" alt="Urban Office Workspace" width="1600" height="1000" fetchpriority="high" decoding="async">
+        <!-- Single Responsive Hero Image (reordered above description via CSS Grid on mobile/tablet) -->
+        <div class="hero-img-wrap">
+            <img src="<?php echo $hero_img_src; ?>" alt="<?php echo sanitize($hero_title); ?> - Urban Office" width="1600" height="1000" fetchpriority="high" decoding="async">
             <div class="hero-floating-card">
                 <p class="floating-card-title"><?php echo sanitize($card_title); ?></p>
                 <p class="floating-card-desc"><?php echo sanitize($card_desc); ?></p>
@@ -144,13 +135,8 @@ $card_desc = $card_desc ?? ($hero_card_content[$current_slug]['desc'] ?? $defaul
     }
 }
 
-/* Hide mobile image wrap by default (desktop view) */
-.hero-img-wrap-mobile {
-    display: none;
-}
-
-/* Desktop image wrap styles */
-.hero-img-wrap-desktop {
+/* Single Hero Image Wrap (Desktop default) */
+.hero-img-wrap {
     position: relative;
     border-radius: var(--radius-lg);
     overflow: hidden;
@@ -159,7 +145,7 @@ $card_desc = $card_desc ?? ($hero_card_content[$current_slug]['desc'] ?? $defaul
     width: 100%;
 }
 
-.hero-img-wrap-desktop img {
+.hero-img-wrap img {
     width: 100%;
     height: auto;
     object-fit: cover;
@@ -207,33 +193,26 @@ $card_desc = $card_desc ?? ($hero_card_content[$current_slug]['desc'] ?? $defaul
 @media (max-width: 991px) {
     .hero-container-grid {
         grid-template-columns: 1fr !important;
-        gap: 30px !important;
+        gap: 0 !important;
     }
-    
-    .hero-img-wrap-desktop {
-        display: none !important;
+
+    .hero-content {
+        display: contents;
     }
-    
-    .hero-img-wrap-mobile {
-        display: block !important;
-        position: relative;
-        border-radius: var(--radius-lg);
-        overflow: hidden;
-        box-shadow: var(--shadow-lg);
-        border: 1px solid #EAEAEA;
+
+    .hero-el-badge { order: 1; justify-self: start; }
+    .hero-el-title { order: 2; }
+    .hero-el-sub   { order: 3; }
+
+    .hero-img-wrap {
+        order: 4;
         max-width: 420px !important;
-        width: 100% !important;
         margin: 15px auto 25px auto !important;
     }
-    
-    .hero-img-wrap-mobile img {
-        width: 100% !important;
-        height: auto !important;
-        aspect-ratio: 16/10 !important;
-        object-fit: cover !important;
-        display: block !important;
-    }
-    
+
+    .hero-el-desc { order: 5; }
+    .hero-el-ctas { order: 6; }
+
     .hero-floating-card {
         bottom: 12px !important;
         right: 12px !important;
@@ -257,7 +236,7 @@ $card_desc = $card_desc ?? ($hero_card_content[$current_slug]['desc'] ?? $defaul
 
 /* Mobile Responsive (max-width: 768px) */
 @media (max-width: 768px) {
-    .hero-img-wrap-mobile {
+    .hero-img-wrap {
         max-width: 360px !important;
     }
     
@@ -282,7 +261,7 @@ $card_desc = $card_desc ?? ($hero_card_content[$current_slug]['desc'] ?? $defaul
 
 /* Small Mobile Responsive (max-width: 576px) */
 @media (max-width: 576px) {
-    .hero-img-wrap-mobile {
+    .hero-img-wrap {
         max-width: 300px !important;
     }
     

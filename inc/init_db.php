@@ -479,6 +479,59 @@ try {
         echo "Applied SEO/GEO meta migration ($migrationKey) for " . count($seo_updates) . " pages.\n";
     }
 
+    // One-time idempotent SERP snippet shortening migration (keep Title <= 60c & Meta Desc <= 155c on SERP)
+    $migrationV2Key = 'seo_geo_migration_2026_11_v2';
+    $hasMigratedV2 = Database::fetch("SELECT value FROM settings WHERE name = ?", [$migrationV2Key]);
+    if (!$hasMigratedV2) {
+        $seo_v2_updates = [
+            ''                                         => ['Home', 'Virtual Office & Sewa Kantor 6Rb/Hr | Urban Office', 'Sewa Virtual Office mulai 6Rb/hr, Private Office 4 Jt/bln, Meeting Room & Coworking di Surabaya, Jakarta Timur, Malang, Gresik & Medan.'],
+            'virtual-office-surabaya'                  => ['Virtual Office Surabaya', 'Virtual Office Surabaya 6Rb/Hr Resmi | Urban Office', 'Virtual Office Surabaya resmi PT/CV, NIB & NPWP di MERR, Klampis & Sungkono. Mulai 6Rb/hr, gratis Meeting Room & pembuatan website.'],
+            'sewa-kantor-surabaya'                     => ['Sewa Kantor Surabaya', 'Sewa Private Office Surabaya 4 Jt/Bln | Urban Office', 'Sewa Private Office fully furnished di MERR Surabaya mulai 4 Jt/bln (2–6 pax). WiFi fiber 100 Mbps, resepsionis, gratis listrik & IPL.'],
+            'meeting-room-surabaya'                    => ['Sewa Ruang Meeting', 'Sewa Meeting Room Surabaya 125Rb/Jam | Urban Office', 'Sewa ruang meeting Surabaya 6–18 pax di MERR, Klampis & Sungkono mulai 125Rb/jam atau 45Rb/pax. Proyektor HD, WiFi 100 Mbps & snack.'],
+            'coworking-space-urban-office'             => ['Coworking Space Surabaya', 'Coworking Space Surabaya Mulai 10Rb/Jam | Urban Office', 'Coworking space Surabaya di MERR & Klampis mulai 10Rb/jam, 45Rb/hari, atau 750Rb/bln. Meja ergonomis, WiFi 100 Mbps & free kopi/teh.'],
+            'event-space-55k-perjam-urbanoffice'       => ['Sewa Event Space', 'Sewa Event Space Surabaya Mulai 45Rb/Pax|Urban Office', 'Sewa aula & event space di Surabaya & Malang (30–80 pax) mulai 45Rb/pax (4 jam). Proyektor HD, sound system & layout fleksibel.'],
+            'sharing-room-office'                      => ['Sewa Sharing Room Office', 'Sewa Sharing Office Surabaya 1 Jt/Bln | Urban Office', 'Dedicated desk di ruang kantor bersama MERR Surabaya mulai 1 Jt/bln. Termasuk WiFi fiber 100 Mbps, resepsionis, kopi/teh & bebas IPL.'],
+            'pajak-dan-akunting'                       => ['Jasa Pajak & Akunting', 'Jasa Konsultan Pajak & Pembukuan NDA | Urban Office', 'Jasa laporan pajak SPT bulanan/tahunan, pembukuan, & pendampingan SP2DK oleh tim berlisensi BKP dengan jaminan kerahasiaan NDA.'],
+            'pendirian-perorangan-plus-virtual-office' => ['PT Perorangan + Virtual Office', 'Pendirian PT Perorangan + VO Resmi | Urban Office', 'Paket bundling pendirian PT Perorangan cepat (±1 minggu) plus Virtual Office alamat resmi. Termasuk SK Kemenkumham, NIB OSS & NPWP.'],
+            'pendirian-pt-include-virtual-office'      => ['Pendirian PT + Virtual Office', 'Jasa Pendirian PT + Virtual Office | Urban Office', 'Paket pendirian PT Badan Usaha + Virtual Office resmi ±1 minggu selesai. Akta notaris, SK Kemenkumham, NIB OSS, NPWP & meeting room.'],
+            'pendirian-cv-virtual-office'              => ['Pendirian CV + Virtual Office', 'Jasa Pendirian CV + Virtual Office | Urban Office', 'Paket bundling pendirian CV + Virtual Office resmi untuk domisili usaha & NIB. Proses cepat ±1 minggu, lengkap akta notaris & SK.'],
+            'pendirian-pma-plus-virtual-office'        => ['Pendirian PMA + Virtual Office', 'Jasa Pendirian PT PMA + Virtual Office|Urban Office', 'Solusi pendirian PT PMA (investor asing) plus alamat Virtual Office komersial di Indonesia. Termasuk akta, SK Kemenkumham, NIB & NPWP.'],
+            'virtual-office-surabaya-timur'            => ['Virtual Office Surabaya Timur', 'Virtual Office Klampis Surabaya Timur|Urban Office', 'Virtual Office termurah di Klampis Surabaya Timur dekat ITS & UNAIR mulai 6Rb/hari. Domisili resmi PT/CV, NIB, NPWP & notif WA.'],
+            'virtual-office-surabaya-barat'            => ['Virtual Office Surabaya Barat', 'Virtual Office Surabaya Barat Sungkono|Urban Office', 'Virtual Office prestisius di Grand Sungkono Lagoon Surabaya Barat mulai 12Rb/hari. Dekat Tol Satelit, resepsionis & meeting room.'],
+            'virtual-office-jakarta-timur'             => ['Virtual Office Jakarta Timur', 'Virtual Office Jakarta Timur 12Rb/Hr | Urban Office', 'Virtual Office resmi di Cakung, Jakarta Timur mulai 12Rb/hari. Alamat bisnis PT/CV, nomor 021, notifikasi surat & kuota meeting room.'],
+            'virtual-office-gresik'                    => ['Virtual Office Gresik', 'Virtual Office Gresik PTGM Tower 12Rb|Urban Office', 'Virtual Office di PTGM Tower Kebomas Gresik mulai 12Rb/hari. Alamat resmi PT/CV dekat Pemkab Gresik & akses Tol Romokalisari.'],
+            'virtual-office-medan'                     => ['Virtual Office Medan', 'Virtual Office Medan Jl. Sutrisno | Urban Office', 'Virtual Office strategis di Medan Area (Jl. Sutrisno) mulai 12Rb/hari. Domisili resmi PT/CV, resepsionis, notif surat & meeting room.'],
+            'virtual-office-malang'                    => ['Virtual Office Malang', 'Virtual Office Malang Blimbing 12Rb/Hr|Urban Office', 'Virtual Office resmi di Blimbing Kota Malang mulai 12Rb/hari. Alamat bisnis legal PT/CV & NIB, notifikasi surat WA & kuota meeting room.'],
+            'sewa-kantor-jakarta'                      => ['Sewa Kantor Jakarta Timur', 'Sewa Kantor Private Office Jakarta | Urban Office', 'Sewa Private Office fully furnished di Cakung, Pulogadung, Jakarta Timur mulai 4 Jt/bln. WiFi fiber, resepsionis, bebas listrik & IPL.'],
+            'sewa-kantor-gresik'                       => ['Sewa Kantor Gresik', 'Sewa Kantor Private Office Gresik | Urban Office', 'Sewa ruang kantor privat fully furnished di PTGM Tower Kebomas Gresik mulai 4 Jt/bln. WiFi cepat, AC, resepsionis & bebas utilitas.'],
+            'sewa-kantor-malang'                       => ['Sewa Kantor Malang', 'Sewa Kantor Private Office Malang | Urban Office', 'Sewa Private Office fully furnished di Blimbing Indah Megah Malang mulai 4 Jt/bln (2–6 pax). WiFi fiber 100 Mbps & gratis meeting room.'],
+            'meeting-room-surabaya-barat'              => ['Meeting Room Surabaya Barat', 'Sewa Meeting Room Surabaya Barat 125Rb|Urban Office', 'Sewa ruang rapat di Grand Sungkono Lagoon Surabaya Barat mulai 125Rb/jam (6–15 pax). Dekat Tol Satelit, proyektor/TV LED & coffee break.'],
+            'meeting-room-jakarta'                     => ['Meeting Room Jakarta Timur', 'Sewa Meeting Room Jakarta Timur 125Rb|Urban Office', 'Sewa ruang meeting di Cakung, Jakarta Timur mulai 125Rb/jam atau 45Rb/pax. Lengkap Smart TV LED, WiFi cepat, whiteboard & opsi snack.'],
+            'meeting-room-gresik'                      => ['Meeting Room Gresik', 'Sewa Meeting Room Gresik PTGM Tower | Urban Office', 'Sewa ruang rapat & seminar di PTGM Tower Kebomas Gresik mulai 125Rb/jam atau 45Rb/pax. Proyektor HD, Smart TV, WiFi & coffee break.'],
+            'meeting-room-malang'                      => ['Meeting Room Malang', 'Sewa Meeting Room Malang Blimbing 125Rb|Urban Office', 'Sewa ruang meeting di Blimbing Malang per jam (125Rb/jam) atau paket 4–8 jam. Lengkap proyektor/TV LED, WiFi cepat & coffee break.'],
+            'coworking-space-surabaya-timur'           => ['Coworking Space Surabaya Timur', 'Coworking Space Klampis Surabaya 45Rb|Urban Office', 'Coworking space Klampis Surabaya Timur dekat ITS & UNAIR mulai 45Rb/hari atau 750Rb/bln. Meja ergonomis, WiFi 100 Mbps & free kopi.'],
+            'coworking-space-malang'                   => ['Coworking Space Malang', 'Coworking Space Malang Mulai 10Rb/Jam | Urban Office', 'Tempat WFA nyaman di Blimbing Kota Malang mulai 10Rb/jam, 45Rb/hari, atau 750Rb/bln. WiFi fiber 100 Mbps & free kopi/teh sepuasnya.'],
+            'event-space-malang'                       => ['Event Space Malang', 'Sewa Event Space Malang Mulai 45Rb/Pax|Urban Office', 'Sewa aula & event space di Blimbing Kota Malang (30–80 pax) mulai 45Rb/pax (Half-Day). Proyektor HD, sound system & mic nirkabel.'],
+        ];
+
+        foreach ($seo_v2_updates as $up_slug => [$up_title, $up_mt, $up_md]) {
+            $exists = Database::fetch("SELECT id FROM pages WHERE slug = ?", [$up_slug]);
+            if ($exists) {
+                Database::query(
+                    "UPDATE pages SET meta_title = ?, meta_description = ?, og_title = ?, og_description = ? WHERE slug = ?",
+                    [$up_mt, $up_md, $up_mt, $up_md, $up_slug]
+                );
+            } else {
+                Database::insert(
+                    "INSERT INTO pages (title, slug, meta_title, meta_description, og_title, og_description) VALUES (?, ?, ?, ?, ?, ?)",
+                    [$up_title, $up_slug, $up_mt, $up_md, $up_mt, $up_md]
+                );
+            }
+        }
+        Database::query("INSERT INTO settings (name, value) VALUES (?, ?)", [$migrationV2Key, date('Y-m-d H:i:s')]);
+        echo "Applied SERP snippet v2 migration ($migrationV2Key) for " . count($seo_v2_updates) . " pages.\n";
+    }
+
     // 14. First-Party Analytics Events table (permanent storage, indexed for fast reporting)
     $db->exec("CREATE TABLE IF NOT EXISTS analytics_events (
         id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

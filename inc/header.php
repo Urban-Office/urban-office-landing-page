@@ -135,7 +135,7 @@ start_page_cache($page_slug);
     <nav class="navbar" id="navbar">
         <div class="container nav-container">
             <a href="<?php echo BASE_URL; ?>" class="logo" aria-label="Urban Office Homepage">
-                <img src="<?php echo BASE_URL; ?>assets/images/imgcomponent/urban%20office%20new%20logo.png" alt="Urban Office Logo">
+                <img src="<?php echo BASE_URL; ?>assets/images/imgcomponent/urban%20office%20new%20logo.webp" alt="Urban Office Logo" width="500" height="137" decoding="async">
             </a>
             
             <button class="mobile-hamburger" id="hamburger-toggle" aria-label="Buka Menu">

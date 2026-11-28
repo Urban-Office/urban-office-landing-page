@@ -22,7 +22,7 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === 'footer.php') {
                 <!-- Col 1: About & Socials -->
                 <div class="footer-col footer-about">
                     <a href="<?php echo BASE_URL; ?>" class="footer-logo" aria-label="Urban Office Homepage" style="margin-bottom: 20px; display: block;">
-                        <img src="<?php echo BASE_URL; ?>assets/images/imgcomponent/urban%20office%20new%20logo.png" alt="Urban Office Logo" width="180" height="50" style="max-height: 50px; width: auto;">
+                        <img src="<?php echo BASE_URL; ?>assets/images/imgcomponent/urban%20office%20new%20logo.webp" alt="Urban Office Logo" width="180" height="50" loading="lazy" decoding="async" style="max-height: 50px; width: auto;">
                     </a>
                     <p>Urban Office menyediakan ruang kerja, alamat bisnis, serta dukungan pendirian usaha, akuntansi, dan perpajakan sesuai tahap dan kebutuhan bisnis Anda.</p>
                     <div class="footer-socials">

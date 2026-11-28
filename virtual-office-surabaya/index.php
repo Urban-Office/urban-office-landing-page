@@ -115,7 +115,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
                     <!-- Slide 1: Efisiensi biaya -->
                     <div class="why-vo-slide">
                         <div class="why-vo-card">
-                            <img src="<?php echo BASE_URL; ?>assets/images/virtualoffice/Buka-Cabang-Lebih-Mudah-4.webp" alt="Efisiensi biaya operasional kantor lebih hemat hingga 90% dengan virtual office" loading="lazy">
+                            <img src="<?php echo BASE_URL; ?>assets/images/virtualoffice/Buka-Cabang-Lebih-Mudah-4.webp" alt="Efisiensi biaya operasional kantor lebih hemat hingga 90% dengan virtual office" width="800" height="400" loading="lazy" decoding="async">
                             <div class="why-vo-caption">
                                 <h3>Efisiensi Biaya Operasional hingga 90%</h3>
                                 <p>Punya alamat kantor prestisius tanpa biaya sewa ruang fisik, listrik, dan perawatan — pangkas pengeluaran operasional hingga 90% dibanding kantor konvensional.</p>
@@ -125,7 +125,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
                     <!-- Slide 2: Buka cabang -->
                     <div class="why-vo-slide">
                         <div class="why-vo-card">
-                            <img src="<?php echo BASE_URL; ?>assets/images/virtualoffice/Buka-Cabang-Lebih-Mudah-5.webp" alt="Buka cabang kantor baru lebih mudah dan murah dengan virtual office" loading="lazy">
+                            <img src="<?php echo BASE_URL; ?>assets/images/virtualoffice/Buka-Cabang-Lebih-Mudah-5.webp" alt="Buka cabang kantor baru lebih mudah dan murah dengan virtual office" width="800" height="400" loading="lazy" decoding="async">
                             <div class="why-vo-caption">
                                 <h3>Buka Cabang Baru Lebih Mudah &amp; Murah</h3>
                                 <p>Perluas bisnis ke kota atau area baru cukup dengan alamat virtual office, tanpa perlu menyewa dan mengelola kantor fisik di setiap lokasi.</p>
@@ -135,7 +135,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
                     <!-- Slide 3: Alamat strategis -->
                     <div class="why-vo-slide">
                         <div class="why-vo-card">
-                            <img src="<?php echo BASE_URL; ?>assets/images/virtualoffice/Buka-Cabang-Lebih-Mudah-6.webp" alt="Alamat kantor strategis meningkatkan kepercayaan klien, mitra, dan calon investor" loading="lazy">
+                            <img src="<?php echo BASE_URL; ?>assets/images/virtualoffice/Buka-Cabang-Lebih-Mudah-6.webp" alt="Alamat kantor strategis meningkatkan kepercayaan klien, mitra, dan calon investor" width="800" height="400" loading="lazy" decoding="async">
                             <div class="why-vo-caption">
                                 <h3>Alamat Strategis Meningkatkan Kepercayaan</h3>
                                 <p>Alamat di gedung perkantoran komersial ternama membangun citra profesional dan meningkatkan kepercayaan klien, mitra, serta calon investor.</p>
@@ -145,7 +145,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
                     <!-- Slide 4: Fasilitas & Fleksibilitas -->
                     <div class="why-vo-slide">
                         <div class="why-vo-card">
-                            <img src="<?php echo BASE_URL; ?>assets/images/virtualoffice/Buka-Cabang-Lebih-Mudah-7.webp" alt="Fasilitas kantor lengkap dan fleksibilitas operasional bisnis" loading="lazy">
+                            <img src="<?php echo BASE_URL; ?>assets/images/virtualoffice/Buka-Cabang-Lebih-Mudah-7.webp" alt="Fasilitas kantor lengkap dan fleksibilitas operasional bisnis" width="800" height="400" loading="lazy" decoding="async">
                             <div class="why-vo-caption">
                                 <h3>Fasilitas Lengkap &amp; Fleksibel</h3>
                                 <p>Didukung fasilitas ruang pertemuan, penanganan surat masuk, dan layanan resepsionis profesional yang siap mendukung operasional harian bisnis Anda.</p>
@@ -286,6 +286,44 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
             </div>
             <?php endforeach; ?>
         </div>
+
+        <!-- GEO Comparison Table for Active Branch Virtual Office Packages -->
+        <div class="seo-compare-wrap">
+            <div class="seo-compare-head">
+                <h3>Perbandingan Paket Virtual Office <?php echo sanitize($vo_branch_public); ?></h3>
+                <p>Semua paket mencakup alamat bisnis resmi untuk domisili PT/CV (Non-PKP), penerimaan surat/paket &amp; notifikasi WhatsApp real-time.</p>
+            </div>
+            <div class="seo-compare-scroll">
+                <table class="seo-compare-table">
+                    <thead>
+                        <tr>
+                            <th>Paket</th>
+                            <th>Tarif</th>
+                            <th>Kuota Meeting Room</th>
+                            <th>Telepon Bersama</th>
+                            <th>Cocok Untuk</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($vo_tiers as $vo_row):
+                            $vo_r_name = (string)($vo_row['name'] ?? '');
+                            $vo_r_low  = strtolower($vo_r_name);
+                            $vo_r_meet = strpos($vo_r_low, 'priority') !== false ? '8 jam / bulan + Coworking' : (strpos($vo_r_low, 'luxury') !== false ? '6 jam / bulan' : (strpos($vo_r_low, 'starter') !== false ? '4 jam / bulan' : 'Diskon sewa member'));
+                            $vo_r_tel  = (strpos($vo_r_low, 'luxury') !== false || strpos($vo_r_low, 'priority') !== false) ? 'Termasuk' : 'Tidak';
+                            $vo_r_fit  = strpos($vo_r_low, 'priority') !== false ? 'Perusahaan mapan (+ gratis website)' : (strpos($vo_r_low, 'luxury') !== false ? 'Bisnis bertumbuh & meeting rutin' : (strpos($vo_r_low, 'starter') !== false ? 'PT/CV baru & pengurusan NIB/NPWP' : 'UMKM fokus alamat legal hemat'));
+                        ?>
+                        <tr>
+                            <td><strong><?php echo sanitize($vo_r_name); ?></strong></td>
+                            <td>Rp <?php echo sanitize((string)($vo_row['price'] ?? '')); ?> / <?php echo sanitize((string)($vo_row['period'] ?? 'hari')); ?>*</td>
+                            <td><?php echo sanitize($vo_r_meet); ?></td>
+                            <td><?php echo sanitize($vo_r_tel); ?></td>
+                            <td><?php echo sanitize($vo_r_fit); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </section>
 <!-- Benefits + Branch Advantages (two-column: "Keuntungan" image slider LEFT, per-branch
@@ -304,22 +342,22 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
                     <div class="benefits-vo-slider" id="benefits-vo-slider">
                         <div class="benefits-vo-slide">
                             <div class="benefits-vo-card">
-                                <img src="<?php echo BASE_URL; ?>assets/images/virtualoffice/ekspansi-bisnis-lebih-luas-1.webp" alt="Alamat gedung perkantoran prestisius untuk meningkatkan citra profesional bisnis" loading="lazy">
+                                <img src="<?php echo BASE_URL; ?>assets/images/virtualoffice/ekspansi-bisnis-lebih-luas-1.webp" alt="Alamat gedung perkantoran prestisius untuk meningkatkan citra profesional bisnis" width="800" height="400" loading="lazy" decoding="async">
                             </div>
                         </div>
                         <div class="benefits-vo-slide">
                             <div class="benefits-vo-card">
-                                <img src="<?php echo BASE_URL; ?>assets/images/virtualoffice/ekspansi-bisnis-lebih-luas-3.webp" alt="Layanan resepsionis dan surat menyurat menerima paket, dokumen, dan telepon" loading="lazy">
+                                <img src="<?php echo BASE_URL; ?>assets/images/virtualoffice/ekspansi-bisnis-lebih-luas-3.webp" alt="Layanan resepsionis dan surat menyurat menerima paket, dokumen, dan telepon" width="800" height="400" loading="lazy" decoding="async">
                             </div>
                         </div>
                         <div class="benefits-vo-slide">
                             <div class="benefits-vo-card">
-                                <img src="<?php echo BASE_URL; ?>assets/images/virtualoffice/ekspansi-bisnis-lebih-luas-5.webp" alt="Fasilitas ruang meeting dan coworking space tersedia saat dibutuhkan" loading="lazy">
+                                <img src="<?php echo BASE_URL; ?>assets/images/virtualoffice/ekspansi-bisnis-lebih-luas-5.webp" alt="Fasilitas ruang meeting dan coworking space tersedia saat dibutuhkan" width="800" height="400" loading="lazy" decoding="async">
                             </div>
                         </div>
                         <div class="benefits-vo-slide">
                             <div class="benefits-vo-card">
-                                <img src="<?php echo BASE_URL; ?>assets/images/virtualoffice/ekspansi-bisnis-lebih-luas.webp" alt="Ekspansi bisnis lebih luas, mudah membuka kantor cabang di tempat lain" loading="lazy">
+                                <img src="<?php echo BASE_URL; ?>assets/images/virtualoffice/ekspansi-bisnis-lebih-luas.webp" alt="Ekspansi bisnis lebih luas, mudah membuka kantor cabang di tempat lain" width="800" height="400" loading="lazy" decoding="async">
                             </div>
                         </div>
                     </div>

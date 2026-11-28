@@ -262,7 +262,7 @@ $mr_cta_attrs     = $mr_has_webapp ? ' target="_blank" rel="noopener" data-webap
             
             <!-- Right Image Area -->
             <div class="rt-booking-image-wrap">
-                <img src="<?php echo BASE_URL; ?>assets/images/imgcomponent/WhatsApp_Image_2026-06-08_at_09.32.25-removebg-preview.png" alt="Real Time Booking Flow" class="rt-booking-image">
+                <img src="<?php echo BASE_URL; ?>assets/images/imgcomponent/WhatsApp_Image_2026-06-08_at_09.32.25-removebg-preview.webp" alt="Real Time Booking Flow" width="447" height="559" loading="lazy" decoding="async" class="rt-booking-image">
             </div>
         </div>
     </div>
@@ -503,7 +503,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
                     <div class="gallery-item-card">
                         <!-- Image Container with Pax Badge -->
                         <div class="gallery-img-container">
-                            <img src="<?php echo sanitize(encode_asset_url(BASE_URL . $item['img'])); ?>" alt="<?php echo sanitize($item['alt']); ?>" loading="lazy" decoding="async" draggable="false">
+                            <img src="<?php echo sanitize(encode_asset_url(BASE_URL . $item['img'])); ?>" alt="<?php echo sanitize($item['alt']); ?>" width="400" height="260" loading="lazy" decoding="async" draggable="false">
                             <?php if (!empty($item['pax'])): ?>
                             <span class="gallery-pax-badge">
                                 <?php echo sanitize($item['pax']); ?>

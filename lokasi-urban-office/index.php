@@ -205,7 +205,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/hero.php';
                 <div class="branch-card">
                     <div style="display: flex; flex-direction: column; flex-grow: 1;">
                         <div class="branch-img-wrap">
-                            <img src="<?php echo $loc['image']; ?>" alt="<?php echo sanitize($loc['title']); ?>" loading="lazy">
+                            <img src="<?php echo sanitize(encode_asset_url($loc['image'])); ?>" alt="<?php echo sanitize($loc['title']); ?>" width="400" height="300" loading="lazy" decoding="async">
                         </div>
                         <div class="branch-body-content">
                             <h3><?php echo sanitize($loc['title']); ?></h3>

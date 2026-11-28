@@ -158,7 +158,7 @@ try {
                     ?>
                         <div class="blog-card-item" style="padding: 0 !important; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid hsl(var(--clr-border)); border-radius: 12px; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
                             <div class="blog-card-img-wrap" style="height: 180px; width: 100%; overflow: hidden; background-color: #f8fafc; margin: 0; padding: 0;">
-                                <img src="<?php echo $image_path; ?>" alt="<?php echo sanitize($post['title']); ?>" style="width: 100%; height: 100%; object-fit: cover; display: block; margin: 0; padding: 0;">
+                                <img src="<?php echo $image_path; ?>" alt="<?php echo sanitize($post['title']); ?>" width="600" height="300" loading="lazy" decoding="async" style="width: 100%; height: 100%; object-fit: cover; display: block; margin: 0; padding: 0;">
                             </div>
                             <div class="blog-card-body" style="padding: 24px; flex-grow:1; display:flex; flex-direction:column; justify-content:space-between;">
                                 <div>

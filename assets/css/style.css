@@ -4634,4 +4634,79 @@ textarea.form-control {
     }
 }
 
+/* ==========================================================================
+   Structured Comparison Tables (SEO / GEO & Scannability, Mobile-Safe)
+   ========================================================================== */
+.seo-compare-wrap {
+    margin-top: 42px;
+    background: #FFFFFF;
+    border: 1px solid hsl(var(--clr-border));
+    border-radius: var(--radius-lg);
+    padding: 24px 26px;
+    box-shadow: var(--shadow-sm);
+    text-align: left;
+}
+.seo-compare-head {
+    margin-bottom: 16px;
+}
+.seo-compare-head h3 {
+    font-size: 1.18rem;
+    font-weight: 800;
+    color: hsl(var(--clr-text-main));
+    margin: 0 0 4px 0;
+}
+.seo-compare-head p {
+    font-size: 0.9rem;
+    color: hsl(var(--clr-text-muted));
+    margin: 0;
+}
+.seo-compare-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.seo-compare-table {
+    width: 100%;
+    min-width: 540px;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+.seo-compare-table th,
+.seo-compare-table td {
+    padding: 11px 14px;
+    border-bottom: 1px solid #EAEAEA;
+    vertical-align: middle;
+    text-align: left;
+}
+.seo-compare-table thead th {
+    background: #FFF7ED;
+    color: #111111;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-bottom: 2px solid #FDBA74;
+}
+.seo-compare-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+.seo-compare-table tbody tr:hover {
+    background: #FAFAFA;
+}
+@media (max-width: 640px) {
+    .seo-compare-wrap {
+        margin-top: 28px;
+        padding: 18px 16px;
+    }
+    .seo-compare-head h3 {
+        font-size: 1.05rem;
+    }
+    .seo-compare-table th,
+    .seo-compare-table td {
+        padding: 9px 10px;
+        font-size: 0.82rem;
+    }
+}
+
+
 

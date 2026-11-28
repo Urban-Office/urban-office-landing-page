@@ -156,7 +156,7 @@ require_once dirname(dirname(__FILE__)) . '/inc/header.php';
             
             <!-- Right Panel: Image Display -->
             <div class="loc-hero-img-wrapper">
-                <img src="<?php echo $branch['image']; ?>" alt="<?php echo sanitize($branch['title']); ?>">
+                <img src="<?php echo sanitize(encode_asset_url($branch['image'])); ?>" alt="<?php echo sanitize($branch['title']); ?>" width="800" height="600" fetchpriority="high" decoding="async">
             </div>
         </div>
     </div>
@@ -220,7 +220,7 @@ require_once dirname(dirname(__FILE__)) . '/inc/header.php';
                         elseif ($index === 3) $cap_title = "Exclusive Private Office";
                     ?>
                         <div class="gallery-item">
-                            <img src="<?php echo sanitize(encode_asset_url($img_url)); ?>" alt="<?php echo sanitize($cap_title . ' - Urban Office ' . $branch['short_title'] . ' (' . $branch['city'] . ')'); ?>" loading="lazy" decoding="async" draggable="false">
+                            <img src="<?php echo sanitize(encode_asset_url($img_url)); ?>" alt="<?php echo sanitize($cap_title . ' - Urban Office ' . $branch['short_title'] . ' (' . $branch['city'] . ')'); ?>" width="600" height="400" loading="lazy" decoding="async" draggable="false">
                             <div class="gallery-caption">
                                 <h4 style="color: #FFFFFF !important; font-size: 1.05rem; font-weight: 700; margin-bottom: 4px;"><?php echo sanitize($cap_title); ?></h4>
                                 <p style="color: rgba(255,255,255,0.8); font-size: 0.8rem; margin: 0;">Fasilitas berkelas dengan standar kenyamanan tinggi.</p>
@@ -249,15 +249,15 @@ require_once dirname(dirname(__FILE__)) . '/inc/header.php';
             <p class="app-promo-desc">Unduh aplikasi mobile **My Urban Office** di handphone Anda untuk melakukan pemesanan ruang meeting harian, pembayaran tagihan virtual office, hingga berinteraksi dengan komunitas member kami secara langsung.</p>
             <div class="app-badge-row">
                 <a href="#" class="app-badge-link" onclick="showDevelopmentToast(); return false;">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store Button">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store Button" width="135" height="40" loading="lazy" decoding="async">
                 </a>
                 <a href="#" class="app-badge-link" onclick="showDevelopmentToast(); return false;">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Play Store Button">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Play Store Button" width="135" height="40" loading="lazy" decoding="async">
                 </a>
             </div>
             
             <div class="app-promo-mockup">
-                <img src="<?php echo BASE_URL; ?>assets/images/imgcomponent/app-component.webp" alt="My Urban Office App Mockup" style="display: block; filter: drop-shadow(0px 15px 30px rgba(0,0,0,0.3));">
+                <img src="<?php echo BASE_URL; ?>assets/images/imgcomponent/app-component.webp" alt="My Urban Office App Mockup" width="600" height="500" loading="lazy" decoding="async" style="display: block; filter: drop-shadow(0px 15px 30px rgba(0,0,0,0.3));">
             </div>
         </div>
     </div>
@@ -496,7 +496,7 @@ require_once dirname(dirname(__FILE__)) . '/inc/header.php';
                         <div class="branch-card">
                             <div>
                                 <div class="branch-img-wrap">
-                                    <img src="<?php echo $loc['image']; ?>" alt="<?php echo sanitize($loc['title']); ?>" loading="lazy">
+                                    <img src="<?php echo sanitize(encode_asset_url($loc['image'])); ?>" alt="<?php echo sanitize($loc['title']); ?>" width="400" height="300" loading="lazy" decoding="async">
                                 </div>
                                 <div class="branch-body-content">
                                     <h3 style="font-size: 16px; margin-bottom: 8px; font-weight: 700;"><?php echo sanitize($loc['title']); ?></h3>

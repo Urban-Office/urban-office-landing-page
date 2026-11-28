@@ -69,7 +69,20 @@ define('DIR_SESSIONS', DIR_ROOT . 'cache/sessions/');
 define('CACHE_EXPIRY', 3600);
 
 // Session Hardening Rules
-if (session_status() === PHP_SESSION_NONE) {
+// Only start a PHP session when needed (admin, API, POST, CSRF/lead endpoints, or an existing
+// session cookie). Starting sessions on every anonymous GET forces `Cache-Control: no-store`
+// and `Set-Cookie` headers that block Cloudflare / browser edge caching on public landing pages.
+$req_uri_for_sess = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$sess_path_norm   = strtolower($req_uri_for_sess);
+$needs_session = (php_sapi_name() === 'cli')
+    || (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST')
+    || isset($_COOKIE['URBAN_SESSID'])
+    || strpos($sess_path_norm, '/admin') !== false
+    || strpos($sess_path_norm, '/_api') !== false
+    || strpos($sess_path_norm, '/inc/csrf_token.php') !== false
+    || strpos($sess_path_norm, '/inc/lead_handler.php') !== false;
+
+if ($needs_session && session_status() === PHP_SESSION_NONE) {
     // Keep sessions alive for 4 hours of inactivity — long enough to draft/review
     // an article in the admin panel without being logged out mid-edit. Using our
     // own save path (instead of the host's shared session dir) also keeps these
@@ -104,8 +117,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Generate CSRF Token if not set
-if (empty($_SESSION['csrf_token'])) {
+// Generate CSRF Token if session is active and token is not set
+if (session_status() === PHP_SESSION_ACTIVE && empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 

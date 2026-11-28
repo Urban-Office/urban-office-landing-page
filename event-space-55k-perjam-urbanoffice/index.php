@@ -207,7 +207,7 @@ include dirname(dirname(__FILE__)) . '/inc/components/features.php';
                     <div class="gallery-item-card">
                         <!-- Image Container with Pax Badge -->
                         <div class="gallery-img-container">
-                            <img src="<?php echo sanitize(encode_asset_url(BASE_URL . $item['img'])); ?>" alt="<?php echo sanitize($item['alt']); ?>" loading="lazy" decoding="async" draggable="false">
+                            <img src="<?php echo sanitize(encode_asset_url(BASE_URL . $item['img'])); ?>" alt="<?php echo sanitize($item['alt']); ?>" width="400" height="260" loading="lazy" decoding="async" draggable="false">
                             <?php if (!empty($item['pax'])): ?>
                             <span class="gallery-pax-badge">
                                 <?php echo sanitize($item['pax']); ?>

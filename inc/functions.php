@@ -529,6 +529,10 @@ function start_page_cache(string $page_key): void {
         // without this every detail?type=N (and the index page) would collide on one cache entry.
     }
 
+    if (php_sapi_name() !== 'cli' && !headers_sent() && session_status() !== PHP_SESSION_ACTIVE) {
+        header('Cache-Control: public, max-age=300, stale-while-revalidate=60');
+    }
+
     // Incorporate full request URI (query string like ?page=2, ?q=...) into cache key to avoid cache collision
     $uri_suffix = $_SERVER['REQUEST_URI'] ?? '';
     $cache_key = md5($page_key . '_' . $uri_suffix);
@@ -769,7 +773,7 @@ function get_private_office_city_gallery(string $city_slug, array $branch): arra
         'surabaya' => [
             ['img' => 'assets/images/privateoffice/Foto ruangan 2 pax.webp', 'title' => 'Private Office Small', 'desc' => 'Kapasitas 2 Orang · 6m²', 'pax' => '2 Pax', 'type_id' => 1, 'alt' => 'Ruang Private Office Small 2 Pax siap pakai di Urban Office MERR Surabaya'],
             ['img' => 'assets/images/privateoffice/offie 301 people.webp', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas 5 Orang · 14m²', 'pax' => '5 Pax', 'type_id' => 2, 'alt' => 'Interior Private Office Corporate 5 Pax di MERR Surabaya Timur'],
-            ['img' => 'assets/images/privateoffice/305.png', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas 5 Orang · 14m²', 'pax' => '5 Pax', 'type_id' => 3, 'alt' => 'Ruang kantor privat eksklusif 5 orang di Urban Office Surabaya'],
+            ['img' => 'assets/images/privateoffice/305.webp', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas 5 Orang · 14m²', 'pax' => '5 Pax', 'type_id' => 3, 'alt' => 'Ruang kantor privat eksklusif 5 orang di Urban Office Surabaya'],
             ['img' => 'assets/images/privateoffice/Foto ruangan 4 pax.webp', 'title' => 'Private Office Medium', 'desc' => 'Kapasitas 4 Orang · 12m²', 'pax' => '4 Pax', 'type_id' => 4, 'alt' => 'Sewa Private Office Medium 4 Pax fully furnished di Surabaya'],
             ['img' => 'assets/images/privateoffice/Foto ruangan 6 pax.webp', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas 6 Orang · 16m²', 'pax' => '6 Pax', 'type_id' => 5, 'alt' => 'Kantor privat tim 6 orang luas 16m2 di Urban Office MERR Surabaya'],
             ['img' => 'assets/images/privateoffice/Meeting 2 Pax.webp', 'title' => 'Private Office Small', 'desc' => 'Kapasitas 2 Orang · 6m²', 'pax' => '2 Pax', 'type_id' => 6, 'alt' => 'Private Office Small kapasitas 2 orang dengan meja kursi ergonomis di Surabaya'],
@@ -777,9 +781,9 @@ function get_private_office_city_gallery(string $city_slug, array $branch): arra
             ['img' => 'assets/images/privateoffice/Meeting 6 pax.webp', 'title' => 'Private Office Medium', 'desc' => 'Kapasitas 5 Orang · 10m²', 'pax' => '5 Pax', 'type_id' => 8, 'alt' => 'Ruang kerja tim 5 orang di Serviced Office MERR Surabaya'],
         ],
         'jakarta' => [
-            ['img' => 'assets/images/privateoffice/office 5 orang jaktim.jpeg', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas 5 Orang · Jakarta Timur', 'pax' => '5 Pax', 'type_id' => 2, 'alt' => 'Ruang Private Office 5 Orang di Urban Office Cakung Jakarta Timur'],
-            ['img' => 'assets/images/privateoffice/office 5 orang jaktim 2.jpeg', 'title' => 'Private Office Medium', 'desc' => 'Kapasitas 4–5 Orang · Siap Pakai', 'pax' => '4-5 Pax', 'type_id' => 4, 'alt' => 'Interior Serviced Office 4-5 Orang di Cakung Jakarta Timur'],
-            ['img' => 'assets/images/privateoffice/office fatmawati.jpeg', 'title' => 'Private Office Small', 'desc' => 'Kapasitas 2 Orang · Fully Furnished', 'pax' => '2 Pax', 'type_id' => 1, 'alt' => 'Ruang Private Office 2 Orang siap kerja di Urban Office Jakarta Timur'],
+            ['img' => 'assets/images/privateoffice/office 5 orang jaktim.webp', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas 5 Orang · Jakarta Timur', 'pax' => '5 Pax', 'type_id' => 2, 'alt' => 'Ruang Private Office 5 Orang di Urban Office Cakung Jakarta Timur'],
+            ['img' => 'assets/images/privateoffice/office 5 orang jaktim 2.webp', 'title' => 'Private Office Medium', 'desc' => 'Kapasitas 4–5 Orang · Siap Pakai', 'pax' => '4-5 Pax', 'type_id' => 4, 'alt' => 'Interior Serviced Office 4-5 Orang di Cakung Jakarta Timur'],
+            ['img' => 'assets/images/privateoffice/office fatmawati.webp', 'title' => 'Private Office Small', 'desc' => 'Kapasitas 2 Orang · Fully Furnished', 'pax' => '2 Pax', 'type_id' => 1, 'alt' => 'Ruang Private Office 2 Orang siap kerja di Urban Office Jakarta Timur'],
             ['img' => 'assets/images/privateoffice/private-office-5.webp', 'title' => 'Private Office Medium', 'desc' => 'Kapasitas 4 Orang · Fully Furnished', 'pax' => '4 Pax', 'type_id' => 4, 'alt' => 'Ruang Private Office Medium 4 Orang modern di Jakarta Timur'],
             ['img' => 'assets/images/privateoffice/private-office-6.webp', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas 6 Orang · Siap Pakai', 'pax' => '6 Pax', 'type_id' => 5, 'alt' => 'Ruang Private Office Corporate 6 Orang di Urban Office Jakarta Timur'],
         ],
@@ -791,11 +795,11 @@ function get_private_office_city_gallery(string $city_slug, array $branch): arra
             ['img' => 'assets/images/privateoffice/private-office-7.webp', 'title' => 'Private Office Executive', 'desc' => 'Kapasitas 5 Orang · PTGM Tower', 'pax' => '5 Pax', 'type_id' => 3, 'alt' => 'Ruang kantor eksekutif 5 orang di Urban Office PTGM Tower Gresik'],
         ],
         'malang' => [
-            ['img' => 'assets/images/privateoffice/office malang.jpeg', 'title' => 'Private Office Medium', 'desc' => 'Kapasitas 4–5 Orang · Cabang Malang', 'pax' => '4-5 Pax', 'type_id' => 4, 'alt' => 'Ruang Private Office modern di Urban Office Blimbing Malang'],
-            ['img' => 'assets/images/privateoffice/office meeting 8 - 12 orang malang.jpeg', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas 5–6 Orang · Blimbing Malang', 'pax' => '5-6 Pax', 'type_id' => 5, 'alt' => 'Ruang Private Office tim 5-6 orang di Urban Office Blimbing Malang'],
+            ['img' => 'assets/images/privateoffice/office malang.webp', 'title' => 'Private Office Medium', 'desc' => 'Kapasitas 4–5 Orang · Cabang Malang', 'pax' => '4-5 Pax', 'type_id' => 4, 'alt' => 'Ruang Private Office modern di Urban Office Blimbing Malang'],
+            ['img' => 'assets/images/privateoffice/office meeting 8 - 12 orang malang.webp', 'title' => 'Private Office Corporate', 'desc' => 'Kapasitas 5–6 Orang · Blimbing Malang', 'pax' => '5-6 Pax', 'type_id' => 5, 'alt' => 'Ruang Private Office tim 5-6 orang di Urban Office Blimbing Malang'],
             ['img' => 'assets/images/privateoffice/private-office-small.webp', 'title' => 'Private Office Small', 'desc' => 'Kapasitas 2 Orang · Fully Furnished', 'pax' => '2 Pax', 'type_id' => 1, 'alt' => 'Sewa Private Office Small 2 Orang di Kota Malang'],
             ['img' => 'assets/images/privateoffice/private-office-8.webp', 'title' => 'Private Office Small', 'desc' => 'Kapasitas 2 Orang · Cabang Malang', 'pax' => '2 Pax', 'type_id' => 7, 'alt' => 'Ruang kerja privat 2 orang nyaman di Urban Office Malang'],
-            ['img' => 'assets/images/privateoffice/office meeting 4 orang malang.jpeg', 'title' => 'Private Office Medium', 'desc' => 'Kapasitas 5 Orang · Siap Pakai', 'pax' => '5 Pax', 'type_id' => 8, 'alt' => 'Private Office tim 5 orang fully furnished di Malang'],
+            ['img' => 'assets/images/privateoffice/office meeting 4 orang malang.webp', 'title' => 'Private Office Medium', 'desc' => 'Kapasitas 5 Orang · Siap Pakai', 'pax' => '5 Pax', 'type_id' => 8, 'alt' => 'Private Office tim 5 orang fully furnished di Malang'],
         ],
     ];
 
@@ -820,14 +824,14 @@ function get_serviced_office_gallery(string $city_slug): array {
             ['img' => 'assets/images/meetingroom/Meeting 18 pax.webp', 'title' => 'Meeting Room', 'alt' => 'Meeting Room Surabaya'],
             ['img' => 'assets/images/privateoffice/serviced-office-desk.webp', 'title' => 'Serviced Office', 'alt' => 'Serviced Office Surabaya'],
             ['img' => 'assets/images/privateoffice/pantry lantai 3.webp', 'title' => 'Pantry', 'alt' => 'Pantry Surabaya'],
-            ['img' => 'assets/images/privateoffice/resepsionis.jpeg', 'title' => 'Resepsionis', 'alt' => 'Resepsionis Surabaya'],
+            ['img' => 'assets/images/privateoffice/resepsionis.webp', 'title' => 'Resepsionis', 'alt' => 'Resepsionis Surabaya'],
             ['img' => 'assets/images/privateoffice/musholla.webp', 'title' => 'Tempat Ibadah', 'alt' => 'Tempat Ibadah Surabaya'],
         ],
         'jakarta' => [
-            ['img' => 'assets/images/meetingroom/Meeting 8 orang jaktim.jpeg', 'title' => 'Meeting Room', 'alt' => 'Meeting Room Jakarta'],
+            ['img' => 'assets/images/meetingroom/Meeting 8 orang jaktim.webp', 'title' => 'Meeting Room', 'alt' => 'Meeting Room Jakarta'],
             ['img' => 'assets/images/privateoffice/serviced-office-desk.webp', 'title' => 'Serviced Office', 'alt' => 'Serviced Office Jakarta'],
             ['img' => 'assets/images/privateoffice/serviced-office-pantry.webp', 'title' => 'Pantry', 'alt' => 'Pantry Jakarta'],
-            ['img' => 'assets/images/privateoffice/ruang tamu & resepsionis.jpeg', 'title' => 'Resepsionis', 'alt' => 'Resepsionis & Ruang Tamu Jakarta'],
+            ['img' => 'assets/images/privateoffice/ruang tamu & resepsionis.webp', 'title' => 'Resepsionis', 'alt' => 'Resepsionis & Ruang Tamu Jakarta'],
         ],
         'gresik' => [
             ['img' => 'assets/images/privateoffice/serviced-office-meeting.webp', 'title' => 'Meeting Room', 'alt' => 'Meeting Room Gresik'],
@@ -837,9 +841,9 @@ function get_serviced_office_gallery(string $city_slug): array {
             ['img' => 'assets/images/privateoffice/serviced-office-outdoor.webp', 'title' => 'Lounge & Area Bersama', 'alt' => 'Area Bersama Gresik'],
         ],
         'malang' => [
-            ['img' => 'assets/images/privateoffice/office meeting 8 - 12 orang malang.jpeg', 'title' => 'Meeting Room', 'alt' => 'Meeting Room Malang'],
+            ['img' => 'assets/images/privateoffice/office meeting 8 - 12 orang malang.webp', 'title' => 'Meeting Room', 'alt' => 'Meeting Room Malang'],
             ['img' => 'assets/images/privateoffice/serviced-office-desk.webp', 'title' => 'Serviced Office', 'alt' => 'Serviced Office Malang'],
-            ['img' => 'assets/images/privateoffice/resepsion malang.jpeg', 'title' => 'Resepsionis', 'alt' => 'Resepsionis Urban Office Malang'],
+            ['img' => 'assets/images/privateoffice/resepsion malang.webp', 'title' => 'Resepsionis', 'alt' => 'Resepsionis Urban Office Malang'],
             ['img' => 'assets/images/privateoffice/open space malang.jpeg', 'title' => 'Open Space Area', 'alt' => 'Area Bersama Malang'],
         ],
     ];
@@ -910,10 +914,10 @@ function get_meeting_room_city_gallery(string $city_slug, array $branch): array 
 
     $catalog = [
         'surabaya' => [
-            ['img' => 'assets/images/meetingroom/Small Meeting.jpeg', 'title' => 'Small Meeting', 'desc' => 'Mulai Rp 125.000 / jam', 'pax' => '6 Pax', 'type_id' => 1, 'alt' => 'Ruang Small Meeting kapasitas 6 orang di Urban Office MERR Surabaya'],
-            ['img' => 'assets/images/meetingroom/Big Meeting.jpeg', 'title' => 'Big Meeting', 'desc' => 'Mulai Rp 45.000 / pax', 'pax' => '15 Pax', 'type_id' => 2, 'alt' => 'Ruang Big Meeting kapasitas 15 orang lengkap proyektor di Surabaya'],
-            ['img' => 'assets/images/meetingroom/Small Meeting (2).jpeg', 'title' => 'Small Meeting', 'desc' => 'Mulai Rp 125.000 / jam', 'pax' => '6 Pax', 'type_id' => 3, 'alt' => 'Sewa ruang meeting per jam untuk 6 orang di Urban Office Surabaya'],
-            ['img' => 'assets/images/meetingroom/meeting klampis.jpeg', 'title' => 'Small Meeting Klampis', 'desc' => 'Mulai Rp 125.000 / jam', 'pax' => '6 Pax', 'type_id' => 1, 'alt' => 'Ruang meeting privat cabang Klampis Surabaya Timur'],
+            ['img' => 'assets/images/meetingroom/Small Meeting.webp', 'title' => 'Small Meeting', 'desc' => 'Mulai Rp 125.000 / jam', 'pax' => '6 Pax', 'type_id' => 1, 'alt' => 'Ruang Small Meeting kapasitas 6 orang di Urban Office MERR Surabaya'],
+            ['img' => 'assets/images/meetingroom/Big Meeting.webp', 'title' => 'Big Meeting', 'desc' => 'Mulai Rp 45.000 / pax', 'pax' => '15 Pax', 'type_id' => 2, 'alt' => 'Ruang Big Meeting kapasitas 15 orang lengkap proyektor di Surabaya'],
+            ['img' => 'assets/images/meetingroom/Small Meeting (2).webp', 'title' => 'Small Meeting', 'desc' => 'Mulai Rp 125.000 / jam', 'pax' => '6 Pax', 'type_id' => 3, 'alt' => 'Sewa ruang meeting per jam untuk 6 orang di Urban Office Surabaya'],
+            ['img' => 'assets/images/meetingroom/meeting klampis.webp', 'title' => 'Small Meeting Klampis', 'desc' => 'Mulai Rp 125.000 / jam', 'pax' => '6 Pax', 'type_id' => 1, 'alt' => 'Ruang meeting privat cabang Klampis Surabaya Timur'],
             ['img' => 'assets/images/meetingroom/Meeting 18 pax.webp', 'title' => 'Big Meeting', 'desc' => 'Mulai Rp 45.000 / pax', 'pax' => '18 Pax', 'type_id' => 5, 'alt' => 'Conference meeting room 18 orang di Urban Office MERR Surabaya'],
         ],
         'jakarta' => [
@@ -921,13 +925,13 @@ function get_meeting_room_city_gallery(string $city_slug, array $branch): array 
             ['img' => 'assets/images/privateoffice/serviced-office-meeting.webp', 'title' => 'Executive Meeting', 'desc' => 'Mulai Rp 125.000 / jam', 'pax' => '6-8 Pax', 'type_id' => 1, 'alt' => 'Ruang rapat representatif untuk presentasi klien di Jakarta Timur'],
         ],
         'gresik' => [
-            ['img' => 'assets/images/meetingroom/Big Meeting (2).jpeg', 'title' => 'Big Meeting', 'desc' => 'Mulai Rp 45.000 / pax', 'pax' => '15 Pax', 'type_id' => 4, 'alt' => 'Big Meeting Room untuk training dan rapat tim di Gresik'],
+            ['img' => 'assets/images/meetingroom/Big Meeting (2).webp', 'title' => 'Big Meeting', 'desc' => 'Mulai Rp 45.000 / pax', 'pax' => '15 Pax', 'type_id' => 4, 'alt' => 'Big Meeting Room untuk training dan rapat tim di Gresik'],
         ],
         'malang' => [
-            ['img' => 'assets/images/privateoffice/office meeting 4 orang malang.jpeg', 'title' => 'Small Meeting', 'desc' => 'Mulai Rp 125.000 / jam', 'pax' => '4-6 Pax', 'type_id' => 1, 'alt' => 'Small Meeting Room 4-6 orang di Urban Office Blimbing Malang'],
-            ['img' => 'assets/images/privateoffice/office meeting 8 - 12 orang malang.jpeg', 'title' => 'Big Meeting', 'desc' => 'Mulai Rp 45.000 / pax', 'pax' => '8-12 Pax', 'type_id' => 2, 'alt' => 'Big Meeting Room 8-12 orang dengan layar TV LED di Urban Office Malang'],
-            ['img' => 'assets/images/meetingroom/Small Meeting.jpeg', 'title' => 'Small Meeting', 'desc' => 'Mulai Rp 125.000 / jam', 'pax' => '6 Pax', 'type_id' => 3, 'alt' => 'Ruang rapat per jam siap pakai di Kota Malang'],
-            ['img' => 'assets/images/meetingroom/Big Meeting (3).jpeg', 'title' => 'Big Meeting', 'desc' => 'Mulai Rp 45.000 / pax', 'pax' => '15 Pax', 'type_id' => 5, 'alt' => 'Ruang meeting luas untuk seminar dan diskusi tim di Malang'],
+            ['img' => 'assets/images/privateoffice/office meeting 4 orang malang.webp', 'title' => 'Small Meeting', 'desc' => 'Mulai Rp 125.000 / jam', 'pax' => '4-6 Pax', 'type_id' => 1, 'alt' => 'Small Meeting Room 4-6 orang di Urban Office Blimbing Malang'],
+            ['img' => 'assets/images/privateoffice/office meeting 8 - 12 orang malang.webp', 'title' => 'Big Meeting', 'desc' => 'Mulai Rp 45.000 / pax', 'pax' => '8-12 Pax', 'type_id' => 2, 'alt' => 'Big Meeting Room 8-12 orang dengan layar TV LED di Urban Office Malang'],
+            ['img' => 'assets/images/meetingroom/Small Meeting.webp', 'title' => 'Small Meeting', 'desc' => 'Mulai Rp 125.000 / jam', 'pax' => '6 Pax', 'type_id' => 3, 'alt' => 'Ruang rapat per jam siap pakai di Kota Malang'],
+            ['img' => 'assets/images/meetingroom/Big Meeting (3).webp', 'title' => 'Big Meeting', 'desc' => 'Mulai Rp 45.000 / pax', 'pax' => '15 Pax', 'type_id' => 5, 'alt' => 'Ruang meeting luas untuk seminar dan diskusi tim di Malang'],
             ['img' => 'assets/images/privateoffice/serviced-office-meeting.webp', 'title' => 'Executive Meeting', 'desc' => 'Mulai Rp 125.000 / jam', 'pax' => '6 Pax', 'type_id' => 1, 'alt' => 'Ruang pertemuan bisnis nyaman di Urban Office Malang'],
         ],
     ];
@@ -938,8 +942,8 @@ function get_meeting_room_city_gallery(string $city_slug, array $branch): array 
     }
 
     return [
-        ['img' => 'assets/images/meetingroom/Small Meeting.jpeg', 'title' => 'Small Meeting', 'desc' => 'Mulai Rp 125.000 / jam', 'pax' => '6 Pax', 'type_id' => 1, 'alt' => 'Small Meeting Room di Urban Office ' . $loc_suffix],
-        ['img' => 'assets/images/meetingroom/Big Meeting.jpeg', 'title' => 'Big Meeting', 'desc' => 'Mulai Rp 45.000 / pax', 'pax' => '15 Pax', 'type_id' => 2, 'alt' => 'Big Meeting Room di Urban Office ' . $loc_suffix],
+        ['img' => 'assets/images/meetingroom/Small Meeting.webp', 'title' => 'Small Meeting', 'desc' => 'Mulai Rp 125.000 / jam', 'pax' => '6 Pax', 'type_id' => 1, 'alt' => 'Small Meeting Room di Urban Office ' . $loc_suffix],
+        ['img' => 'assets/images/meetingroom/Big Meeting.webp', 'title' => 'Big Meeting', 'desc' => 'Mulai Rp 45.000 / pax', 'pax' => '15 Pax', 'type_id' => 2, 'alt' => 'Big Meeting Room di Urban Office ' . $loc_suffix],
     ];
 }
 
@@ -1058,9 +1062,9 @@ function get_coworking_city_gallery(string $city_slug, array $branch): array {
         ],
         'malang' => [
             ['img' => 'assets/images/privateoffice/open space malang.jpeg', 'title' => 'Open Space Hot Desk', 'desc' => 'Mulai Rp 10.000 / jam', 'badge' => 'Hot Desk', 'type_id' => 1, 'alt' => 'Area Open Space Coworking per jam di Urban Office Blimbing Malang'],
-            ['img' => 'assets/images/privateoffice/office meeting 4 orang malang.jpeg', 'title' => 'Daily Working Desk', 'desc' => 'Mulai Rp 45.000 / hari', 'badge' => 'Daily Pass', 'type_id' => 2, 'alt' => 'Meja kerja harian Coworking Space dengan WiFi cepat di Kota Malang'],
-            ['img' => 'assets/images/privateoffice/office malang.jpeg', 'title' => 'Monthly Workspace & Lounge', 'desc' => 'Mulai Rp 750.000 / bulan', 'badge' => 'Monthly Pass', 'type_id' => 3, 'alt' => 'Akses Coworking bulanan dan lounge kolaborasi di Urban Office Malang'],
-            ['img' => 'assets/images/privateoffice/Malang.jpeg', 'title' => 'Workspace Area Blimbing', 'desc' => 'Mulai Rp 45.000 / hari', 'badge' => 'Malang Area', 'type_id' => 2, 'alt' => 'Ruang kerja bersama nyaman di cabang Urban Office Blimbing Malang'],
+            ['img' => 'assets/images/privateoffice/office meeting 4 orang malang.webp', 'title' => 'Daily Working Desk', 'desc' => 'Mulai Rp 45.000 / hari', 'badge' => 'Daily Pass', 'type_id' => 2, 'alt' => 'Meja kerja harian Coworking Space dengan WiFi cepat di Kota Malang'],
+            ['img' => 'assets/images/privateoffice/office malang.webp', 'title' => 'Monthly Workspace & Lounge', 'desc' => 'Mulai Rp 750.000 / bulan', 'badge' => 'Monthly Pass', 'type_id' => 3, 'alt' => 'Akses Coworking bulanan dan lounge kolaborasi di Urban Office Malang'],
+            ['img' => 'assets/images/privateoffice/Malang.webp', 'title' => 'Workspace Area Blimbing', 'desc' => 'Mulai Rp 45.000 / hari', 'badge' => 'Malang Area', 'type_id' => 2, 'alt' => 'Ruang kerja bersama nyaman di cabang Urban Office Blimbing Malang'],
         ],
     ];
 
@@ -1144,8 +1148,8 @@ function get_event_space_city_gallery(string $city_slug, array $branch): array {
         ],
         'malang' => [
             ['img' => 'assets/images/eventspace/event space outdor malang.jpeg', 'title' => 'Ruang Seminar Malang', 'desc' => 'Area representatif untuk seminar, workshop & gathering di Blimbing.', 'pax' => '30-80 Pax', 'alt' => 'Sewa Event Space ruang seminar lengkap proyektor di Blimbing Malang'],
-            ['img' => 'assets/images/privateoffice/office meeting 8 - 12 orang malang.jpeg', 'title' => 'Classroom & Workshop Setup', 'desc' => 'Penataan meja-kursi fleksibel untuk pelatihan tim & komunitas.', 'pax' => '30-80 Pax', 'alt' => 'Event Space setting Classroom untuk workshop bisnis di Kota Malang'],
-            ['img' => 'assets/images/eventspace/event space indoor malang.jpeg', 'title' => 'U-Shape & Forum Setup', 'desc' => 'Format diskusi interaktif lengkap dengan whiteboard & flipchart.', 'pax' => '30-80 Pax', 'alt' => 'Ruang Event Space setting U-Shape untuk forum diskusi di Urban Office Malang'],
+            ['img' => 'assets/images/privateoffice/office meeting 8 - 12 orang malang.webp', 'title' => 'Classroom & Workshop Setup', 'desc' => 'Penataan meja-kursi fleksibel untuk pelatihan tim & komunitas.', 'pax' => '30-80 Pax', 'alt' => 'Event Space setting Classroom untuk workshop bisnis di Kota Malang'],
+            ['img' => 'assets/images/eventspace/event space indoor malang.webp', 'title' => 'U-Shape & Forum Setup', 'desc' => 'Format diskusi interaktif lengkap dengan whiteboard & flipchart.', 'pax' => '30-80 Pax', 'alt' => 'Ruang Event Space setting U-Shape untuk forum diskusi di Urban Office Malang'],
             ['img' => 'assets/images/eventspace/WhatsApp Image 2026-06-08 at 11.44.58.webp', 'title' => 'Theater Conference Setup', 'desc' => 'Cocok untuk peluncuran produk, talkshow & presentasi publik.', 'pax' => '30-80 Pax', 'alt' => 'Sewa aula Theater Event Space strategis di Kota Malang'],
         ],
     ];

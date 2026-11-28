@@ -138,8 +138,8 @@ function get_page_seo(string $slug): array {
             ? 'Cakung, Pulogadung, Jakarta Timur'
             : ($sk_branch ? ($sk_branch_label . ' (' . $sk_branch['location'] . ')') : $sk_city);
         $sk_short = ($sk_city_slug !== 'jakarta' && $sk_branch_label !== '') ? ' ' . $sk_branch_label : '';
-        $sk_title = 'Sewa Kantor ' . $sk_city . ' - Private Office' . $sk_short . ' Siap Pakai | Urban Office';
-        $sk_desc = 'Sewa kantor privat (serviced office) siap pakai di ' . $sk_area . '. Fully furnished, internet fiber 100 Mbps, resepsionis, bebas biaya utilitas, alamat bisnis resmi ' . $sk_city . '.';
+        $sk_title = 'Sewa Kantor ' . $sk_city . $sk_short . ' | Urban Office';
+        $sk_desc = 'Sewa kantor privat siap pakai di ' . $sk_area . '. Fully furnished, WiFi fiber 100 Mbps, resepsionis, bebas listrik & IPL.';
         $sk_og_img = !empty($sk_branch['image']) ? $sk_branch['image'] : (BASE_URL . 'assets/images/og-default.png');
         return [
             'title' => $sk_title,
@@ -188,8 +188,8 @@ function get_page_seo(string $slug): array {
         $mr_city = ($mr_city_slug === 'jakarta')
             ? 'Jakarta Timur'
             : ($mr_city_slug === 'surabaya-barat' ? 'Surabaya Barat' : ($mr_branch ? $mr_branch['city'] : ucwords(str_replace('-', ' ', $mr_city_slug))));
-        $mr_title = 'Sewa Ruang Meeting ' . $mr_city . ' - Meeting Room Mulai 125Rb/Jam | Urban Office';
-        $mr_desc = 'Sewa ruang meeting (meeting room) di ' . $mr_city . ' per jam atau harian. Layar LED/proyektor, WiFi cepat, whiteboard, free flow air mineral, lokasi strategis.';
+        $mr_title = 'Sewa Meeting Room ' . $mr_city . ' Mulai 125Rb | Urban Office';
+        $mr_desc = 'Sewa ruang meeting di ' . $mr_city . ' per jam atau harian. Layar LED/proyektor, WiFi cepat, whiteboard & opsi coffee break.';
         $mr_og_img = !empty($mr_branch['image']) ? $mr_branch['image'] : (BASE_URL . 'assets/images/og-default.png');
         return [
             'title' => $mr_title,
@@ -236,8 +236,8 @@ function get_page_seo(string $slug): array {
             ];
         }
         $cs_city = ($cs_city_slug === 'surabaya-timur') ? 'Surabaya Timur' : ($cs_branch ? $cs_branch['city'] : ucwords(str_replace('-', ' ', $cs_city_slug)));
-        $cs_title = 'Coworking Space ' . $cs_city . ' | Harian & Bulanan - Urban Office';
-        $cs_desc = 'Temukan ruang kerja bersama (coworking space) di ' . $cs_city . '. Meja kerja fleksibel per jam, harian, atau bulanan dengan fasilitas lengkap & internet cepat.';
+        $cs_title = 'Coworking Space ' . $cs_city . ' 10Rb/Jam | Urban Office';
+        $cs_desc = 'Ruang kerja bersama (coworking space) di ' . $cs_city . ' per jam, harian & bulanan. Fasilitas lengkap, kopi/teh & WiFi cepat.';
         $cs_og_img = !empty($cs_branch['image']) ? $cs_branch['image'] : (BASE_URL . 'assets/images/og-default.png');
         return [
             'title' => $cs_title,
@@ -284,8 +284,8 @@ function get_page_seo(string $slug): array {
             ];
         }
         $es_city = $es_branch ? $es_branch['city'] : ucwords(str_replace('-', ' ', $es_city_slug));
-        $es_title = 'Sewa Event Space ' . $es_city . ' | Ruang Seminar & Workshop - Urban Office';
-        $es_desc = 'Sewa event space murah di ' . $es_city . ' untuk seminar, workshop, dan pelatihan bisnis. Kapasitas fleksibel dengan perlengkapan lengkap.';
+        $es_title = 'Sewa Event Space ' . $es_city . ' 45Rb/Pax | Urban Office';
+        $es_desc = 'Sewa event space & aula di ' . $es_city . ' untuk seminar dan workshop (30–80 pax). Kapasitas fleksibel & perlengkapan audio visual.';
         $es_og_img = !empty($es_branch['image']) ? $es_branch['image'] : (BASE_URL . 'assets/images/og-default.png');
         return [
             'title' => $es_title,
@@ -301,11 +301,11 @@ function get_page_seo(string $slug): array {
     }
 
     $default_seo = [
-        'title' => 'Virtual Office & Sewa Kantor Surabaya, Jakarta Timur, Malang | Urban Office',
-        'meta_description' => 'Sewa Virtual Office mulai 6Rb/hari, Private Office siap pakai mulai 4 Jt/bln, Meeting Room & Coworking di Surabaya, Jakarta Timur, Malang, Gresik & Medan.',
+        'title' => 'Virtual Office & Sewa Kantor 6Rb/Hr | Urban Office',
+        'meta_description' => 'Sewa Virtual Office mulai 6Rb/hr, Private Office 4 Jt/bln, Meeting Room & Coworking di Surabaya, Jakarta Timur, Malang, Gresik & Medan.',
         'canonical_url' => BASE_URL . ($slug ? $slug . '/' : ''),
-        'og_title' => 'Virtual Office & Sewa Kantor Surabaya, Jakarta Timur, Malang | Urban Office',
-        'og_description' => 'Sewa Virtual Office mulai 6Rb/hari, Private Office siap pakai mulai 4 Jt/bln, Meeting Room & Coworking di Surabaya, Jakarta Timur, Malang, Gresik & Medan.',
+        'og_title' => 'Virtual Office & Sewa Kantor 6Rb/Hr | Urban Office',
+        'og_description' => 'Sewa Virtual Office mulai 6Rb/hr, Private Office 4 Jt/bln, Meeting Room & Coworking di Surabaya, Jakarta Timur, Malang, Gresik & Medan.',
         'og_image' => BASE_URL . 'assets/images/branch/merr%20new.webp',
         'schema_faq' => ($slug === '' || $slug === 'index') && function_exists('get_homepage_faqs') ? get_homepage_faqs() : null
     ];
@@ -404,11 +404,11 @@ function get_page_seo(string $slug): array {
     // Hardcoded fallback checks (if DB not populated yet or query fails)
     if ($slug === 'pendirian-perorangan-plus-virtual-office') {
         return [
-            'title' => 'PT Perorangan + Virtual Office Bundling Murah - Urban Office',
-            'meta_description' => 'Paket bundling pendirian PT Perorangan terlengkap + sewa Virtual Office dengan alamat bisnis prestisius. Dapatkan SK Kemenkumham, NIB, NPWP, & surat domisili resmi.',
+            'title' => 'Pendirian PT Perorangan + VO Resmi | Urban Office',
+            'meta_description' => 'Paket bundling pendirian PT Perorangan cepat (±1 minggu) plus Virtual Office alamat resmi. Termasuk SK Kemenkumham, NIB OSS & NPWP.',
             'canonical_url' => BASE_URL . 'pendirian-perorangan-plus-virtual-office/',
-            'og_title' => 'PT Perorangan + Virtual Office Bundling Murah - Urban Office',
-            'og_description' => 'Paket bundling pendirian PT Perorangan terlengkap + sewa Virtual Office dengan alamat bisnis prestisius. Dapatkan SK Kemenkumham, NIB, NPWP, & surat domisili resmi.',
+            'og_title' => 'Pendirian PT Perorangan + VO Resmi | Urban Office',
+            'og_description' => 'Paket bundling pendirian PT Perorangan cepat (±1 minggu) plus Virtual Office alamat resmi. Termasuk SK Kemenkumham, NIB OSS & NPWP.',
             'og_image' => $default_seo['og_image'],
             'schema_faq' => $resolve_fallback_faq($slug)
         ];
@@ -416,11 +416,11 @@ function get_page_seo(string $slug): array {
 
     if ($slug === 'pendirian-pt-include-virtual-office') {
         return [
-            'title' => 'Pendirian PT Badan Usaha + Virtual Office Murah - Urban Office',
-            'meta_description' => 'Paket bundling pendirian PT Badan Usaha (Persekutuan Modal) terlengkap + sewa Virtual Office dengan alamat bisnis prestisius. Legalitas akta notaris, SK Kemenkumham, NIB, & NPWP resmi.',
+            'title' => 'Jasa Pendirian PT + Virtual Office | Urban Office',
+            'meta_description' => 'Paket pendirian PT Badan Usaha + Virtual Office resmi ±1 minggu selesai. Akta notaris, SK Kemenkumham, NIB OSS, NPWP & meeting room.',
             'canonical_url' => BASE_URL . 'pendirian-pt-include-virtual-office/',
-            'og_title' => 'Pendirian PT Badan Usaha + Virtual Office Murah - Urban Office',
-            'og_description' => 'Paket bundling pendirian PT Badan Usaha (Persekutuan Modal) terlengkap + sewa Virtual Office dengan alamat bisnis prestisius. Legalitas akta notaris, SK Kemenkumham, NIB, & NPWP resmi.',
+            'og_title' => 'Jasa Pendirian PT + Virtual Office | Urban Office',
+            'og_description' => 'Paket pendirian PT Badan Usaha + Virtual Office resmi ±1 minggu selesai. Akta notaris, SK Kemenkumham, NIB OSS, NPWP & meeting room.',
             'og_image' => $default_seo['og_image'],
             'schema_faq' => $resolve_fallback_faq($slug)
         ];
@@ -428,11 +428,11 @@ function get_page_seo(string $slug): array {
 
     if ($slug === 'pendirian-cv-virtual-office') {
         return [
-            'title' => 'Pendirian CV + Virtual Office Bundling Murah - Urban Office',
-            'meta_description' => 'Paket bundling pendirian CV (Persekutuan Komanditer) terlengkap + sewa Virtual Office dengan alamat bisnis prestisius. Proses cepat dengan akta notaris, SK Kemenkumham, & NIB.',
+            'title' => 'Jasa Pendirian CV + Virtual Office | Urban Office',
+            'meta_description' => 'Paket bundling pendirian CV + Virtual Office resmi untuk domisili usaha & NIB. Proses cepat ±1 minggu, lengkap akta notaris & SK.',
             'canonical_url' => BASE_URL . 'pendirian-cv-virtual-office/',
-            'og_title' => 'Pendirian CV + Virtual Office Bundling Murah - Urban Office',
-            'og_description' => 'Paket bundling pendirian CV (Persekutuan Komanditer) terlengkap + sewa Virtual Office dengan alamat bisnis prestisius. Proses cepat dengan akta notaris, SK Kemenkumham, & NIB.',
+            'og_title' => 'Jasa Pendirian CV + Virtual Office | Urban Office',
+            'og_description' => 'Paket bundling pendirian CV + Virtual Office resmi untuk domisili usaha & NIB. Proses cepat ±1 minggu, lengkap akta notaris & SK.',
             'og_image' => $default_seo['og_image'],
             'schema_faq' => $resolve_fallback_faq($slug)
         ];
@@ -440,11 +440,11 @@ function get_page_seo(string $slug): array {
 
     if ($slug === 'pendirian-pma-plus-virtual-office') {
         return [
-            'title' => 'Pendirian PT PMA (Foreign Investment) + Virtual Office - Urban Office',
-            'meta_description' => 'Seamless PT PMA (Foreign Owned Enterprise) incorporation in Indonesia with premium Virtual Office address. Complete setup, notarial deed, Kemenkumham approval, and NIB.',
+            'title' => 'Jasa Pendirian PT PMA + Virtual Office|Urban Office',
+            'meta_description' => 'Solusi pendirian PT PMA (investor asing) plus alamat Virtual Office komersial di Indonesia. Termasuk akta, SK Kemenkumham, NIB & NPWP.',
             'canonical_url' => BASE_URL . 'pendirian-pma-plus-virtual-office/',
-            'og_title' => 'Pendirian PT PMA (Foreign Investment) + Virtual Office - Urban Office',
-            'og_description' => 'Seamless PT PMA (Foreign Owned Enterprise) incorporation in Indonesia with premium Virtual Office address. Complete setup, notarial deed, Kemenkumham approval, and NIB.',
+            'og_title' => 'Jasa Pendirian PT PMA + Virtual Office|Urban Office',
+            'og_description' => 'Solusi pendirian PT PMA (investor asing) plus alamat Virtual Office komersial di Indonesia. Termasuk akta, SK Kemenkumham, NIB & NPWP.',
             'og_image' => $default_seo['og_image'],
             'schema_faq' => $resolve_fallback_faq($slug)
         ];
